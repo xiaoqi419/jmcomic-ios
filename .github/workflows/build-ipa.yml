@@ -1,4 +1,4 @@
-name: Build IPA (Unsigned - 适合自签)
+name: Build IPA
 
 on:
   workflow_dispatch:
@@ -17,8 +17,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Prebuild native project
-        run: npx expo prebuild --platform ios --no-install
+      - name: Prebuild + Pods
+        run: |
+          npx expo prebuild --platform ios --no-install
+          npx pod-install
 
       - name: Build unsigned IPA
         run: |
@@ -30,12 +32,20 @@ jobs:
             -derivedDataPath ../build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            build
+            DEVELOPMENT_TEAM="" \
+            build 2>&1 | tee ../xcodebuild.log
 
       - name: Package IPA
         run: |
+          APP=$(find build/Build/Products/Release-iphoneos -name "*.app" | head -1)
+          if [ -z "$APP" ]; then
+            echo "No .app found. Build output:"
+            find build -name "*.app" 2>/dev/null || echo "No .app anywhere"
+            cat xcodebuild.log | tail -50
+            exit 1
+          fi
           mkdir -p Payload
-          cp -r "build/Build/Products/Release-iphoneos/jmcomic.app" Payload/
+          cp -r "$APP" Payload/
           zip -r jmcomic-unsigned.ipa Payload/
           rm -rf Payload
 
