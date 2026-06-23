@@ -25,12 +25,13 @@ jobs:
       - name: Build unsigned IPA
         run: |
           cd ios
-          WORKSPACE=$(ls *.xcworkspace 2>/dev/null | head -1)
-          SCHEME=$(ls *.xcodeproj 2>/dev/null | head -1 | sed 's/\.xcodeproj//')
-          echo "Workspace: $WORKSPACE"
-          echo "Scheme: $SCHEME"
-          xcodebuild -workspace "$WORKSPACE" \
-            -scheme "$SCHEME" \
+          # 查找正确的 workspace 和 scheme
+          WS=$(ls -d *.xcworkspace 2>/dev/null | head -1)
+          PR=$(ls -d *.xcodeproj 2>/dev/null | head -1)
+          SC=$(echo "$PR" | sed 's/\.xcodeproj//')
+          echo "WS=$WS SC=$SC"
+          xcodebuild -workspace "$WS" \
+            -scheme "$SC" \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath ../build \
@@ -41,15 +42,14 @@ jobs:
 
       - name: Package IPA
         run: |
-          APP=$(find build -name "*.app" -type d | head -1)
+          APP=$(find build -name "*.app" -type d 2>/dev/null | head -1)
           if [ -z "$APP" ]; then
-            echo "=== xcodebuild log (last 30 lines) ==="
+            echo "=== xcodebuild log ==="
             tail -30 xcodebuild.log
-            echo "=== Directory tree ==="
-            find build -type d 2>/dev/null | head -20 || echo "(no build dir)"
+            echo "=== build dir ==="
+            find build -maxdepth 4 -type d 2>/dev/null | head -20
             exit 1
           fi
-          echo "Found app: $APP"
           mkdir -p Payload
           cp -r "$APP" Payload/
           zip -r jmcomic-unsigned.ipa Payload/
