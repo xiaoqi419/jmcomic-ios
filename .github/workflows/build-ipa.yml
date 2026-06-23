@@ -1,7 +1,7 @@
-name: Build IPA (Free)
+name: Build IPA (Unsigned - 适合自签)
 
 on:
-  workflow_dispatch:  # 手动触发
+  workflow_dispatch:
   push:
     branches: [main]
 
@@ -10,7 +10,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -18,18 +17,29 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Export for iOS
-        run: npx expo export --platform ios
+      - name: Prebuild native project
+        run: npx expo prebuild --platform ios --no-install
 
-      # 打包成 IPA（未签名，适合自签）
-      - name: Create unsigned IPA
+      - name: Build unsigned IPA
+        run: |
+          cd ios
+          xcodebuild -workspace jmcomic.xcworkspace \
+            -scheme jmcomic \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath ../build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Package IPA
         run: |
           mkdir -p Payload
-          cp -r dist/ios/*.app Payload/
+          cp -r "build/Build/Products/Release-iphoneos/jmcomic.app" Payload/
           zip -r jmcomic-unsigned.ipa Payload/
           rm -rf Payload
 
       - uses: actions/upload-artifact@v4
         with:
-          name: jmcomic-ipa-unsigned
+          name: jmcomic-ipa
           path: jmcomic-unsigned.ipa
