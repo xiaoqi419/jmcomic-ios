@@ -25,8 +25,12 @@ jobs:
       - name: Build unsigned IPA
         run: |
           cd ios
-          xcodebuild -workspace jmcomic.xcworkspace \
-            -scheme jmcomic \
+          WORKSPACE=$(ls *.xcworkspace 2>/dev/null | head -1)
+          SCHEME=$(ls *.xcodeproj 2>/dev/null | head -1 | sed 's/\.xcodeproj//')
+          echo "Workspace: $WORKSPACE"
+          echo "Scheme: $SCHEME"
+          xcodebuild -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath ../build \
@@ -37,13 +41,15 @@ jobs:
 
       - name: Package IPA
         run: |
-          APP=$(find build/Build/Products/Release-iphoneos -name "*.app" | head -1)
+          APP=$(find build -name "*.app" -type d | head -1)
           if [ -z "$APP" ]; then
-            echo "No .app found. Build output:"
-            find build -name "*.app" 2>/dev/null || echo "No .app anywhere"
-            cat xcodebuild.log | tail -50
+            echo "=== xcodebuild log (last 30 lines) ==="
+            tail -30 xcodebuild.log
+            echo "=== Directory tree ==="
+            find build -type d 2>/dev/null | head -20 || echo "(no build dir)"
             exit 1
           fi
+          echo "Found app: $APP"
           mkdir -p Payload
           cp -r "$APP" Payload/
           zip -r jmcomic-unsigned.ipa Payload/
