@@ -175,7 +175,42 @@ export async function toggleFavorite(albumId: string | number): Promise<boolean>
   try { decryptAndParse(ts, await apiClient.getMobile<string>(API_PATHS.FAVORITE, { aid: Number(albumId) })); return true; } catch { return false; }
 }
 
-// ===================== 登录 =====================
+// ===================== 热门标签 / 推荐 / 每周 =====================
+
+/** 获取热门搜索标签 */
+export async function getHotTags(): Promise<string[]> {
+  try {
+    const ts = nowTs();
+    const encrypted = await apiClient.getMobile<string>(API_PATHS.HOT_TAGS);
+    const data = decryptAndParse<any>(ts, encrypted);
+    return Array.isArray(data) ? data : [];
+  } catch { return []; }
+}
+
+/** 获取随机推荐 */
+export async function getRandomRecommend(): Promise<SearchResult[]> {
+  try {
+    const ts = nowTs();
+    const encrypted = await apiClient.getMobile<string>(API_PATHS.RANDOM_RECOMMEND);
+    const data = decryptAndParse<any>(ts, encrypted);
+    return (data || []).map((item: any) => ({
+      id: String(item.id || ''), name: item.name || '',
+      coverUrl: item.image || getCoverUrl(IMAGE_DOMAINS[0], item.id),
+      tags: item.tags || [],
+    }));
+  } catch { return []; }
+}
+
+/** 获取每周必看 */
+export async function getWeekRecommend(): Promise<{ categories: { id: string; name: string }[] } | null> {
+  try {
+    const ts = nowTs();
+    const encrypted = await apiClient.getMobile<string>(API_PATHS.WEEK);
+    return decryptAndParse(ts, encrypted);
+  } catch { return null; }
+}
+
+// ===================== 登录/注册 =====================
 
 export async function login(username: string, password: string): Promise<{ success: boolean; username?: string; error?: string }> {
   const ts = nowTs();
@@ -201,6 +236,23 @@ export function getCoverUrl(imageDomain: string, albumId: string | number): stri
 }
 
 /** 获取图片 URL（章节内页） */
+// ===================== 更多用户 =====================
+
+export async function register(username: string, password: string, email?: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const encrypted = await apiClient.getMobile<string>(API_PATHS.REGISTER, { username, password });
+    return { success: true };
+  } catch (e: any) { return { success: false, error: e.message }; }
+}
+
+export async function forgotPassword(email: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const ts = nowTs();
+    const encrypted = await apiClient.getMobile<string>(API_PATHS.FORGOT, { email });
+    return { success: true };
+  } catch (e: any) { return { success: false, error: e.message }; }
+}
+
 export function getPhotoUrl(imageDomain: string, chapterId: string | number, filename: string): string {
   return `https://${imageDomain}/media/photos/${chapterId}/${filename}`;
 }

@@ -23,16 +23,42 @@ export const APP_TOKEN_SECRET_2 = '18comicAPPContent'; // 解密降级密钥
 export const APP_DATA_SECRET = '185Hcomic3PAPP7R';
 export const APP_VERSION = '1.7.2';
 
-// API 路径
+// API 路径 (从官方 APK 完整提取)
 export const API_PATHS = {
+  // 漫画
   SEARCH: '/search',
   ALBUM: '/album',
   CHAPTER: '/chapter',
+  PROMOTE: '/promote',
+  LATEST: '/latest',
+  HOT_TAGS: '/hot_tags',
+  RANDOM_RECOMMEND: '/random_recommend',
+  CATEGORIES: '/categories',
+  CATEGORIES_FILTER: '/categories/filter',
   SCRAMBLE: '/chapter_view_template',
-  FAVORITE: '/favorite',
-  WEEKLY_INFO: '/week',
-  WEEKLY: '/week/filter',
+  COMIC_READ: '/comic_read', // 标记已读
+
+  // 用户
   LOGIN: '/login',
+  REGISTER: '/register',
+  FORGOT: '/forgot',
+  LOGOUT: '/logout',
+
+  // 收藏
+  FAVORITE: '/favorite',
+  FAVORITE_FOLDER: '/favorite_folder',
+
+  // 评论
+  FORUM: '/forum',
+  COMMENT: '/comment',
+  COMMENT_VOTE: '/comment_vote',
+
+  // 历史
+  WATCH_LIST: '/watch_list',
+
+  // 推荐
+  WEEK: '/week',
+  WEEK_FILTER: '/week/filter',
 } as const;
 
 // 分类常量
