@@ -23,13 +23,16 @@ export async function searchAlbums(params: {
     return { content: [albumToSearchResult(album)], total: 1, page: 1, pageCount: 1 };
   }
 
-  const content: SearchResult[] = (data.content || []).map((item: any) => ({
-    id: String(item.id || item.album_id || ''),
-    name: item.name || item.title || '',
-    coverUrl: item.cover || item.coverUrl || '',
-    tags: item.tags || [],
-    category: item.category || '',
-  }));
+  const content: SearchResult[] = (data.content || []).map((item: any) => {
+    const id = String(item.id || item.album_id || '');
+    return {
+      id,
+      name: item.name || item.title || '',
+      coverUrl: item.cover || item.coverUrl || getCoverUrl(IMAGE_DOMAINS[0], id),
+      tags: item.tags || [],
+      category: item.category || '',
+    };
+  });
 
   return { content, total: data.total || content.length, page: data.page || page, pageCount: Math.ceil((data.total || 1) / 20) };
 }
@@ -44,12 +47,15 @@ export async function getCategoryAlbums(params: {
   try {
     const encrypted = await apiClient.getMobile<string>('/categories/filter', { page, order: '', c: category, o: sort });
     const data = decryptAndParse<any>(ts, encrypted);
-    const content: SearchResult[] = (data.content || []).map((item: any) => ({
-      id: String(item.id || item.album_id || ''),
-      name: item.name || item.title || '',
-      coverUrl: item.cover || item.coverUrl || '',
-      tags: item.tags || [],
-    }));
+    const content: SearchResult[] = (data.content || []).map((item: any) => {
+      const id = String(item.id || item.album_id || '');
+      return {
+        id,
+        name: item.name || item.title || '',
+        coverUrl: item.cover || item.coverUrl || getCoverUrl(IMAGE_DOMAINS[0], id),
+        tags: item.tags || [],
+      };
+    });
     return { content, total: data.total || content.length, page: data.page || page, pageCount: Math.ceil((data.total || 1) / 20) };
   } catch (e: any) {
     console.warn('获取分类失败, 尝试网页端API:', e.message);
@@ -180,4 +186,9 @@ function albumToSearchResult(album: AlbumDetail): SearchResult {
 
 export function getImageUrl(imageDomain: string, photoId: string | number, pageNum: number, _scrambleId?: number): string {
   return `https://${imageDomain}/media/photos/${photoId}/${String(pageNum).padStart(5, '0')}.jpg`;
+}
+
+/** 获取封面图 URL */
+export function getCoverUrl(imageDomain: string, albumId: string | number): string {
+  return `https://${imageDomain}/media/albums/${albumId}.jpg`;
 }

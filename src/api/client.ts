@@ -131,8 +131,11 @@ export class ApiClient {
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 12000);
+    const isWeb = typeof window !== 'undefined';
     const fetchOpts: RequestInit = {
-      method, headers, redirect: 'follow', credentials: 'include', referrerPolicy: 'no-referrer' as any,
+      method, headers, redirect: 'follow',
+      credentials: isWeb ? 'omit' : 'include',
+      referrerPolicy: 'no-referrer' as any,
       signal: controller.signal,
     };
     if (config.form && method === 'POST') {

@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { getAlbumDetail, getChapterDetail, getImageUrl } from '../api/mobile';
+import { getAlbumDetail, getChapterDetail, getImageUrl, getCoverUrl } from '../api/mobile';
 import { useFavoritesStore, LocalFavorite } from '../store/useFavorites';
 import { useReaderStore } from '../store/useReader';
 import { IMAGE_DOMAINS } from '../constants';
@@ -22,7 +22,7 @@ export function AlbumDetailScreen({ route, navigation }: any) {
 
   useEffect(() => { load(); }, [albumId]);
   const load = async () => {
-    try { setLoading(true); const d = await getAlbumDetail(albumId); setAlbum(d); setCoverUrl(d.coverUrl || getImageUrl(IMAGE_DOMAINS[0], albumId, 1)); } catch {} finally { setLoading(false); }
+    try { setLoading(true); const d = await getAlbumDetail(albumId); setAlbum(d); setCoverUrl(d.coverUrl || getCoverUrl(IMAGE_DOMAINS[0], albumId)); } catch {} finally { setLoading(false); }
   };
 
   const openChapter = async (chId: string) => {

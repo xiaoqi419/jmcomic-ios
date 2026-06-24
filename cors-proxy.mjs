@@ -34,8 +34,10 @@ http.createServer(async (req, res) => {
 
     const resp = await fetch(targetUrl, { method: req.method, headers });
     const body = await resp.arrayBuffer();
+    const origin = req.headers['origin'] || '*';
     res.writeHead(resp.status, {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Allow-Headers': '*',
       'Content-Type': resp.headers.get('content-type') || 'application/octet-stream',
     });
