@@ -8,21 +8,21 @@ import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { login, register, forgotPassword } from '../api/mobile';
-import { useSettingsStore, saveSettings } from '../store/useSettings';
+import { apiClient } from '../api/client';
+import { useAuthStore } from '../store/useAuth';
 import { Colors, Radius, Spacing, FontSize } from '../theme';
 import { Text, StyleSheet } from 'react-native';
 
 export function LoginScreen() {
   const nav = useNavigation<any>();
-  const { username: savedUser, setUsername } = useSettingsStore();
+  const { username: savedUser, loggedIn, login: saveLogin, logout: doLogout } = useAuthStore();
   const [username, setUname] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
 
-  // 已登录 → 显示用户信息
-  if (savedUser) {
+  if (loggedIn && savedUser) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar style="dark" />
@@ -33,7 +33,7 @@ export function LoginScreen() {
           <Text style={styles.title}>{savedUser}</Text>
           <Text style={{ color: Colors.textSecondary, marginBottom: 24 }}>已登录</Text>
 
-          <Pressable onPress={() => { setUsername(''); }}
+          <Pressable onPress={() => { doLogout(); apiClient.setAvs(''); }}
             style={({ pressed }) => [styles.btn, { backgroundColor: Colors.error, opacity: pressed ? 0.7 : 1 }]}>
             <Text style={styles.btnText}>退出登录</Text>
           </Pressable>
@@ -52,7 +52,7 @@ export function LoginScreen() {
       if (mode === 'login') {
         const r = await login(username.trim(), password.trim());
         if (r.success) {
-          setUsername(r.username || username);
+          saveLogin(r.username || username, r.token || '', r.photo || '');
           Alert.alert('登录成功', `欢迎, ${r.username || username}`, [
             { text: '确定', onPress: () => nav.goBack() }
           ]);

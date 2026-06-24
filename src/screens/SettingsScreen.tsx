@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSettingsStore, saveSettings } from '../store/useSettings';
+import { useAuthStore } from '../store/useAuth';
 import { detectServers } from '../utils/serverDetect';
 import { Colors, Radius, Spacing, FontSize } from '../theme';
 
@@ -16,7 +17,8 @@ export function SettingsScreen() {
   const navigation = useNavigation<any>();
   const { readingMode, setReadingMode, readingDirection, setReadingDirection,
     selectedServer, setSelectedServer, autoSelectServer, setAutoSelectServer,
-    servers, setServers, setDetectingServers, detectingServers, username } = useSettingsStore();
+    servers, setServers, setDetectingServers, detectingServers } = useSettingsStore();
+  const { username, loggedIn } = useAuthStore();
   const [testing, setTesting] = useState(false);
 
   useEffect(() => { useSettingsStore.getState().loadSettings(); }, []);

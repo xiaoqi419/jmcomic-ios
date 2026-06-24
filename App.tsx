@@ -18,6 +18,8 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { useSettingsStore, useFavoritesStore } from './src/store';
+import { useAuthStore } from './src/store/useAuth';
+import { apiClient } from './src/api/client';
 import { detectServers } from './src/utils/serverDetect';
 import { Colors } from './src/theme';
 
@@ -88,6 +90,10 @@ export default function App() {
     (async () => {
       await loadSettings();
       await useFavoritesStore.getState().loadFavorites();
+      await useAuthStore.getState().load();
+      // 恢复 AVS token
+      const avs = useAuthStore.getState().avs;
+      if (avs) apiClient.setAvs(avs);
 
       // 先用默认服务器，不阻塞 UI
       setSelectedServer('www.cdnhjk.net');
@@ -103,7 +109,7 @@ export default function App() {
       });
 
       // 预热 API
-      import('./src/api/client').then(m => m.apiClient.warmUp().catch(() => {}));
+      // warm-up removed (new client doesn't need it)
     })();
   }, []);
 

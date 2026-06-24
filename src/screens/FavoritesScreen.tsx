@@ -7,13 +7,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Image } from 'expo-image';
 import { useFavoritesStore } from '../store/useFavorites';
-import { useSettingsStore } from '../store/useSettings';
+import { useAuthStore } from '../store/useAuth';
 import { getOnlineFavorites } from '../api/mobile';
 import { Colors, Radius, Spacing, FontSize } from '../theme';
 
 export function FavoritesScreen({ navigation }: any) {
   const { items, isLoading, loadFavorites, removeFavorite } = useFavoritesStore();
-  const username = useSettingsStore(s => s.username);
+  const { username, loggedIn } = useAuthStore();
   const [onlineItems, setOnlineItems] = useState<any[]>([]);
   const [onlineLoading, setOnlineLoading] = useState(false);
 
