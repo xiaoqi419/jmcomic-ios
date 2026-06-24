@@ -3,28 +3,32 @@
 
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { ServerInfo } from '../utils/serverDetect';
 
 interface SettingsState {
-  /** 阅读方向: 'ltr' | 'rtl' */
   readingDirection: 'ltr' | 'rtl';
-  /** 阅读模式: 'scroll' | 'page' */
   readingMode: 'scroll' | 'page';
-  /** 图片域名的索引 */
   imageDomainIndex: number;
-  /** 是否使用移动端 API */
-  useMobileApi: boolean;
-  /** 已登录用户名 */
   username: string;
-  /** 深色模式 */
   darkMode: boolean;
+  /** 当前选中的 API 服务器 */
+  selectedServer: string;
+  /** 是否自动选择最快服务器 */
+  autoSelectServer: boolean;
+  /** 所有可用的服务器列表 */
+  servers: ServerInfo[];
+  /** 正在检测服务器 */
+  detectingServers: boolean;
 
-  // actions
   setReadingDirection: (d: 'ltr' | 'rtl') => void;
   setReadingMode: (m: 'scroll' | 'page') => void;
   setImageDomainIndex: (i: number) => void;
-  setUseMobileApi: (v: boolean) => void;
   setUsername: (name: string) => void;
   setDarkMode: (v: boolean) => void;
+  setSelectedServer: (domain: string) => void;
+  setAutoSelectServer: (v: boolean) => void;
+  setServers: (servers: ServerInfo[]) => void;
+  setDetectingServers: (v: boolean) => void;
   loadSettings: () => Promise<void>;
 }
 
@@ -34,20 +38,26 @@ const defaultSettings = {
   readingDirection: 'ltr' as const,
   readingMode: 'scroll' as const,
   imageDomainIndex: 0,
-  useMobileApi: true,
   username: '',
-  darkMode: true,
+  darkMode: false,
+  selectedServer: '',
+  autoSelectServer: true,
 };
 
-export const useSettingsStore = create<SettingsState>((set, get) => ({
+export const useSettingsStore = create<SettingsState>((set) => ({
   ...defaultSettings,
+  servers: [],
+  detectingServers: false,
 
-  setReadingDirection: (readingDirection) => set({ readingDirection }),
-  setReadingMode: (readingMode) => set({ readingMode }),
-  setImageDomainIndex: (imageDomainIndex) => set({ imageDomainIndex }),
-  setUseMobileApi: (useMobileApi) => set({ useMobileApi }),
-  setUsername: (username) => set({ username }),
-  setDarkMode: (darkMode) => set({ darkMode }),
+  setReadingDirection: (v) => set({ readingDirection: v }),
+  setReadingMode: (v) => set({ readingMode: v }),
+  setImageDomainIndex: (v) => set({ imageDomainIndex: v }),
+  setUsername: (v) => set({ username: v }),
+  setDarkMode: (v) => set({ darkMode: v }),
+  setSelectedServer: (v) => set({ selectedServer: v }),
+  setAutoSelectServer: (v) => set({ autoSelectServer: v }),
+  setServers: (v) => set({ servers: v }),
+  setDetectingServers: (v) => set({ detectingServers: v }),
 
   loadSettings: async () => {
     try {
@@ -56,24 +66,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         const saved = JSON.parse(json);
         set({ ...defaultSettings, ...saved });
       }
-    } catch {
-      // 使用默认值
-    }
+    } catch {}
   },
 }));
 
-// 自动持久化
-export async function saveSettings(
-  settings: Partial<SettingsState>
-): Promise<void> {
+export async function saveSettings(settings: Partial<SettingsState>): Promise<void> {
   try {
     const json = await AsyncStorage.getItem(SETTINGS_KEY);
     const current = json ? JSON.parse(json) : {};
-    await AsyncStorage.setItem(
-      SETTINGS_KEY,
-      JSON.stringify({ ...current, ...settings })
-    );
-  } catch {
-    // 静默
-  }
+    await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...current, ...settings }));
+  } catch {}
 }

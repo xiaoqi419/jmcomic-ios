@@ -38,6 +38,16 @@ export class ApiClient {
 
   getDomain(): string {
     if (typeof window !== 'undefined') return this.domains[0];
+    // 优先使用用户选择的服务器
+    try {
+      const { useSettingsStore } = require('../store/useSettings');
+      const { selectedServer, autoSelectServer, servers } = useSettingsStore.getState();
+      if (selectedServer && !autoSelectServer) return selectedServer;
+      if (autoSelectServer && servers.length > 0) {
+        const fastest = servers.find((s: any) => s.available);
+        if (fastest) return fastest.domain;
+      }
+    } catch {}
     return this.domains[this.domainIndex % this.domains.length];
   }
 
