@@ -14,11 +14,36 @@ import { Text, StyleSheet } from 'react-native';
 
 export function LoginScreen() {
   const nav = useNavigation<any>();
-  const [username, setUsername] = useState('');
+  const { username: savedUser, setUsername } = useSettingsStore();
+  const [username, setUname] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
+
+  // 已登录 → 显示用户信息
+  if (savedUser) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="dark" />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+            <Text style={{ color: '#fff', fontSize: 32, fontWeight: '700' }}>{savedUser[0]?.toUpperCase()}</Text>
+          </View>
+          <Text style={styles.title}>{savedUser}</Text>
+          <Text style={{ color: Colors.textSecondary, marginBottom: 24 }}>已登录</Text>
+
+          <Pressable onPress={() => { setUsername(''); }}
+            style={({ pressed }) => [styles.btn, { backgroundColor: Colors.error, opacity: pressed ? 0.7 : 1 }]}>
+            <Text style={styles.btnText}>退出登录</Text>
+          </Pressable>
+          <Pressable onPress={() => nav.goBack()} style={{ marginTop: 16 }}>
+            <Text style={{ color: Colors.textSecondary, fontSize: 15 }}>返回</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const handleSubmit = async () => {
     if (!username.trim() || (!password.trim() && mode !== 'forgot')) return;
@@ -27,7 +52,7 @@ export function LoginScreen() {
       if (mode === 'login') {
         const r = await login(username.trim(), password.trim());
         if (r.success) {
-          useSettingsStore.getState().setUsername(r.username || username);
+          setUsername(r.username || username);
           saveSettings({ username: r.username || username });
           nav.goBack();
         } else Alert.alert('登录失败', r.error);
@@ -56,7 +81,7 @@ export function LoginScreen() {
             value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
         )}
         <TextInput style={styles.input} placeholder="用户名" placeholderTextColor={Colors.textTertiary}
-          value={username} onChangeText={setUsername} autoCapitalize="none" />
+          value={username} onChangeText={setUname} autoCapitalize="none" />
         {mode !== 'forgot' && (
           <TextInput style={styles.input} placeholder="密码" placeholderTextColor={Colors.textTertiary}
             value={password} onChangeText={setPassword} secureTextEntry />
@@ -64,15 +89,15 @@ export function LoginScreen() {
 
         <Pressable onPress={handleSubmit} disabled={loading}
           style={({ pressed }) => [styles.btn, { opacity: pressed ? 0.7 : 1 }]}>
-          <Text style={styles.btnText}>{loading ? '处理中...' : mode === 'login' ? '登 录' : mode === 'register' ? '注 册' : '找 回'}</Text>
+          <Text style={styles.btnText}>{loading ? '处理中...' : mode === 'login' ? '登录' : mode === 'register' ? '注册' : '找回'}</Text>
         </Pressable>
 
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 16 }}>
           <Pressable onPress={() => setMode(m => m === 'login' ? 'register' : 'login')}>
-            <Text style={styles.link}>{mode === 'login' ? '注册账号' : '返回登录'}</Text>
+            <Text style={styles.link}>{mode === 'login' ? '注册' : '登录'}</Text>
           </Pressable>
           <Pressable onPress={() => setMode(m => m === 'forgot' ? 'login' : 'forgot')}>
-            <Text style={styles.link}>{mode === 'forgot' ? '返回登录' : '忘记密码'}</Text>
+            <Text style={styles.link}>{mode === 'forgot' ? '登录' : '忘记密码'}</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>

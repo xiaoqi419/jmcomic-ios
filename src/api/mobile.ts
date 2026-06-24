@@ -212,12 +212,26 @@ export async function getWeekRecommend(): Promise<{ categories: { id: string; na
 
 // ===================== 登录/注册 =====================
 
-export async function login(username: string, password: string): Promise<{ success: boolean; username?: string; error?: string }> {
-  const ts = nowTs();
+export async function login(username: string, password: string): Promise<LoginResult> {
   try {
+    const ts = nowTs();
     const data = decryptAndParse<any>(ts, await apiClient.postMobile<string>(API_PATHS.LOGIN, { username, password }));
-    return { success: true, username: data.username || username };
+    return {
+      success: true,
+      username: data.username || username,
+      token: data.token || data.Token || '',
+      photo: data.photo || data.avatar || '',
+    };
   } catch (e: any) { return { success: false, error: e.message || '登录失败' }; }
+}
+
+// 更新 LoginResult 类型
+export interface LoginResult {
+  success: boolean;
+  username?: string;
+  token?: string;
+  photo?: string;
+  error?: string;
 }
 
 // ===================== 工具 =====================
