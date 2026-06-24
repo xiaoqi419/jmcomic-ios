@@ -10,10 +10,13 @@ import { useSettingsStore, saveSettings } from '../store/useSettings';
 import { detectServers } from '../utils/serverDetect';
 import { Colors, Radius, Spacing, FontSize } from '../theme';
 
+import { useNavigation } from '@react-navigation/native';
+
 export function SettingsScreen() {
+  const navigation = useNavigation<any>();
   const { readingMode, setReadingMode, readingDirection, setReadingDirection,
     selectedServer, setSelectedServer, autoSelectServer, setAutoSelectServer,
-    servers, setServers, setDetectingServers, detectingServers } = useSettingsStore();
+    servers, setServers, setDetectingServers, detectingServers, username } = useSettingsStore();
   const [testing, setTesting] = useState(false);
 
   useEffect(() => { useSettingsStore.getState().loadSettings(); }, []);
@@ -75,6 +78,30 @@ export function SettingsScreen() {
       <StatusBar style="dark" />
       <ScrollView contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: Spacing.xl * 2 }}>
         <Text style={{ fontSize: FontSize.largeTitle, fontWeight: '800', color: Colors.textPrimary, marginBottom: Spacing.lg }}>设置</Text>
+
+        {/* 账号区 */}
+        <View style={{ marginBottom: Spacing.lg }}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Login')}
+            style={{
+              backgroundColor: Colors.surfaceLowest, borderRadius: Radius.card, padding: Spacing.md,
+              borderWidth: 1, borderColor: Colors.divider, flexDirection: 'row', alignItems: 'center', gap: 12,
+            }}
+            activeOpacity={0.7}>
+            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}>
+              <MaterialIcons name="person" size={28} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: FontSize.bodyLarge, fontWeight: '600', color: Colors.textPrimary }}>
+                {username ? username : '登录 / 注册'}
+              </Text>
+              <Text style={{ fontSize: FontSize.body, color: Colors.textSecondary }}>
+                {username ? '已登录，同步收藏与历史' : '登录后同步收藏、评论、签到'}
+              </Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={24} color={Colors.textTertiary} />
+          </TouchableOpacity>
+        </View>
 
         <Section title="线路选择" icon="signal-cellular-alt">
           <Row label="自动选择最快线路">
