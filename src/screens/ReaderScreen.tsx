@@ -1,10 +1,11 @@
-// 阅读器 — 单页翻页模式
+// 阅读器 — 使用原生 iOS PagerView 翻页
 // @author Jason
 
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, Dimensions, StatusBar } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TouchableOpacity, Dimensions, StatusBar } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import PagerView from 'react-native-pager-view';
 import { useReaderStore } from '../store/useReader';
 import { useSettingsStore } from '../store/useSettings';
 import { Colors, Spacing, FontSize } from '../theme';
@@ -12,88 +13,73 @@ import { Colors, Spacing, FontSize } from '../theme';
 const { width: W, height: H } = Dimensions.get('window');
 
 export function ReaderScreen({ route, navigation }: any) {
-  const { imageUrls, currentPage, setPage, nextPage, prevPage } = useReaderStore();
+  const { imageUrls, currentPage, setPage } = useReaderStore();
   const readingMode = useSettingsStore(s => s.readingMode);
   const [showUI, setShowUI] = useState(true);
-  const toggle = () => { setShowUI(p => !p); StatusBar.setHidden(!showUI); };
+  const pagerRef = useRef<PagerView>(null);
+  const toggle = () => setShowUI(p => !p);
 
-  // 翻页模式（默认）
-  if (readingMode !== 'scroll') {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#1a1a2e' }}>
-        <StatusBar hidden={!showUI} />
-        <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} activeOpacity={1} onPress={toggle}>
-          {/* 左翻页 */}
-          <TouchableOpacity style={{ position: 'absolute', left: 0, top: 0, width: '30%', height: '100%', zIndex: 10 }} onPress={prevPage} />
-          {/* 右翻页 */}
-          <TouchableOpacity style={{ position: 'absolute', right: 0, top: 0, width: '30%', height: '100%', zIndex: 10 }} onPress={nextPage} />
+  const overlay = (
+    <SafeAreaView style={{
+      position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+      paddingHorizontal: Spacing.md, paddingTop: Spacing.sm + 4, paddingBottom: Spacing.xs,
+      backgroundColor: 'rgba(0,0,0,0.55)',
+    }}>
+      <TouchableOpacity onPress={() => navigation.goBack()}>
+        <Text style={{ color: '#fff', fontSize: 17, fontWeight: '600' }}>返回</Text>
+      </TouchableOpacity>
+      <Text style={{ color: '#ccc', fontSize: 15 }}>
+        {currentPage + 1} / {imageUrls.length}
+      </Text>
+    </SafeAreaView>
+  );
 
-          <Image
-            source={{ uri: imageUrls[currentPage] || '' }}
-            style={{ width: W, height: H }}
-            contentFit="contain"
-            placeholder={require('../../assets/icon.png')}
-            transition={200}
-          />
-        </TouchableOpacity>
-
-        {showUI && (
-          <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm + 4, backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={{ color: '#fff', fontSize: FontSize.bodyLarge, fontWeight: '600' }}>返回</Text>
-            </TouchableOpacity>
-            <Text style={{ color: '#ccc', fontSize: FontSize.body }}>{currentPage + 1} / {imageUrls.length}</Text>
-          </SafeAreaView>
-        )}
-
-        {showUI && (
-          <SafeAreaView style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 100, paddingHorizontal: Spacing.md, paddingBottom: Spacing.xl, paddingTop: Spacing.sm, backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <View style={{ height: 3, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 2, overflow: 'hidden' }}>
-              <View style={{ height: '100%', backgroundColor: Colors.primary, borderRadius: 2, width: `${((currentPage + 1) / Math.max(1, imageUrls.length)) * 100}%` }} />
-            </View>
-          </SafeAreaView>
-        )}
+  const bottomBar = (
+    <SafeAreaView style={{
+      position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 100,
+      paddingHorizontal: Spacing.md, paddingBottom: Spacing.lg, paddingTop: Spacing.xs,
+      backgroundColor: 'rgba(0,0,0,0.55)',
+    }}>
+      <View style={{ height: 3, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 2, overflow: 'hidden' }}>
+        <View style={{
+          height: '100%', backgroundColor: Colors.primary, borderRadius: 2,
+          width: `${((currentPage + 1) / Math.max(1, imageUrls.length)) * 100}%`,
+        }} />
       </View>
-    );
-  }
+    </SafeAreaView>
+  );
 
-  // 滚动模式
+  // 翻页模式
   return (
-    <View style={{ flex: 1, backgroundColor: '#1a1a2e' }}>
+    <View style={{ flex: 1, backgroundColor: '#000' }}>
       <StatusBar hidden={!showUI} />
-      {showUI && (
-        <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm + 4, backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={{ color: '#fff', fontSize: FontSize.bodyLarge, fontWeight: '600' }}>返回</Text>
-          </TouchableOpacity>
-          <Text style={{ color: '#ccc', fontSize: FontSize.body }}>{currentPage + 1} / {imageUrls.length}</Text>
-        </SafeAreaView>
-      )}
 
-      <FlatList
-        data={imageUrls}
-        keyExtractor={(_, i) => String(i)}
-        showsVerticalScrollIndicator={false}
-        onScroll={e => {
-          const o = e.nativeEvent.contentOffset.y;
-          const p = Math.max(0, Math.round(o / H));
-          if (p !== currentPage && p < imageUrls.length) setPage(p);
-        }}
-        scrollEventThrottle={100}
-        renderItem={({ item, index }) => (
-          <TouchableOpacity activeOpacity={1} onPress={toggle}>
-            <Image source={{ uri: item }} style={{ width: W, height: H, backgroundColor: '#0a0a1e' }} contentFit="contain" />
-          </TouchableOpacity>
-        )}
-      />
-
-      {showUI && (
-        <SafeAreaView style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 100, paddingHorizontal: Spacing.md, paddingBottom: Spacing.xl, paddingTop: Spacing.sm, backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <View style={{ height: 3, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 2, overflow: 'hidden' }}>
-            <View style={{ height: '100%', backgroundColor: Colors.primary, borderRadius: 2, width: `${((currentPage + 1) / Math.max(1, imageUrls.length)) * 100}%` }} />
+      <PagerView
+        ref={pagerRef}
+        style={{ flex: 1 }}
+        initialPage={currentPage}
+        orientation="horizontal"
+        onPageSelected={e => setPage(e.nativeEvent.position)}
+        pageMargin={0}
+      >
+        {imageUrls.map((url, i) => (
+          <View key={i} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} activeOpacity={1} onPress={toggle}>
+              <Image
+                source={{ uri: url }}
+                style={{ width: W, height: H }}
+                contentFit="contain"
+                placeholder={require('../../assets/icon.png')}
+                transition={200}
+              />
+            </TouchableOpacity>
           </View>
-        </SafeAreaView>
-      )}
+        ))}
+      </PagerView>
+
+      {showUI && overlay}
+      {showUI && bottomBar}
     </View>
   );
 }
