@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { getAlbumDetail, getChapterDetail, getImageUrl, getCoverUrl } from '../api/mobile';
 import { useFavoritesStore, LocalFavorite } from '../store/useFavorites';
 import { useReaderStore } from '../store/useReader';
+import { useHistoryStore } from '../store/useHistory';
 import { IMAGE_DOMAINS } from '../constants';
 import { Colors, Radius, Spacing, FontSize } from '../theme';
 
@@ -34,6 +35,12 @@ export function AlbumDetailScreen({ route, navigation }: any) {
           ? ch.pageArr.map((a: number[], i: number) => `https://${ch.dataOriginalDomain || IMAGE_DOMAINS[0]}/media/photos/${chId}/${String(a[0] || i + 1).padStart(5, '0')}.jpg`)
           : Array.from({ length: ch.pageCount || 20 }, (_, i) => getImageUrl(IMAGE_DOMAINS[0], chId, i + 1));
       startReading(albumId, chId, imgs);
+      // 记录历史
+      useHistoryStore.getState().addHistory({
+        id: albumId, title: album?.title || '', coverUrl: coverUrl || '',
+        chapterId: chId, chapterTitle: ch.title || '',
+        page: 0, readAt: Date.now(),
+      });
       navigation.navigate('Reader', { chapterId: chId, albumId });
     } catch {}
   };

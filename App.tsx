@@ -15,6 +15,8 @@ import { AlbumDetailScreen } from './src/screens/AlbumDetailScreen';
 import { ReaderScreen } from './src/screens/ReaderScreen';
 import { FavoritesScreen } from './src/screens/FavoritesScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { HistoryScreen } from './src/screens/HistoryScreen';
+import { LoginScreen } from './src/screens/LoginScreen';
 import { useSettingsStore, useFavoritesStore } from './src/store';
 import { detectServers } from './src/utils/serverDetect';
 import { Colors } from './src/theme';
@@ -70,6 +72,8 @@ function HomeTabs() {
         options={{ tabBarLabel: '搜索', tabBarIcon: ({ focused }) => <TabIcon name="search" focused={focused} /> }} />
       <Tab.Screen name="Favorites" component={FavoritesScreen}
         options={{ tabBarLabel: '收藏', tabBarIcon: ({ focused }) => <TabIcon name="favorite" focused={focused} /> }} />
+      <Tab.Screen name="History" component={HistoryScreen}
+        options={{ tabBarLabel: '历史', tabBarIcon: ({ focused }) => <TabIcon name="history" focused={focused} /> }} />
       <Tab.Screen name="Settings" component={SettingsScreen}
         options={{ tabBarLabel: '设置', tabBarIcon: ({ focused }) => <TabIcon name="settings" focused={focused} /> }} />
     </Tab.Navigator>
@@ -129,6 +133,8 @@ export default function App() {
             options={{ title: '详情', headerBackTitle: '返回' }} />
           <Stack.Screen name="Reader" component={ReaderScreen}
             options={{ headerShown: false, orientation: 'landscape' }} />
+          <Stack.Screen name="Login" component={LoginScreen}
+            options={{ title: '账号', presentation: 'modal' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
