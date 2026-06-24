@@ -101,8 +101,8 @@ export class ApiClient {
     const headers: Record<string, string> = { ...BROWSER_HEADERS };
     if (isMobile) {
       const { token, tokenparam } = generateToken(ts);
-      headers['token'] = token;
-      headers['tokenparam'] = tokenparam;
+      headers['Token'] = token;      // 官方 App 用大写 T
+      headers['Tokenparam'] = tokenparam; // 官方 App 用大写 T
     }
     if (this.cookieJar) {
       headers['Cookie'] = this.cookieJar;
@@ -119,7 +119,7 @@ export class ApiClient {
       url += '?' + params.toString();
     }
 
-    const fetchOpts: RequestInit = { method, headers, redirect: 'follow' };
+    const fetchOpts: RequestInit = { method, headers, redirect: 'follow', credentials: 'include', referrerPolicy: 'no-referrer' as any };
     if (config.form && method === 'POST') {
       const fd = new URLSearchParams();
       Object.entries(config.form).forEach(([k, v]) => fd.append(k, String(v)));
