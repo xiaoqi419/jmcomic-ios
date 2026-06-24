@@ -230,6 +230,8 @@ export async function login(username: string, password: string): Promise<LoginRe
     console.log('[Login] AVS from data.s:', data.s, '| final avs:', avs);
     if (avs) {
       apiClient.setAvs(avs);
+      const { setGlobalAvs } = require('./client');
+      setGlobalAvs(avs);
       const { default: AsyncStorage } = require('@react-native-async-storage/async-storage');
       AsyncStorage.setItem('@jmcomic.avs', avs).catch(() => {});
     }

@@ -40,11 +40,12 @@ export class ApiClient {
       h['Token'] = token;
       h['Tokenparam'] = tokenparam;
     }
-    if (this.avsToken) {
-      h['Cookie'] = `AVS=${this.avsToken}`;
-      console.log('[ApiClient] 携带 AVS:', this.avsToken.slice(0, 10) + '...');
+    const avs = this.avsToken || globalAvs;
+    if (avs) {
+      h['Cookie'] = `AVS=${avs}`;
+      console.log('[ApiClient] AVS:', avs.slice(0, 10) + '...');
     } else {
-      console.log('[ApiClient] 无 AVS token');
+      console.log('[ApiClient] 无 AVS');
     }
     return h;
   }
@@ -111,5 +112,10 @@ export class ApiClient {
   async postMobile<T>(path: string, f?: Record<string, string | number>) { return this.request<T>(path, { method: 'POST', form: f }); }
   async getWeb(path: string, q?: Record<string, string | number>) { return this.request<string>(path, { method: 'GET', query: q, isMobile: false }); }
 }
+
+// 全局 AVS 存储（热重载安全）
+let globalAvs = '';
+export function setGlobalAvs(t: string) { globalAvs = t; }
+export function getGlobalAvs() { return globalAvs; }
 
 export const apiClient = new ApiClient();

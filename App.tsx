@@ -19,7 +19,7 @@ import { HistoryScreen } from './src/screens/HistoryScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { useSettingsStore, useFavoritesStore } from './src/store';
 import { useAuthStore } from './src/store/useAuth';
-import { apiClient } from './src/api/client';
+import { apiClient, setGlobalAvs } from './src/api/client';
 import { detectServers } from './src/utils/serverDetect';
 import { Colors } from './src/theme';
 
@@ -93,8 +93,8 @@ export default function App() {
       await useAuthStore.getState().load();
       // 恢复 AVS token
       const avs = useAuthStore.getState().avs;
-      console.log('[App] 恢复 AVS:', avs ? avs.slice(0, 10) + '...' : '无');
-      if (avs) apiClient.setAvs(avs);
+      console.log('[App] AVS:', avs ? avs.slice(0, 10) + '...' : '无');
+      if (avs) { apiClient.setAvs(avs); setGlobalAvs(avs); }
 
       // 先用默认服务器，不阻塞 UI
       setSelectedServer('www.cdnhjk.net');

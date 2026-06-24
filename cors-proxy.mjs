@@ -20,7 +20,8 @@ http.createServer(async (req, res) => {
   const restPath = slashIdx > 0 ? path.substring(slashIdx) : path;
   const targetUrl = `https://${domain}${restPath}`;
 
-  console.log(`[proxy] ${req.method} ${domain}${restPath}`);
+  const hasCookie = req.headers.cookie ? ` [Cookie: ${req.headers.cookie.slice(0, 60)}...]` : ' [no cookie]';
+  console.log(`[proxy] ${req.method} ${domain}${restPath}${hasCookie}`);
 
   try {
     const headers = {
