@@ -215,7 +215,7 @@ export async function getWeekRecommend(): Promise<{ categories: { id: string; na
 export async function login(username: string, password: string): Promise<{ success: boolean; username?: string; error?: string }> {
   const ts = nowTs();
   try {
-    const data = decryptAndParse<any>(ts, await apiClient.getMobile<string>(API_PATHS.LOGIN, { username, password }));
+    const data = decryptAndParse<any>(ts, await apiClient.postMobile<string>(API_PATHS.LOGIN, { username, password }));
     return { success: true, username: data.username || username };
   } catch (e: any) { return { success: false, error: e.message || '登录失败' }; }
 }
@@ -240,15 +240,14 @@ export function getCoverUrl(imageDomain: string, albumId: string | number): stri
 
 export async function register(username: string, password: string, email?: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const encrypted = await apiClient.getMobile<string>(API_PATHS.REGISTER, { username, password });
+    await apiClient.postMobile<string>(API_PATHS.REGISTER, { username, password });
     return { success: true };
   } catch (e: any) { return { success: false, error: e.message }; }
 }
 
 export async function forgotPassword(email: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const ts = nowTs();
-    const encrypted = await apiClient.getMobile<string>(API_PATHS.FORGOT, { email });
+    await apiClient.postMobile<string>(API_PATHS.FORGOT, { email });
     return { success: true };
   } catch (e: any) { return { success: false, error: e.message }; }
 }

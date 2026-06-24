@@ -211,6 +211,10 @@ export class ApiClient {
   async getWeb(path: string, query?: Record<string, string | number>) {
     return this.request<string>(path, { method: 'GET', query, isMobileApi: false });
   }
+  /** 移动端 API — POST (登录/注册等) */
+  async postMobile<T = any>(path: string, form?: Record<string, string | number>) {
+    return this.request<T>(path, { method: 'POST', form, isMobileApi: true });
+  }
 }
 
 export const apiClient = new ApiClient();
