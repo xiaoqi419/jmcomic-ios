@@ -1,79 +1,64 @@
-// JMComic iOS - 设计主题 (Cybernetic Sakura Bloom 樱花绯红)
-// 基于 Stitch AI 生成设计提取
+// JMComic - 简洁暖色设计主题
+// Flat Design + 44px touch targets + 无障碍对比度
 // @author Jason
 
 export const Colors = {
-  // 主色 - 绯红
-  primary: '#B51536',
-  primaryLight: '#D8334C',
-  primaryDark: '#920026',
-  primaryContainer: '#FFFBFF',
-  primaryFixed: '#FFDADA',
-  primaryFixedDim: '#FFB3B5',
+  primary: '#DB2777',           // 粉玫红主色
+  primaryLight: '#F472B6',
+  primaryDark: '#9D174D',
+  accent: '#F97316',            // 橙色强调整
 
-  // 强调
-  accent: '#C25200',       // 暖橙
-  accentLight: '#FFB692',
-
-  // 背景
-  background: '#FFF8F7',   // 暖白
-  surface: '#FFF8F7',
-  surfaceContainer: '#FFE9E9',
-  surfaceContainerLow: '#FFF0F0',
-  surfaceContainerHigh: '#FEE2E2',
-  surfaceDim: '#EFD4D4',
+  background: '#FFFBFC',        // 暖白背景
+  surface: '#FFFFFF',
   surfaceLowest: '#FFFFFF',
+  surfaceVariant: '#FFF5F6',
+  surfaceContainer: '#FFF0F2',
+  surfaceContainerLow: '#FFF5F6',
 
-  // 文字
-  textPrimary: '#271818',
-  textSecondary: '#5A4041',
-  textTertiary: '#8E6F70',
+  textPrimary: '#1A1118',       // 近黑文字
+  textSecondary: '#6B4B59',     // 灰褐次要
+  textTertiary: '#9E7B89',      // 浅灰褐辅助
   textOnPrimary: '#FFFFFF',
 
-  // 次要色 - 粉紫
-  secondary: '#993295',
-  secondaryContainer: '#FC8AF1',
+  error: '#DC2626',
+  success: '#059669',
+  divider: '#F6E8ED',
+  border: '#EBD5DD',
+  outline: '#D4B7C3',
 
-  // 状态
-  error: '#BA1A1A',
-  success: '#2E7D32',
+  tabActive: '#DB2777',
+  tabInactive: '#C4A6B1',
+  tabBar: '#FFFBFC',
+  tabBarBorder: '#F6E8ED',
 
-  // 边框/分隔
-  divider: '#F0D6D6',
-  border: '#E2BEBE',
-  outline: '#8E6F70',
-  outlineVariant: '#E2BEBE',
-
-  // Tab 栏
-  tabActive: '#B51536',
-  tabInactive: '#C9A7A8',
-  tabBar: '#FFFFFF',
-  tabBarBorder: '#F0D6D6',
-
-  shadow: '#271818',
+  shadow: '#1A1118',
 } as const;
 
+// 44px 最小触控目标 (iOS HIG)
+export const Touch = { min: 44 } as const;
+
 export const Radius = {
-  xs: 4, sm: 8, md: 12, lg: 16, xl: 20, full: 9999,
-  card: 12, button: 20, chip: 20,
+  xs: 4, sm: 8, md: 12, lg: 16, xl: 24,
+  chip: 6, button: 10, card: 6,
 } as const;
 
 export const Spacing = {
-  xs: 4, sm: 8, md: 16, lg: 24, xl: 32,
-  gutter: 12, marginEdge: 16,
+  xs: 4, sm: 6, md: 12, lg: 20, xl: 32,
+  gutter: 6, marginEdge: 10,
 } as const;
 
 export const FontSize = {
-  caption: 11, label: 12, body: 14, bodyLarge: 16,
-  headline: 18, title: 20, largeTitle: 24, display: 30,
+  caption: 11, label: 12, body: 13, bodyLarge: 15,
+  headline: 17, title: 20, largeTitle: 26,
 } as const;
 
+// Flat Design — 极淡阴影
 export const Shadow = {
   card: {
     shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
 } as const;
