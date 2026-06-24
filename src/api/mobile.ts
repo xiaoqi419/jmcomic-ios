@@ -1,7 +1,7 @@
 // 禁漫天堂 API 封装 - 支持移动端加密 + 网页端双引擎
 // @author Jason
 
-import { apiClient } from './client';
+import { apiClient, setGlobalAvs } from './client';
 import { decryptAndParse, nowTs, generateToken } from './crypto';
 import { API_PATHS, IMAGE_DOMAINS } from '../constants';
 import type { SearchResponse, SearchResult, AlbumDetail, Episode, ChapterDetail, FavoriteResponse, FavoriteItem } from './types';
@@ -230,7 +230,6 @@ export async function login(username: string, password: string): Promise<LoginRe
     console.log('[Login] AVS from data.s:', data.s, '| final avs:', avs);
     if (avs) {
       apiClient.setAvs(avs);
-      const { setGlobalAvs } = require('./client');
       setGlobalAvs(avs);
       const { default: AsyncStorage } = require('@react-native-async-storage/async-storage');
       AsyncStorage.setItem('@jmcomic.avs', avs).catch(() => {});
