@@ -56,25 +56,29 @@ export function decryptData(
   ts: number,
   encryptedBase64: string
 ): string {
-  // 1. 生成密钥: md5(ts + secret) 的 hex 字符串转为 UTF-8 WordArray
-  const keyHex = md5Hex(`${ts}${APP_DATA_SECRET}`);
-  const key = CryptoJS.enc.Utf8.parse(keyHex);
+  // 官方 App 尝试两个密钥
+  const secrets = [APP_DATA_SECRET, APP_TOKEN_SECRET_2];
 
-  // 2. Base64 解码密文
+  // Base64 解码密文
   const ciphertext = CryptoJS.enc.Base64.parse(encryptedBase64);
 
-  // 3. AES-256-ECB 解密（PKCS7 padding 默认开启）
-  const decrypted = CryptoJS.AES.decrypt(
-    { ciphertext: ciphertext } as CryptoJS.lib.CipherParams,
-    key,
-    {
-      mode: CryptoJS.mode.ECB,
-      padding: CryptoJS.pad.Pkcs7,
-    }
-  );
+  for (const secret of secrets) {
+    try {
+      const keyHex = md5Hex(`${ts}${secret}`);
+      const key = CryptoJS.enc.Utf8.parse(keyHex);
+      const decrypted = CryptoJS.AES.decrypt(
+        { ciphertext: ciphertext } as CryptoJS.lib.CipherParams,
+        key,
+        { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7 }
+      );
+      const result = decrypted.toString(CryptoJS.enc.Utf8);
+      if (result && (result.startsWith('{') || result.startsWith('['))) {
+        return result;
+      }
+    } catch {}
+  }
 
-  // 4. 转为 UTF-8 字符串
-  return decrypted.toString(CryptoJS.enc.Utf8);
+  throw new Error('解密失败：所有密钥均无效');
 }
 
 /**

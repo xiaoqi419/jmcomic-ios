@@ -17,9 +17,9 @@ export const IMAGE_DOMAINS = [
   'cdn-msp3.18comic.vip',
 ];
 
-// APP 接口加密常量（参考 PicaComic）
-export const APP_TOKEN_SECRET = '18comicAPPContent';
-export const APP_TOKEN_SECRET_2 = '18comicAPPContent';
+// APP 接口加密常量（从官方 APK 反编译）
+export const APP_TOKEN_SECRET = '185Hcomic3PAPP7R';     // auth token 密钥
+export const APP_TOKEN_SECRET_2 = '18comicAPPContent'; // 解密降级密钥
 export const APP_DATA_SECRET = '185Hcomic3PAPP7R';
 export const APP_VERSION = '1.7.2';
 
