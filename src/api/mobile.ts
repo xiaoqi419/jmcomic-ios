@@ -156,18 +156,26 @@ async function getScrambleId(photoId: string | number): Promise<number> {
 
 // ===================== 收藏 =====================
 
-export async function getFavorites(params: { page?: number; folderId?: string; sort?: string } = {}): Promise<FavoriteResponse> {
+export async function getOnlineFavorites(params: { page?: number; folderId?: string; sort?: string } = {}): Promise<FavoriteResponse> {
   const ts = nowTs();
   const { page = 1, folderId = '0', sort = 'mv' } = params;
   try {
     const encrypted = await apiClient.getMobile<string>(API_PATHS.FAVORITE, { page, o: sort, folder_id: folderId });
     const data = decryptAndParse<any>(ts, encrypted);
-    const content: FavoriteItem[] = (data.content || []).map((item: any) => ({
+    // API returns { list: [...], folder_list: [...], total: "..." }
+    const raw = data.list || data.content || [];
+    const content: FavoriteItem[] = raw.map((item: any) => ({
       id: String(item.id || item.album_id || ''), name: item.name || item.title || '',
-      coverUrl: item.cover || item.coverUrl || '',
+      coverUrl: item.cover || item.coverUrl || getCoverUrl(IMAGE_DOMAINS[0], item.id || item.album_id),
     }));
-    return { content, total: data.total || content.length, folders: [] };
+    const folders = (data.folder_list || []).map((f: any) => ({ id: f.FID || '0', name: f.name || '默认' }));
+    return { content, total: parseInt(data.total) || content.length, folders };
   } catch { return { content: [], total: 0, folders: [] }; }
+}
+
+// 兼容旧接口
+export async function getFavorites(params: { page?: number; folderId?: string; sort?: string } = {}): Promise<FavoriteResponse> {
+  return getOnlineFavorites(params);
 }
 
 export async function toggleFavorite(albumId: string | number): Promise<boolean> {

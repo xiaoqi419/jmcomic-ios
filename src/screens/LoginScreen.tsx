@@ -53,17 +53,18 @@ export function LoginScreen() {
         const r = await login(username.trim(), password.trim());
         if (r.success) {
           setUsername(r.username || username);
-          saveSettings({ username: r.username || username });
-          nav.goBack();
-        } else Alert.alert('登录失败', r.error);
+          Alert.alert('登录成功', `欢迎, ${r.username || username}`, [
+            { text: '确定', onPress: () => nav.goBack() }
+          ]);
+        } else Alert.alert('登录失败', r.error || '用户名或密码错误');
       } else if (mode === 'register') {
         const r = await register(username.trim(), password.trim(), email.trim());
-        if (r.success) { Alert.alert('注册成功', '请返回登录'); setMode('login'); }
-        else Alert.alert('注册失败', r.error);
+        if (r.success) { Alert.alert('注册成功', '请返回登录，使用新账号登录'); setMode('login'); }
+        else Alert.alert('注册失败', r.error || '请检查账号信息');
       } else {
         const r = await forgotPassword(username.trim());
-        if (r.success) Alert.alert('已发送', '请查看邮箱');
-        else Alert.alert('失败', r.error);
+        if (r.success) Alert.alert('找回成功', '重置邮件已发送，请查看邮箱');
+        else Alert.alert('找回失败', r.error || '请检查账号信息');
       }
     } catch (e: any) { Alert.alert('错误', e.message); }
     finally { setLoading(false); }

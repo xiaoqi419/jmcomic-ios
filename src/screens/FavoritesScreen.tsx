@@ -1,24 +1,36 @@
 // 收藏页 - 樱花绯红主题
 // @author Jason
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Image } from 'expo-image';
 import { useFavoritesStore } from '../store/useFavorites';
+import { useSettingsStore } from '../store/useSettings';
+import { getOnlineFavorites } from '../api/mobile';
 import { Colors, Radius, Spacing, FontSize } from '../theme';
 
 export function FavoritesScreen({ navigation }: any) {
   const { items, isLoading, loadFavorites, removeFavorite } = useFavoritesStore();
-  useEffect(() => { loadFavorites(); }, []);
+  const username = useSettingsStore(s => s.username);
+  const [onlineItems, setOnlineItems] = useState<any[]>([]);
+  const [onlineLoading, setOnlineLoading] = useState(false);
+
+  useEffect(() => {
+    loadFavorites();
+    if (username) {
+      setOnlineLoading(true);
+      getOnlineFavorites().then(r => { setOnlineItems(r.content); setOnlineLoading(false); });
+    }
+  }, [username]);
 
   if (isLoading) return <SafeAreaView style={styles.container}><View style={styles.center}><ActivityIndicator size="large" color={Colors.primary} /></View></SafeAreaView>;
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <FlatList data={items} keyExtractor={i => i.id} contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: Spacing.xl * 2 }}
+      <FlatList data={username ? onlineItems : items} keyExtractor={i => i.id} contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: Spacing.xl * 2 }}
         ListHeaderComponent={<Text style={{ fontSize: FontSize.title, fontWeight: '700', color: Colors.textPrimary, marginBottom: Spacing.md }}>我的收藏 <Text style={{ fontSize: FontSize.body, color: Colors.textSecondary, fontWeight: '400' }}>({items.length})</Text></Text>}
         ListEmptyComponent={<View style={{ alignItems: 'center', marginTop: 60 }}><Text style={{ fontSize: 48, marginBottom: Spacing.md }}>📚</Text><Text style={{ fontSize: FontSize.bodyLarge, color: Colors.textSecondary, marginBottom: Spacing.xs }}>还没有收藏</Text><Text style={{ fontSize: FontSize.body, color: Colors.textTertiary }}>在漫画详情页点击收藏按钮即可添加</Text></View>}
         renderItem={({ item }) => (
