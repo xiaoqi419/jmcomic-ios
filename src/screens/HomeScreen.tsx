@@ -2,7 +2,7 @@
 // @author Jason
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { ComicCard } from '../components/ComicCard';
@@ -57,9 +57,9 @@ export function HomeScreen({ navigation }: any) {
     <FlatList horizontal showsHorizontalScrollIndicator={false} data={items} keyExtractor={i => i.id}
       contentContainerStyle={{ paddingVertical: Spacing.xs, gap: Spacing.sm }}
       renderItem={({ item }) => (
-        <TouchableOpacity style={[styles.chip, active === item.id && styles.chipActive]} onPress={() => onPress(item.id)} activeOpacity={0.7}>
+        <Pressable style={({ pressed }) => [styles.chip, active === item.id && styles.chipActive, { opacity: pressed ? 0.7 : 1 }]} onPress={() => onPress(item.id)}>
           <Text style={[styles.chipText, active === item.id && styles.chipTextActive]}>{item.label}</Text>
-        </TouchableOpacity>
+        </Pressable>
       )}
     />
   );
@@ -70,7 +70,7 @@ export function HomeScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       <FlatList data={albums} numColumns={3} keyExtractor={i => i.id}
-        contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: Spacing.xl }}
+        contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: Spacing.xl }}
         ListHeaderComponent={
           <View>
             <Text style={[styles.sectionTitle, { marginTop: Spacing.sm }]}>分类</Text>

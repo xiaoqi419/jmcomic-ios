@@ -7,8 +7,8 @@ import { Image } from 'expo-image';
 import { Colors, Radius, Spacing, FontSize, Shadow } from '../theme';
 
 const W = Dimensions.get('window').width;
-const PADDING = 12;
-const GAP = 8;
+const PADDING = 10;
+const GAP = 6;
 const CARD_W = (W - PADDING * 2 - GAP * 2) / 3;
 const CARD_H = CARD_W * 1.4;
 
@@ -19,7 +19,7 @@ interface Props {
 
 function Inner({ id, title, coverUrl, tags, onPress }: Props) {
   return (
-    <TouchableOpacity style={[styles.card, Shadow.card]} onPress={() => onPress(id)} activeOpacity={0.85}>
+    <TouchableOpacity style={[styles.card, { marginHorizontal: 3, marginBottom: 6 }, Shadow.card]} onPress={() => onPress(id)} activeOpacity={0.85}>
       <Image source={{ uri: coverUrl }} style={styles.cover} contentFit="cover" transition={200} />
       <View style={styles.info}>
         <Text style={styles.title} numberOfLines={2}>{title}</Text>

@@ -1,14 +1,14 @@
-// 搜索页 - 支持车号直达
+// 搜索页 — 原生组件重写
 // @author Jason
 
 import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, FlatList, Pressable, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ComicCard } from '../components/ComicCard';
 import { searchAlbums } from '../api/mobile';
-import { Colors, Radius, Spacing, FontSize } from '../theme';
+import { Colors, Radius, Spacing, FontSize, Shadow } from '../theme';
 
 const TAGS = ['全彩', '无修正', '同人', 'CG', '韩漫', '纯爱', 'NTR', '后宫', '姐系', '母系'];
 
@@ -20,21 +20,8 @@ export function SearchScreen({ navigation }: any) {
     const keyword = kw.trim();
     if (!keyword) return;
     setLoading(true);
-
-    // 检测是否为车号（纯数字）
-    if (/^\d{4,}$/.test(keyword)) {
-      // 直接跳转到漫画详情
-      setLoading(false);
-      setSearched(true);
-      navigation.navigate('AlbumDetail', { albumId: keyword });
-      return;
-    }
-
-    try {
-      const r = await searchAlbums({ keyword, page: p, sort: 'mv' });
-      if (refresh || p === 1) setRes(r.content); else setRes(prev => [...prev, ...r.content]);
-      setMore(r.content.length >= 20); setSearched(true);
-    } catch {} finally { setLoading(false); }
+    if (/^\d{4,}$/.test(keyword)) { setLoading(false); setSearched(true); navigation.navigate('AlbumDetail', { albumId: keyword }); return; }
+    try { const r = await searchAlbums({ keyword, page: p, sort: 'mv' }); if (refresh || p === 1) setRes(r.content); else setRes(prev => [...prev, ...r.content]); setMore(r.content.length >= 20); setSearched(true); } catch {} finally { setLoading(false); }
   }, [kw, navigation]);
 
   const onSearch = () => { setPage(1); search(1, true); };
@@ -43,42 +30,53 @@ export function SearchScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       <FlatList data={res} numColumns={3} keyExtractor={i => i.id}
-        contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: Spacing.xl }}
+        contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: Spacing.xl }}
         ListHeaderComponent={
-          <View>
-            <View style={{ flexDirection: 'row', paddingVertical: Spacing.md, gap: Spacing.sm, alignItems: 'center' }}>
-              <View style={{ flex: 1, backgroundColor: Colors.surfaceLowest, borderRadius: Radius.xl, borderWidth: 1, borderColor: Colors.border }}>
-                <TextInput style={{ height: 44, paddingHorizontal: Spacing.md, color: Colors.textPrimary, fontSize: FontSize.bodyLarge }}
-                  placeholder="搜索漫画、作者、标签，或输入车号直达..." placeholderTextColor={Colors.textTertiary} value={kw}
-                  onChangeText={setKw} onSubmitEditing={onSearch} returnKeyType="search" />
-              </View>
-              <TouchableOpacity style={{ height: 44, paddingHorizontal: Spacing.lg, backgroundColor: Colors.primary, borderRadius: Radius.xl, justifyContent: 'center', alignItems: 'center' }}
-                onPress={onSearch} activeOpacity={0.8}>
-                <Text style={{ color: Colors.textOnPrimary, fontWeight: '700', fontSize: FontSize.bodyLarge }}>搜索</Text>
-              </TouchableOpacity>
+          <View style={{ paddingTop: Spacing.sm }}>
+            {/* 原生风格搜索框 */}
+            <View style={styles.searchWrap}>
+              <MaterialIcons name="search" size={20} color={Colors.textTertiary} style={{ marginLeft: 10 }} />
+              <TextInput style={styles.input} placeholder="搜索漫画、作者、标签，或车号..."
+                placeholderTextColor={Colors.textTertiary} value={kw} onChangeText={setKw}
+                onSubmitEditing={onSearch} returnKeyType="search" />
+              {kw.length > 0 && (
+                <Pressable onPress={() => { setKw(''); setSearched(false); setRes([]); }}
+                  style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1, paddingRight: 8 })}>
+                  <MaterialIcons name="close" size={18} color={Colors.textTertiary} />
+                </Pressable>
+              )}
             </View>
-            {!searched ? (
-              <View>
-                <Text style={styles.sectionTitle}>热门搜索</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
+
+            {/* 搜索按钮 */}
+            <Pressable onPress={onSearch} style={({ pressed }) => [styles.searchBtn, { opacity: pressed ? 0.7 : 1 }]}>
+              <MaterialIcons name="search" size={18} color="#fff" />
+              <Text style={styles.searchBtnText}>搜索</Text>
+            </Pressable>
+
+            {!searched && (
+              <View style={{ marginTop: Spacing.md }}>
+                <Text style={styles.sectionTitle}>
+                  <MaterialIcons name="local-fire-department" size={16} color={Colors.accent} /> 热门搜索
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
                   {TAGS.map(t => (
-                    <TouchableOpacity key={t} style={{ paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.chip, backgroundColor: Colors.surfaceLowest, borderWidth: 1, borderColor: Colors.border }}
-                      onPress={() => { setKw(t); setTimeout(onSearch, 100); }} activeOpacity={0.7}>
-                      <Text style={{ fontSize: FontSize.label, color: Colors.textSecondary }}>{t}</Text>
-                    </TouchableOpacity>
+                    <Pressable key={t} onPress={() => { setKw(t); setTimeout(onSearch, 100); }}
+                      style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: Colors.surfaceContainerLow, borderWidth: 1, borderColor: Colors.border })}>
+                      <Text style={{ fontSize: 13, color: Colors.textSecondary }}>{t}</Text>
+                    </Pressable>
                   ))}
                 </View>
-                <Text style={{ fontSize: FontSize.caption, color: Colors.textTertiary, marginTop: Spacing.sm, textAlign: 'center' }}>
-                  提示：输入纯数字车号（如 480715）直达漫画
+                <Text style={{ fontSize: 11, color: Colors.textTertiary, marginTop: 8, textAlign: 'center' }}>
+                  纯数字车号（如 480715）直达漫画
                 </Text>
               </View>
-            ) : null}
+            )}
           </View>
         }
         ListEmptyComponent={!loading && searched ? (
           <View style={{ alignItems: 'center', marginTop: 60 }}>
             <MaterialIcons name="search-off" size={48} color={Colors.textTertiary} />
-            <Text style={{ fontSize: FontSize.bodyLarge, color: Colors.textSecondary, marginTop: Spacing.md }}>未找到相关结果</Text>
+            <Text style={{ fontSize: 15, color: Colors.textSecondary, marginTop: 12 }}>未找到相关结果</Text>
           </View>
         ) : null}
         renderItem={({ item }) => <ComicCard id={item.id} title={item.name} coverUrl={item.coverUrl} tags={item.tags} onPress={id => navigation.navigate('AlbumDetail', { albumId: id })} />}
@@ -92,5 +90,15 @@ export function SearchScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  sectionTitle: { fontSize: FontSize.headline, fontWeight: '700', color: Colors.textPrimary, marginBottom: Spacing.sm },
+  sectionTitle: { fontSize: FontSize.headline, fontWeight: '700', color: Colors.textPrimary, marginBottom: 4 },
+  searchWrap: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surfaceLowest,
+    borderRadius: 10, borderWidth: 1, borderColor: Colors.border,
+  },
+  input: { flex: 1, height: 40, paddingHorizontal: 8, color: Colors.textPrimary, fontSize: 15 },
+  searchBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    marginTop: 8, height: 40, borderRadius: 10, backgroundColor: Colors.primary, gap: 6,
+  },
+  searchBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 });
