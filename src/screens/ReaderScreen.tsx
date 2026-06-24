@@ -1,22 +1,18 @@
-// 阅读器 — 使用原生 iOS PagerView 翻页
+// 阅读器 — 横向翻页模式
 // @author Jason
 
-import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, Dimensions, StatusBar } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, FlatList, Dimensions, StatusBar } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import PagerView from 'react-native-pager-view';
 import { useReaderStore } from '../store/useReader';
-import { useSettingsStore } from '../store/useSettings';
 import { Colors, Spacing, FontSize } from '../theme';
 
 const { width: W, height: H } = Dimensions.get('window');
 
 export function ReaderScreen({ route, navigation }: any) {
   const { imageUrls, currentPage, setPage } = useReaderStore();
-  const readingMode = useSettingsStore(s => s.readingMode);
   const [showUI, setShowUI] = useState(true);
-  const pagerRef = useRef<PagerView>(null);
   const toggle = () => setShowUI(p => !p);
 
   const overlay = (
@@ -29,9 +25,7 @@ export function ReaderScreen({ route, navigation }: any) {
       <TouchableOpacity onPress={() => navigation.goBack()}>
         <Text style={{ color: '#fff', fontSize: 17, fontWeight: '600' }}>返回</Text>
       </TouchableOpacity>
-      <Text style={{ color: '#ccc', fontSize: 15 }}>
-        {currentPage + 1} / {imageUrls.length}
-      </Text>
+      <Text style={{ color: '#ccc', fontSize: 15 }}>{currentPage + 1}/{imageUrls.length}</Text>
     </SafeAreaView>
   );
 
@@ -42,42 +36,30 @@ export function ReaderScreen({ route, navigation }: any) {
       backgroundColor: 'rgba(0,0,0,0.55)',
     }}>
       <View style={{ height: 3, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 2, overflow: 'hidden' }}>
-        <View style={{
-          height: '100%', backgroundColor: Colors.primary, borderRadius: 2,
-          width: `${((currentPage + 1) / Math.max(1, imageUrls.length)) * 100}%`,
-        }} />
+        <View style={{ height: '100%', backgroundColor: Colors.primary, borderRadius: 2,
+          width: `${((currentPage + 1) / Math.max(1, imageUrls.length)) * 100}%` }} />
       </View>
     </SafeAreaView>
   );
 
-  // 翻页模式
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <StatusBar hidden={!showUI} />
-
-      <PagerView
-        ref={pagerRef}
-        style={{ flex: 1 }}
-        initialPage={currentPage}
-        orientation="horizontal"
-        onPageSelected={e => setPage(e.nativeEvent.position)}
-        pageMargin={0}
-      >
-        {imageUrls.map((url, i) => (
-          <View key={i} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} activeOpacity={1} onPress={toggle}>
-              <Image
-                source={{ uri: url }}
-                style={{ width: W, height: H }}
-                contentFit="contain"
-                placeholder={require('../../assets/icon.png')}
-                transition={200}
-              />
-            </TouchableOpacity>
-          </View>
-        ))}
-      </PagerView>
-
+      <FlatList
+        horizontal
+        pagingEnabled
+        data={imageUrls}
+        keyExtractor={(_, i) => String(i)}
+        showsHorizontalScrollIndicator={false}
+        initialScrollIndex={currentPage}
+        getItemLayout={(_, index) => ({ length: W, offset: W * index, index })}
+        onMomentumScrollEnd={e => { setPage(Math.round(e.nativeEvent.contentOffset.x / W)); }}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={{ width: W, height: H, justifyContent: 'center', alignItems: 'center' }} activeOpacity={1} onPress={toggle}>
+            <Image source={{ uri: item }} style={{ width: W, height: H }} contentFit="contain" transition={200} />
+          </TouchableOpacity>
+        )}
+      />
       {showUI && overlay}
       {showUI && bottomBar}
     </View>
