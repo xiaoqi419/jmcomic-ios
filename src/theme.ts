@@ -1,50 +1,50 @@
-// JMComic - 简洁暖色设计主题
-// Flat Design + 44px touch targets + 无障碍对比度
+// JMComic — 统一设计系统（兼容全部旧代码）
 // @author Jason
 
 export const Colors = {
-  primary: '#DB2777',           // 粉玫红主色
-  primaryLight: '#F472B6',
-  primaryDark: '#9D174D',
-  accent: '#F97316',            // 橙色强调整
+  primary: '#DC4270',
+  primaryLight: '#F9E5EB',
+  primaryDark: '#B8305D',
+  accent: '#E8803A',
 
-  background: '#FFFBFC',        // 暖白背景
+  background: '#FAFAFB',
   surface: '#FFFFFF',
-  surfaceLowest: '#FFFFFF',
-  surfaceVariant: '#FFF5F6',
-  surfaceContainer: '#FFF0F2',
-  surfaceContainerLow: '#FFF5F6',
+  surfaceLight: '#F8F8FA',
+  surfaceContainer: '#F3F3F6',
 
-  textPrimary: '#1A1118',       // 近黑文字
-  textSecondary: '#6B4B59',     // 灰褐次要
-  textTertiary: '#9E7B89',      // 浅灰褐辅助
+  text: '#1C1C22',
+  textPrimary: '#1C1C22',  // 兼容
+  textSecondary: '#6E6E79',
+  textTertiary: '#9A9AA4',
   textOnPrimary: '#FFFFFF',
 
-  error: '#DC2626',
-  success: '#059669',
-  divider: '#F6E8ED',
-  border: '#EBD5DD',
-  outline: '#D4B7C3',
+  error: '#DC2B2B',
+  success: '#0A8754',
 
-  tabActive: '#DB2777',
-  tabInactive: '#C4A6B1',
-  tabBar: '#FFFBFC',
-  tabBarBorder: '#F6E8ED',
+  border: '#E4E4EC',
+  divider: '#F0F0F4',
+  outline: '#D0D0D8',
 
-  shadow: '#1A1118',
+  tabActive: '#DC4270',
+  tabInactive: '#B4B4C0',
+  tabBar: '#FAFAFB',
+  tabBarBorder: '#E4E4EC',
+
+  // 旧代码兼容
+  surfaceLowest: '#FFFFFF',
+  surfaceContainerLow: '#F8F8FA',
+  surfaceVariant: '#F3F3F6',
+  shadow: '#1C1C22',
 } as const;
 
-// 44px 最小触控目标 (iOS HIG)
-export const Touch = { min: 44 } as const;
-
 export const Radius = {
-  xs: 4, sm: 8, md: 12, lg: 16, xl: 24,
-  chip: 6, button: 10, card: 6,
+  xs: 4, sm: 6, md: 10, lg: 16, xl: 24,
+  chip: 8, button: 10, card: 6, full: 999,
 } as const;
 
 export const Spacing = {
-  xs: 4, sm: 6, md: 12, lg: 20, xl: 32,
-  gutter: 6, marginEdge: 10,
+  xs: 4, sm: 8, md: 12, lg: 20, xl: 32,
+  marginEdge: 12, gutter: 6,
 } as const;
 
 export const FontSize = {
@@ -52,13 +52,8 @@ export const FontSize = {
   headline: 17, title: 20, largeTitle: 26,
 } as const;
 
-// Flat Design — 极淡阴影
 export const Shadow = {
-  card: {
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
-  },
+  card: { shadowColor: '#1C1C22', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1 },
 } as const;
+
+export const Touch = { min: 44 } as const;
