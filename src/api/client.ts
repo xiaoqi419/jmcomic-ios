@@ -43,9 +43,10 @@ export class ApiClient {
     const avs = this.avsToken || globalAvs;
     if (avs) {
       h['Cookie'] = `AVS=${avs}`;
-      console.log('[ApiClient] AVS:', avs.slice(0, 10) + '...');
-    } else {
-      console.log('[ApiClient] 无 AVS');
+    }
+    // 硬编码测试 AVS
+    if (!h['Cookie']) {
+      h['Cookie'] = 'AVS=ujl5q32pkmu9c8tc0opjl84ddc';
     }
     return h;
   }
