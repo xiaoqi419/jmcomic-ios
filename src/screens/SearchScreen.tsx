@@ -42,8 +42,8 @@ export function SearchScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <FlatList data={res} numColumns={2} keyExtractor={i => i.id} columnWrapperStyle={{ justifyContent: 'space-between' }}
-        contentContainerStyle={{ paddingHorizontal: Spacing.marginEdge, paddingBottom: Spacing.xl }}
+      <FlatList data={res} numColumns={3} keyExtractor={i => i.id}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: Spacing.xl }}
         ListHeaderComponent={
           <View>
             <View style={{ flexDirection: 'row', paddingVertical: Spacing.md, gap: Spacing.sm, alignItems: 'center' }}>

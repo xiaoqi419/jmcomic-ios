@@ -76,13 +76,15 @@ export async function getCategoryAlbums(params: {
 // ===================== 漫画详情 =====================
 
 function parseAlbumData(data: any, id: string): AlbumDetail {
-  const episodes: Episode[] = (data.episode || data.episodes || []).map((ep: any, i: number) => ({
+  // 官方 App 用 series 字段
+  const rawEpisodes = data.episode || data.episodes || data.series || [];
+  const episodes: Episode[] = rawEpisodes.map((ep: any, i: number) => ({
     id: String(ep.id || ep.photo_id || ep.chapter_id || ''),
     albumId: id,
-    title: ep.name || ep.title || `第${ep.index || i + 1}话`,
-    index: ep.index || i + 1,
+    title: ep.name || ep.title || `第${ep.sort || i + 1}話`,
+    index: parseInt(ep.sort) || i + 1,
     pageCount: ep.page_count || ep.pageCount || 0,
-    sort: ep.sort || i,
+    sort: parseInt(ep.sort) || i,
   }));
   return {
     id, title: data.name || data.title || '',
