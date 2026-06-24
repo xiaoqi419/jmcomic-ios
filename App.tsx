@@ -56,7 +56,7 @@ function HomeTabs() {
     <Tab.Navigator screenOptions={{
       headerShown: false,
       tabBarStyle: {
-        backgroundColor: 'rgba(255,255,255,0.72)',
+        backgroundColor: 'rgba(248,250,252,0.85)',
         borderTopWidth: 0.5,
         borderTopColor: 'rgba(60,60,67,0.08)',
       },
@@ -78,32 +78,28 @@ function HomeTabs() {
 
 export default function App() {
   const [ready, setReady] = useState(false);
-  const { loadSettings, autoSelectServer, setServers, setDetectingServers, selectedServer } = useSettingsStore();
+  const { loadSettings, setSelectedServer, setServers, setDetectingServers } = useSettingsStore();
 
   useEffect(() => {
     (async () => {
       await loadSettings();
       await useFavoritesStore.getState().loadFavorites();
 
-      // 检测服务器
-      if (autoSelectServer || !selectedServer) {
-        setDetectingServers(true);
-        const servers = await detectServers();
+      // 先用默认服务器，不阻塞 UI
+      setSelectedServer('www.cdnhjk.net');
+      setReady(true);
+
+      // 后台检测所有服务器
+      setDetectingServers(true);
+      detectServers().then(servers => {
         setServers(servers);
         setDetectingServers(false);
-
-        // 自动选择最快的
-        if (autoSelectServer) {
-          const fastest = servers.find(s => s.available);
-          if (fastest) {
-            useSettingsStore.getState().setSelectedServer(fastest.domain);
-          }
-        }
-      }
+        const fastest = servers.find(s => s.available);
+        if (fastest) setSelectedServer(fastest.domain);
+      });
 
       // 预热 API
       import('./src/api/client').then(m => m.apiClient.warmUp().catch(() => {}));
-      setReady(true);
     })();
   }, []);
 

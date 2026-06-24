@@ -129,7 +129,12 @@ export class ApiClient {
       url += '?' + params.toString();
     }
 
-    const fetchOpts: RequestInit = { method, headers, redirect: 'follow', credentials: 'include', referrerPolicy: 'no-referrer' as any };
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    const fetchOpts: RequestInit = {
+      method, headers, redirect: 'follow', credentials: 'include', referrerPolicy: 'no-referrer' as any,
+      signal: controller.signal,
+    };
     if (config.form && method === 'POST') {
       const fd = new URLSearchParams();
       Object.entries(config.form).forEach(([k, v]) => fd.append(k, String(v)));
@@ -139,15 +144,14 @@ export class ApiClient {
 
     try {
       const response = await fetch(url, fetchOpts);
+      clearTimeout(timeoutId);
       const text = await response.text();
 
-      // 保存返回的 cookies
       const sc = response.headers.get('set-cookie');
       if (sc) this.cookieJar = sc;
 
-      // 检测 CloudFlare
       if (text.includes('Just a moment') || text.includes('challenge-platform')) {
-        throw new ApiError('CloudFlare 拦截，正在重试...', 403, 'cloudflare');
+        throw new ApiError('CloudFlare 拦截', 403, 'cloudflare');
       }
 
       if (!response.ok) {
@@ -170,7 +174,7 @@ export class ApiClient {
       return text as unknown as T;
 
     } catch (error: any) {
-      // CloudFlare 检测到 → 先 warmUp 获取 cookie 再重试
+      clearTimeout(timeoutId);
       if (error instanceof ApiError && error.body === 'cloudflare' && retryCount < maxRetries) {
         const warmed = await this.warmUp();
         if (warmed) {
