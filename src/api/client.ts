@@ -37,8 +37,7 @@ export class ApiClient {
   constructor(private domains: string[] = [...API_DOMAINS]) {}
 
   getDomain(): string {
-    // web 端必须用 18comic.vip（CORS 代理只转发了这个域名）
-    if (typeof window !== 'undefined') return '18comic.vip';
+    if (typeof window !== 'undefined') return this.domains[0];
     return this.domains[this.domainIndex % this.domains.length];
   }
 
@@ -112,7 +111,7 @@ export class ApiClient {
     // 构建 URL（web 端走本地 CORS 代理）
     let url = `https://${domain}${path}`;
     if (typeof window !== 'undefined') {
-      url = `${WEB_PROXY}${path}`;
+      url = `${WEB_PROXY}/${domain}${path}`;
     }
     if (config.query) {
       const params = new URLSearchParams();

@@ -1,72 +1,47 @@
-// CORS 代理服务器 — 解决 web 版跨域 + 翻墙问题
-// 通过本机代理(127.0.0.1:7897)访问 18comic，并添加 CORS 头
+// CORS 代理 - 支持任意目标域名
 // @author Jason
 
 import http from 'http';
 import { setGlobalDispatcher, ProxyAgent } from 'undici';
 
 const PORT = 3456;
-const PROXY_URL = 'http://127.0.0.1:7897';
+setGlobalDispatcher(new ProxyAgent('http://127.0.0.1:7897'));
 
-// 使用代理访问外网
-setGlobalDispatcher(new ProxyAgent(PROXY_URL));
-
-const server = http.createServer(async (clientReq, clientRes) => {
-  const targetUrl = `https://18comic.vip${clientReq.url}`;
-  console.log(`[proxy] ${clientReq.method} ${clientReq.url}`);
-
-  // 处理 OPTIONS 预检
-  if (clientReq.method === 'OPTIONS') {
-    clientRes.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': '*',
-      'Access-Control-Max-Age': '86400',
-    });
-    clientRes.end();
+http.createServer(async (req, res) => {
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': '*', 'Access-Control-Max-Age': '86400' });
+    res.end();
     return;
   }
+  // URL 格式: /{domain}/{path} → https://{domain}/{path}
+  const path = req.url || '/';
+  const slashIdx = path.indexOf('/', 1);
+  const domain = slashIdx > 0 ? path.substring(1, slashIdx) : '18comic.vip';
+  const restPath = slashIdx > 0 ? path.substring(slashIdx) : path;
+  const targetUrl = `https://${domain}${restPath}`;
+
+  console.log(`[proxy] ${req.method} ${domain}${restPath}`);
 
   try {
-    const resp = await fetch(targetUrl, {
-      method: clientReq.method,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': clientReq.headers.accept || '*/*',
-        'Accept-Language': 'zh-CN,zh;q=0.9',
-        'Referer': 'https://18comic.vip/',
-        'Origin': 'https://18comic.vip',
-        'token': clientReq.headers.token || '',
-        'tokenparam': clientReq.headers.tokenparam || '',
-        'Cookie': clientReq.headers.cookie || '',
-        'Content-Type': clientReq.headers['content-type'] || '',
-      },
-    });
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile',
+      'Accept': req.headers.accept || '*/*',
+    };
+    if (req.headers.token) headers['token'] = req.headers.token;
+    if (req.headers.tokenparam) headers['tokenparam'] = req.headers.tokenparam;
+    if (req.headers.cookie) headers['cookie'] = req.headers.cookie;
+    if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
 
+    const resp = await fetch(targetUrl, { method: req.method, headers });
     const body = await resp.arrayBuffer();
-
-    clientRes.writeHead(resp.status, {
+    res.writeHead(resp.status, {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': '*',
-      'Access-Control-Expose-Headers': '*',
       'Content-Type': resp.headers.get('content-type') || 'application/octet-stream',
     });
-    clientRes.end(Buffer.from(body));
-
+    res.end(Buffer.from(body));
   } catch (err) {
-    console.error(`[proxy] 错误: ${err.message}`);
-    clientRes.writeHead(502, {
-      'Access-Control-Allow-Origin': '*',
-      'Content-Type': 'text/plain',
-    });
-    clientRes.end(`Proxy Error: ${err.message}`);
+    res.writeHead(502, { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'text/plain' });
+    res.end(`Proxy Error: ${err.message}`);
   }
-});
-
-server.listen(PORT, () => {
-  console.log(`\n========================================`);
-  console.log(`  🌐 CORS Proxy 运行中`);
-  console.log(`  端口: ${PORT} → 18comic.vip (通过本地代理)`);
-  console.log(`========================================\n`);
-});
+}).listen(PORT, () => console.log(`🌐 CORS Proxy :${PORT} → 任意域名`));
