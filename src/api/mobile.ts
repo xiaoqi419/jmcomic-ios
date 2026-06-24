@@ -274,6 +274,41 @@ export async function forgotPassword(email: string): Promise<{ success: boolean;
   } catch (e: any) { return { success: false, error: e.message }; }
 }
 
+// ===================== 评论 =====================
+
+export interface CommentItem {
+  id: string;
+  username: string;
+  content: string;
+  time: string;
+  photo: string;
+  replies: CommentItem[];
+}
+
+export async function getComments(albumId: string, page = 1, mode = 'manhua'): Promise<{ list: CommentItem[]; total: number }> {
+  try {
+    const ts = nowTs();
+    const encrypted = await apiClient.getMobile<string>(API_PATHS.FORUM, { mode, aid: albumId, page });
+    const data = decryptAndParse<any>(ts, encrypted);
+    const list = (data.list || []).map((c: any) => ({
+      id: c.CID, username: c.username, content: c.content || '',
+      time: c.addtime, photo: c.photo || '',
+      replies: (c.replys || []).map((r: any) => ({
+        id: r.CID, username: r.username, content: r.content || '',
+        time: r.addtime, photo: r.photo || '', replies: [],
+      })),
+    }));
+    return { list, total: parseInt(data.total) || list.length };
+  } catch { return { list: [], total: 0 }; }
+}
+
+export async function postComment(albumId: string, content: string): Promise<boolean> {
+  try {
+    await apiClient.postMobile<string>(API_PATHS.COMMENT, { video_id: albumId, comment: content, status: 'true' });
+    return true;
+  } catch { return false; }
+}
+
 export function getPhotoUrl(imageDomain: string, chapterId: string | number, filename: string): string {
   return `https://${imageDomain}/media/photos/${chapterId}/${filename}`;
 }

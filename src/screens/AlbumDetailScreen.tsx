@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { getAlbumDetail, getChapterDetail, getImageUrl, getCoverUrl } from '../api/mobile';
+import { getAlbumDetail, getChapterDetail, getImageUrl, getCoverUrl, getComments, postComment, type CommentItem } from '../api/mobile';
 import { useFavoritesStore, LocalFavorite } from '../store/useFavorites';
 import { useReaderStore } from '../store/useReader';
 import { useHistoryStore } from '../store/useHistory';
@@ -17,6 +17,9 @@ export function AlbumDetailScreen({ route, navigation }: any) {
   const [album, setAlbum] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [coverUrl, setCoverUrl] = useState('');
+  const [comments, setComments] = useState<CommentItem[]>([]);
+  const [commentTotal, setCommentTotal] = useState(0);
+  const [commentLoading, setCommentLoading] = useState(false);
   const { isFavorite, addFavorite, removeFavorite } = useFavoritesStore();
   const { startReading } = useReaderStore();
   const fav = isFavorite(albumId);
@@ -24,6 +27,9 @@ export function AlbumDetailScreen({ route, navigation }: any) {
   useEffect(() => { load(); }, [albumId]);
   const load = async () => {
     try { setLoading(true); const d = await getAlbumDetail(albumId); setAlbum(d); setCoverUrl(d.coverUrl || getCoverUrl(IMAGE_DOMAINS[0], albumId)); } catch {} finally { setLoading(false); }
+    // 加载评论
+    setCommentLoading(true);
+    getComments(albumId, 1).then(r => { setComments(r.list); setCommentTotal(r.total); setCommentLoading(false); });
   };
 
   const openChapter = async (chId: string) => {
@@ -101,6 +107,31 @@ export function AlbumDetailScreen({ route, navigation }: any) {
               <Text style={{ fontSize: 20, color: Colors.textTertiary, fontWeight: '300' }}>›</Text>
             </TouchableOpacity>
           ))}
+        </View>
+
+        {/* 评论区 */}
+        <View style={{ paddingHorizontal: Spacing.marginEdge, marginTop: Spacing.lg }}>
+          <Text style={{ fontSize: FontSize.headline, fontWeight: '700', color: Colors.textPrimary, marginBottom: Spacing.sm }}>
+            评论 ({commentTotal})
+          </Text>
+          {commentLoading ? (
+            <ActivityIndicator style={{ padding: 20 }} color={Colors.primary} />
+          ) : comments.length === 0 ? (
+            <Text style={{ color: Colors.textTertiary, textAlign: 'center', padding: 20 }}>暂无评论</Text>
+          ) : (
+            comments.map((c, i) => (
+              <View key={c.id || i} style={{ backgroundColor: Colors.surfaceLowest, borderRadius: Radius.sm, padding: 12, marginBottom: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{(c.username || '?')[0]}</Text>
+                  </View>
+                  <Text style={{ fontSize: FontSize.body, fontWeight: '600', color: Colors.textPrimary }}>{c.username}</Text>
+                  <Text style={{ fontSize: FontSize.caption, color: Colors.textTertiary }}>{c.time}</Text>
+                </View>
+                <Text style={{ fontSize: FontSize.body, color: Colors.textSecondary, lineHeight: 20 }}>{c.content}</Text>
+              </View>
+            ))
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
