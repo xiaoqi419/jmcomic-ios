@@ -225,12 +225,12 @@ export async function login(username: string, password: string): Promise<LoginRe
     const ts = nowTs();
     const encrypted = await apiClient.postMobile<string>(API_PATHS.LOGIN, { username, password });
     const data = decryptAndParse<any>(ts, encrypted);
-    // 保存 AVS token 到全局客户端，后续请求自动携带
-    if (data.s || data.token) {
-      apiClient.setAvs(data.s || data.token);
-    }
-    if (data.avs) {
-      apiClient.setAvs(data.avs);
+    // 保存 AVS token 到全局客户端 + AsyncStorage
+    const avs = data.s || data.token || data.avs || '';
+    if (avs) {
+      apiClient.setAvs(avs);
+      const { default: AsyncStorage } = require('@react-native-async-storage/async-storage');
+      AsyncStorage.setItem('@jmcomic.avs', avs).catch(() => {});
     }
     return {
       success: true,
