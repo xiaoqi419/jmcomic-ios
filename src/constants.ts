@@ -1,14 +1,13 @@
 // 禁漫天堂 API 常量
 // @author Jason
 
-// API 域名列表（按优先级排列）
-// 参考 PicaComic(wgh136) 使用的 API 代理域名
+// API 域名列表（从官方 APK 配置文件解密得到）
 export const API_DOMAINS = [
-  'www.jmeadpoolcdn.one',
-  'www.jmeadpoolcdn.life',
-  'www.jmapiproxyxxx.one',
-  'www.jmfreedomproxy.xyz',
-  '18comic.vip',
+  'www.cdnhjk.net',
+  'www.cdngwc.cc',
+  'www.cdngwc.net',
+  'www.cdngwc.club',
+  'www.cdnutc.me',
 ];
 
 // 图片 CDN 域名
