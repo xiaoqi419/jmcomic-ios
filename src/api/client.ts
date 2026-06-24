@@ -40,7 +40,12 @@ export class ApiClient {
       h['Token'] = token;
       h['Tokenparam'] = tokenparam;
     }
-    if (this.avsToken) h['Cookie'] = `AVS=${this.avsToken}`;
+    if (this.avsToken) {
+      h['Cookie'] = `AVS=${this.avsToken}`;
+      console.log('[ApiClient] 携带 AVS:', this.avsToken.slice(0, 10) + '...');
+    } else {
+      console.log('[ApiClient] 无 AVS token');
+    }
     return h;
   }
 

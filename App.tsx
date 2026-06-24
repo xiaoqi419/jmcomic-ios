@@ -93,6 +93,7 @@ export default function App() {
       await useAuthStore.getState().load();
       // 恢复 AVS token
       const avs = useAuthStore.getState().avs;
+      console.log('[App] 恢复 AVS:', avs ? avs.slice(0, 10) + '...' : '无');
       if (avs) apiClient.setAvs(avs);
 
       // 先用默认服务器，不阻塞 UI

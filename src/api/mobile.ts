@@ -227,6 +227,7 @@ export async function login(username: string, password: string): Promise<LoginRe
     const data = decryptAndParse<any>(ts, encrypted);
     // 保存 AVS token 到全局客户端 + AsyncStorage
     const avs = data.s || data.token || data.avs || '';
+    console.log('[Login] AVS from data.s:', data.s, '| final avs:', avs);
     if (avs) {
       apiClient.setAvs(avs);
       const { default: AsyncStorage } = require('@react-native-async-storage/async-storage');
