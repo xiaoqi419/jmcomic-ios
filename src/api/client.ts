@@ -158,7 +158,14 @@ export class ApiClient {
       }
 
       if (!response.ok) {
-        throw new ApiError(`HTTP ${response.status}`, response.status, text.slice(0, 200));
+        // 尝试提取 API 返回的详细错误信息
+        let errMsg = `HTTP ${response.status}`;
+        try {
+          const errJson = JSON.parse(text);
+          if (errJson.errorMsg) errMsg = errJson.errorMsg;
+          else if (errJson.errors) errMsg = JSON.stringify(errJson.errors);
+        } catch {}
+        throw new ApiError(errMsg, response.status, text.slice(0, 200));
       }
 
       // 移动端 API：返回加密的 data 字符串
