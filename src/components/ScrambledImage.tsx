@@ -1,5 +1,5 @@
 // ScrambledImage — WebView Canvas 解码 scramble 图片
-// iOS EAS Build: expo-file-system 下载 → WebView Canvas 处理 → 显示解码图
+// iOS EAS Build 始终解码，Web/Expo Go 直接显示
 // @author nyx
 
 import React, { useEffect, useState } from 'react';
@@ -45,30 +45,23 @@ function buildHtml(base64Data: string, gridSize: number): string {
 function calcGridSize(scrambleId: number): number {
   if (scrambleId <= 0) return 10;
   const r = scrambleId % 10;
-  const gridMap: Record<number, number> = {
-    0: 2, 1: 4, 2: 6, 3: 8, 4: 10,
-    5: 12, 6: 14, 7: 16, 8: 18, 9: 20,
-  };
-  return gridMap[r] || 10;
+  const m: Record<number, number> = {0:2,1:4,2:6,3:8,4:10,5:12,6:14,7:16,8:18,9:20};
+  return m[r] || 10;
 }
 
 export function ScrambledImage({ imageUrl, scrambleId, style, onLoad }: Props) {
   const [decoded, setDecoded] = useState<string | null>(null);
-  const needsScramble = scrambleId !== 0 && scrambleId !== 220980;
 
-  // 始终解码（CDN 对所有图片都做了 scramble）
+  // Web/ExpoGo: 直接显示原图
   if (Platform.OS === 'web') {
-    return <Image source={{ uri: imageUrl }} style={[{ flex: 1, width: '100%' }, style]} contentFit="contain" onLoad={onLoad} />;
+    return <Image source={{ uri: imageUrl }} style={[{flex:1,width:'100%'},style]} contentFit="contain" onLoad={onLoad} />;
   }
 
+  // iOS: always descramble via WebView
   if (decoded) {
-    return <Image source={{ uri: decoded }} style={[{ flex: 1, width: '100%' }, style]} contentFit="contain" onLoad={onLoad} />;
+    return <Image source={{ uri: decoded }} style={[{flex:1,width:'100%'},style]} contentFit="contain" onLoad={onLoad} />;
   }
 
-    return <Image source={{ uri: imageUrl }} style={[{ flex: 1, width: '100%' }, style]} contentFit="contain" onLoad={onLoad} />;
-  }
-
-  // iOS EAS Build: 下载 → WebView 解码
   return <DescrambleRunner imageUrl={imageUrl} scrambleId={scrambleId} onResult={setDecoded} onLoad={onLoad} />;
 }
 
@@ -80,7 +73,6 @@ function DescrambleRunner({ imageUrl, scrambleId, onResult, onLoad }: {
   useEffect(() => {
     (async () => {
       try {
-        // 动态导入 expo-file-system（web 上不加载）
         const FileSystem = require('expo-file-system');
         const dest = FileSystem.cacheDirectory + 'tmp_scramble_' + Date.now() + '.jpg';
         const result = await FileSystem.downloadAsync(imageUrl, dest);
@@ -97,7 +89,7 @@ function DescrambleRunner({ imageUrl, scrambleId, onResult, onLoad }: {
 
   if (!html) {
     return (
-      <View style={[{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }, style]}>
+      <View style={[{flex:1,width:'100%',justifyContent:'center',alignItems:'center',backgroundColor:'#000'},style]}>
         <ActivityIndicator size="small" color="#F59E0B" />
       </View>
     );
@@ -106,10 +98,10 @@ function DescrambleRunner({ imageUrl, scrambleId, onResult, onLoad }: {
   try {
     const WebView = require('react-native-webview').WebView;
     return (
-      <View style={[{ flex: 1, width: '100%' }, style]}>
+      <View style={[{flex:1,width:'100%'},style]}>
         <WebView
           source={{ html }}
-          style={{ flex: 1, opacity: 0, height: 0 }}
+          style={{flex:1,opacity:0,height:0}}
           onMessage={(e: any) => {
             if (e.nativeEvent.data !== 'ERR') onResult(e.nativeEvent.data);
             onLoad();
@@ -121,6 +113,6 @@ function DescrambleRunner({ imageUrl, scrambleId, onResult, onLoad }: {
     );
   } catch {
     onLoad();
-    return <Image source={{ uri: imageUrl }} style={[{ flex: 1, width: '100%' }, style]} contentFit="contain" />;
+    return <Image source={{ uri: imageUrl }} style={[{flex:1,width:'100%'},style]} contentFit="contain" />;
   }
 }
