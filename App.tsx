@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer, Theme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -67,7 +67,7 @@ function TabIcon({ name, focused }: { name: string; focused: boolean }) {
 
 function HomeTabs() {
   const { t } = useTranslation();
-  // 使用 CategoriesScreen 作为分类页，添加 SearchScreen 作为搜索
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -76,10 +76,13 @@ function HomeTabs() {
           backgroundColor: Colors.tabBar,
           borderTopWidth: 0.5,
           borderTopColor: Colors.tabBarBorder,
+          paddingBottom: insets.bottom || 8,
+          height: 56 + (insets.bottom || 8),
         },
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.tabInactive,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '500', marginBottom: 2 },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '500', marginBottom: 4 },
+        tabBarIconStyle: { marginTop: 4 },
       }}
     >
       <Tab.Screen name="Home" component={MainScreen}
@@ -87,7 +90,7 @@ function HomeTabs() {
       <Tab.Screen name="Categories" component={CategoriesScreen}
         options={{ tabBarLabel: t('nav.categories'), tabBarIcon: ({ focused }) => <TabIcon name="window" focused={focused} /> }} />
       <Tab.Screen name="Search" component={SearchScreen}
-        options={{ tabBarLabel: t('nav.home'), tabBarIcon: ({ focused }) => <TabIcon name="search" focused={focused} /> }} />
+        options={{ tabBarLabel: '搜索', tabBarIcon: ({ focused }) => <TabIcon name="search" focused={focused} /> }} />
       <Tab.Screen name="Movies" component={MoviesScreen}
         options={{ tabBarLabel: t('nav.movie'), tabBarIcon: ({ focused }) => <TabIcon name="video-library" focused={focused} /> }} />
       <Tab.Screen name="Forum" component={ForumScreen}
