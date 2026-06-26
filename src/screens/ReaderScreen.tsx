@@ -52,9 +52,10 @@ export function ReaderScreen() {
     try {
       const data = await fetchComicRead(chId);
       const images = buildChapterImageUrls(
-        'cdn-msp.18comic.vip', chId,
+        getImgHost(), chId,
         data.page_count || data.images?.length || 20,
         data.scramble_id,
+        data.images,
       );
       startReading(albumId || data.album_id, chId, chName, images);
       useHistoryStore.getState().add({

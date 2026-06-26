@@ -28,7 +28,7 @@ import { MoviesScreen, MoviePlayerScreen } from './src/screens/MoviesScreen';
 import { NovelsScreen, NovelDetailScreen, NovelReaderScreen } from './src/screens/NovelsScreen';
 import { BlogsScreen, BlogDetailScreen } from './src/screens/BlogsScreen';
 import { ForumScreen } from './src/screens/ForumScreen';
-import { GamesScreen } from './src/screens/GamesScreen';
+
 import { LibraryScreen } from './src/screens/LibraryScreen';
 import { MemberScreen } from './src/screens/MemberScreen';
 import { WeekRankScreen } from './src/screens/WeekRankScreen';
@@ -86,8 +86,8 @@ function HomeTabs() {
         options={{ tabBarLabel: t('nav.home'), tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} /> }} />
       <Tab.Screen name="Categories" component={CategoriesScreen}
         options={{ tabBarLabel: t('nav.categories'), tabBarIcon: ({ focused }) => <TabIcon name="window" focused={focused} /> }} />
-      <Tab.Screen name="Games" component={GamesScreen}
-        options={{ tabBarLabel: t('nav.game'), tabBarIcon: ({ focused }) => <TabIcon name="sports-esports" focused={focused} /> }} />
+      <Tab.Screen name="Search" component={SearchScreen}
+        options={{ tabBarLabel: t('nav.home'), tabBarIcon: ({ focused }) => <TabIcon name="search" focused={focused} /> }} />
       <Tab.Screen name="Movies" component={MoviesScreen}
         options={{ tabBarLabel: t('nav.movie'), tabBarIcon: ({ focused }) => <TabIcon name="video-library" focused={focused} /> }} />
       <Tab.Screen name="Forum" component={ForumScreen}
