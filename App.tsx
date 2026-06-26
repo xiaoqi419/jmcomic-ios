@@ -74,8 +74,7 @@ function HomeTabs() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: Platform.OS === 'web' ? Colors.tabBar : undefined,
-          backdropFilter: Platform.OS === 'web' ? undefined : 'blur(20px)',
-          // iOS 26 原生半透明玻璃效果
+          // iOS 26 原生半透明玻璃效果（backgroundColor=undefined 时自动生效）
           borderTopWidth: 0.5,
           borderTopColor: Colors.tabBarBorder,
           paddingBottom: insets.bottom || 8,
