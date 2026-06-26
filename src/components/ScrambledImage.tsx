@@ -101,7 +101,7 @@ function DescrambleRunner({ imageUrl, scrambleId, onResult, onLoad }: {
       <View style={[{flex:1,width:'100%'},style]}>
         <WebView
           source={{ html }}
-          style={{flex:1,opacity:0,height:0}}
+          style={{flex:1,height:1,position:'absolute',opacity:0}}
           onMessage={(e: any) => {
             if (e.nativeEvent.data !== 'ERR') onResult(e.nativeEvent.data);
             onLoad();
