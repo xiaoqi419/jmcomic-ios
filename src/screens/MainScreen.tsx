@@ -109,7 +109,7 @@ export function MainScreen() {
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {data.slice(0, 6).map((item) => (
                     <Pressable key={item.id} onPress={() => nav.navigate('ComicDetail', { albumId: item.id })} style={{ width: (W - 28 - 16) / 3 }}>
-                      <Image source={{ uri: `https://${getImgHost()}/media/albums/${item.id}_3x4.jpg` }} style={{ width: '100%', aspectRatio: 0.72, borderRadius: Radius.sm, backgroundColor: Colors.surfaceContainer }} contentFit="cover" />
+                      <Image source={{ uri: getCoverUrl(item.id) }} style={{ width: '100%', aspectRatio: 0.72, borderRadius: Radius.sm, backgroundColor: Colors.surfaceContainer }} contentFit="cover" />
                       <Text style={{ fontSize: FontSize.label, color: Colors.text, marginTop: 4 }} numberOfLines={2}>{item.name}</Text>
                     </Pressable>
                   ))}
@@ -125,7 +125,7 @@ export function MainScreen() {
           <ComicCard
             id={item.id}
             title={item.name}
-            coverUrl={`https://${getImgHost()}/media/albums/${item.id}_3x4.jpg`}
+            coverUrl={getCoverUrl(item.id)}
             onPress={(id) => nav.navigate('ComicDetail', { albumId: id })}
           />
         )}
@@ -138,7 +138,7 @@ export function MainScreen() {
 }
 
 import { Image } from 'expo-image';
-import { getImgHost } from '../api/endpoints';
+import { getCoverUrl } from '../api/endpoints';
 
 const { width: W } = Dimensions.get('window');
 
