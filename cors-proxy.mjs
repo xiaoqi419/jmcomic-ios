@@ -40,7 +40,7 @@ async function descrambleImage(imageBuffer, scrambleId, albumId) {
 
     for (let i = 0; i < gridSize; i++) {
       const srcY = h - stripH * (i + 1) - remainder;
-      const destY = stripH * i;
+      const destY = stripH * i + (i === 0 ? 0 : remainder);
       const currentH = stripH + (i === 0 ? remainder : 0);
       ctx.drawImage(img, 0, srcY, w, currentH, 0, destY, w, currentH);
     }
