@@ -16,8 +16,14 @@ const BROWSER_HEADERS = {
   'Accept-Language': 'zh-CN,zh;q=0.9',
 };
 
-// 硬编码兜底域名
-const FALLBACK_DOMAINS = ['18comic.vip', '18comic.co'];
+// 硬编码兜底域名（从 APK 提取的实际 API CDN）
+const FALLBACK_DOMAINS = [
+  'www.cdnhjk.net',
+  'www.cdngwc.cc',
+  'www.cdngwc.net',
+  'www.cdngwc.club',
+  'www.cdnutc.me',
+];
 
 export class ApiClient {
   private domainIdx = 0;

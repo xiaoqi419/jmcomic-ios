@@ -31,9 +31,12 @@ async function encryptedPost<T>(path: string, f?: Record<string, string | number
 // ===================== 配置 =====================
 
 export async function fetchSetting(): Promise<SettingData> {
+  // 尝试加密 API → 降级明文
+  try {
+    return await encryptedGet<SettingData>('/api/setting');
+  } catch {}
   const res = await apiClient.getWeb('/api/setting');
-  const json: ApiResponse<SettingData> = JSON.parse(res);
-  return json.data;
+  return JSON.parse(res).data;
 }
 
 // ===================== 首页 =====================
