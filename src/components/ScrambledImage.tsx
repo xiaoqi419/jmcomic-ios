@@ -1,94 +1,88 @@
-// ScrambledImage — WebView Canvas 解码
-// 仅在 EAS Build / Expo Go native 中使用
+// ScrambledImage — WebView Canvas 方式解码 scramble 图片
+// EAS Build (IPA) 可用，Expo Go 显示原始图片
 // @author nyx
 
-import React, { useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { WebView } from 'react-native-webview';
+import React, { useRef, useState } from 'react';
+import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { Image } from 'expo-image';
 
 interface Props {
   imageUrl: string;
   scrambleId: number;
-  albumId: string;
+  albumId?: string;
   style?: any;
+  onLoad?: () => void;
 }
 
-export function ScrambledImage({ imageUrl, scrambleId, albumId, style }: Props) {
-  const [decoded, setDecoded] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
-
-  // 默认 scrambleId 不处理
-  if (scrambleId === 0 || scrambleId === 220980) {
-    return <Image source={{ uri: imageUrl }} style={[{ flex: 1, width: '100%' }, style]} contentFit="contain" />;
-  }
-
-  if (failed) {
-    return <Image source={{ uri: imageUrl }} style={[{ flex: 1, width: '100%' }, style]} contentFit="contain" />;
-  }
-
-  if (decoded) {
-    return <Image source={{ uri: `data:image/webp;base64,${decoded}` }} style={[{ flex: 1, width: '100%' }, style]} contentFit="contain" />;
-  }
-
-  const html = `
+// Canvas 解码脚本
+const SCRAMBLE_HTML = `
 <!DOCTYPE html>
-<html><body>
+<html>
+<body>
 <script>
+(function(){
   var img = new Image();
   img.crossOrigin = "anonymous";
-  img.onload = function() {
+  img.onload = function(){
+    var c = document.createElement('canvas');
+    var ctx = c.getContext('2d');
     var w = img.naturalWidth, h = img.naturalHeight;
-    var canvas = document.createElement('canvas');
-    canvas.width = w; canvas.height = h;
-    var ctx = canvas.getContext('2d');
-
-    // 计算 grid size (简化版)
-    var sc = ${scrambleId}, aid = '${albumId}';
-    var combined = btoa(String(sc)) + btoa(aid);
-    var hash = 0;
-    for (var i = 0; i < combined.length; i++) { hash = ((hash << 5) - hash) + combined.charCodeAt(i); hash |= 0; }
-    var r = Math.abs(hash).toString(16).charCodeAt(0);
-    if (sc >= 268850 && sc <= 421925) r %= 10;
-    else if (sc >= 421926) r %= 8;
-    var gridMap = {0:2,1:4,2:6,3:8,4:10,5:12,6:14,7:16,8:18,9:20};
-    var n = gridMap[r] || 10;
-
-    var stripH = Math.floor(h / n), rem = h % n;
-    for (var c = 0; c < n; c++) {
-      var sy = h - stripH*(c+1) - (c===0?0:rem);
-      var dy = stripH * c;
-      var ch = stripH + (c===0?rem:0);
+    c.width = w; c.height = h;
+    var n = 10;
+    var sh = Math.floor(h / n);
+    var r = h % n;
+    for(var i=0; i<n; i++){
+      var sy = h - sh*(i+1) - (i===0?0:r);
+      var dy = sh * i;
+      var ch = sh + (i===0?r:0);
       ctx.drawImage(img, 0, sy, w, ch, 0, dy, w, ch);
     }
-    var b64 = canvas.toDataURL('image/webp', 0.85).split(',')[1];
-    window.ReactNativeWebView.postMessage(b64);
+    window.ReactNativeWebView.postMessage(c.toDataURL('image/jpeg',0.85));
   };
-  img.onerror = function() { window.ReactNativeWebView.postMessage('ERROR'); };
-  img.src = '${imageUrl}';
-</script>
-</body></html>
-`;
+  img.onerror = function(){ window.ReactNativeWebView.postMessage('ERR'); };
+  img.src = '__URL__';
+})();
+<\/script>
+</body>
+</html>`;
 
-  return (
-    <View style={[{ flex: 1, width: '100%' }, style]}>
-      {loading && (
-        <View style={{ position: 'absolute', inset: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
+export function ScrambledImage({ imageUrl, scrambleId, style, onLoad }: Props) {
+  const [decoded, setDecoded] = useState<string | null>(null);
+  const needsScramble = scrambleId !== 0 && scrambleId !== 220980;
+
+  // 不需要 scramble 或不是 EAS Build → 直接显示
+  if (!needsScramble || Platform.OS === 'web') {
+    return <Image source={{ uri: imageUrl }} style={[{ flex: 1, width: '100%' }, style]} contentFit="contain" onLoad={onLoad} />;
+  }
+
+  // iOS EAS Build: 用 WebView Canvas 解码
+  if (decoded) {
+    return <Image source={{ uri: decoded }} style={[{ flex: 1, width: '100%' }, style]} contentFit="contain" onLoad={onLoad} />;
+  }
+
+  // 用 WebView 执行 canvas 解码
+  const html = SCRAMBLE_HTML.replace('__URL__', imageUrl);
+  try {
+    const WebView = require('react-native-webview').WebView;
+    return (
+      <View style={[{ flex: 1, width: '100%' }, style]}>
+        <WebView
+          source={{ html }}
+          style={{ flex: 1, opacity: 0, height: 0 }}
+          onMessage={(e: any) => {
+            if (e.nativeEvent.data === 'ERR') { setDecoded(imageUrl); onLoad?.(); }
+            else { setDecoded(e.nativeEvent.data); onLoad?.(); }
+          }}
+          javaScriptEnabled
+          domStorageEnabled
+        />
+        <View style={StyleSheet.absoluteFill}>
           <ActivityIndicator size="small" color="#F59E0B" />
         </View>
-      )}
-      <WebView
-        source={{ html }}
-        style={{ flex: 1, opacity: 0, width: 1, height: 1 }}
-        javaScriptEnabled
-        originWhitelist={['*']}
-        onMessage={(e) => {
-          const data = e.nativeEvent.data;
-          if (data === 'ERROR') { setFailed(true); setLoading(false); }
-          else { setDecoded(data); setLoading(false); }
-        }}
-      />
-    </View>
-  );
+      </View>
+    );
+  } catch {
+    // WebView not available (Expo Go) → fallback to raw image
+    return <Image source={{ uri: imageUrl }} style={[{ flex: 1, width: '100%' }, style]} contentFit="contain" onLoad={onLoad} />;
+  }
 }

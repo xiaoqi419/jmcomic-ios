@@ -51,6 +51,13 @@ export function SearchScreen() {
   const doSearch = useCallback(async (q: string, p = 1, refresh = false) => {
     if (!q.trim()) return;
     setLoading(true);
+    // ID 直达：全数字直接跳详情
+    if (/^\d{4,}$/.test(q.trim())) {
+      setLoading(false);
+      setSearched(true);
+      nav.navigate('ComicDetail', { albumId: q.trim() });
+      return;
+    }
     try {
       const data = await searchComics({ search_query: q, page: p, o: sort });
       if (data.redirect_aid) {
@@ -64,7 +71,7 @@ export function SearchScreen() {
       }));
       if (refresh || p === 1) setResults(items);
       else setResults((prev) => [...prev, ...items]);
-      setTotal(parseInt(data.total) || items.length);
+      setTotal(parseInt(String(String(data.total))) || items.length);
       setHasMore(items.length >= 80);
       setSearched(true);
       // 存历史
