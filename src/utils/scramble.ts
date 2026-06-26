@@ -25,6 +25,13 @@ export function needsScramble(scrambleId: number): boolean {
   return scrambleId !== 0 && scrambleId !== 220980;
 }
 
+function proxyImg(u: string): string {
+  if (typeof navigator !== 'undefined' && navigator.product !== 'ReactNative' && typeof window !== 'undefined') {
+    return 'http://localhost:3456/' + u.replace('https://', '').replace('http://', '');
+  }
+  return u;
+}
+
 export function buildChapterImageUrls(
   host: string,
   chapterId: string,
@@ -33,13 +40,13 @@ export function buildChapterImageUrls(
   images?: { page: number; image: string }[],
 ): string[] {
   if (images?.length) {
-    return images.map((item) => item.image + "?sc=" + scrambleId + "&aid=" + chapterId);
+    return images.map((item) => proxyImg(item.image + "?sc=" + scrambleId + "&aid=" + chapterId));
   }
   const urls: string[] = [];
   for (let i = 1; i <= pageCount; i++) {
     let url = "https://" + host + "/media/photos/" + chapterId + "/" + String(i).padStart(5, "0") + ".webp";
     url += "?sc=" + scrambleId + "&aid=" + chapterId;
-    urls.push(url);
+    urls.push(proxyImg(url));
   }
   return urls;
 }
