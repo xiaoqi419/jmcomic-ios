@@ -96,8 +96,11 @@ export interface SearchData {
 
 // ===== 分类列表 =====
 export interface MoreListData {
-  total: string;
-  list: ComicItem[];
+  total: string | number;
+  list?: ComicItem[];
+  content?: ComicItem[];
+  search_query?: string;
+  tags?: string[];
 }
 
 // ===== 漫画详情 =====
@@ -109,17 +112,24 @@ export interface AlbumDetail {
   actors: string[];
   works: string[];
   image: string;
+  images?: string[];
   description: string;
-  view: number;
-  like: number;
-  comment_count: number;
+  total_views: string | number;
+  likes: string | number;
+  comment_total: string | number;
   addtime: string;
-  update_at: string;
+  update_at?: string;
   purchased?: string;
   bought?: boolean;
+  liked?: boolean;
+  is_favorite?: boolean;
+  related_list?: ComicItem[];
+  price?: string;
   series: Episode[];
-  page_count: number;
-  scramble_id: number;
+  series_id?: number;
+  page_count?: number;
+  scramble_id?: number;
+  real_link?: string;
 }
 
 export interface Episode {

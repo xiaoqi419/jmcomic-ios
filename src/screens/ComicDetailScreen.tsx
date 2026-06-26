@@ -220,9 +220,9 @@ export function ComicDetailScreen() {
         {tab === 1 && (
           <View style={{ paddingHorizontal: Spacing.marginEdge, paddingTop: Spacing.md }}>
             <View style={{ flexDirection: 'row', gap: 16, marginBottom: 8 }}>
-              <Text style={styles.stat}>👁 {fmt(detail.view)}</Text>
-              <Text style={styles.stat}>❤ {fmt(detail.like)}</Text>
-              <Text style={styles.stat}>💬 {fmt(detail.comment_count)}</Text>
+              <Text style={styles.stat}>👁 {fmt(detail.total_views)}</Text>
+              <Text style={styles.stat}>❤ {fmt(detail.likes)}</Text>
+              <Text style={styles.stat}>💬 {fmt(detail.comment_total)}</Text>
             </View>
             {detail.tags?.length > 0 && (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>

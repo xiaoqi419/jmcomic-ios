@@ -8,7 +8,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { Colors, Spacing, FontSize, Radius } from '../theme';
 import { ComicCard } from '../components/ComicCard';
-import { fetchLatest, getCoverUrl as getCover } from '../api/endpoints';
+import { fetchCategoriesFilter, getCoverUrl as getCover } from '../api/endpoints';
 import type { ComicItem } from '../api/types';
 
 const SORTS = [
@@ -41,10 +41,11 @@ export function CategoriesScreen() {
 
   const load = useCallback(async (p: number, refresh = false) => {
     try {
-      const items = await fetchLatest(p);
-      if (refresh || p === 1) setList(items || []);
-      else setList((prev) => [...prev, ...(items || [])]);
-      setHasMore((items || []).length >= 30);
+      const data = await fetchCategoriesFilter({ page: p, o: sort });
+      const items = data.content || data.list || [];
+      if (refresh || p === 1) setList(items);
+      else setList((prev) => [...prev, ...items]);
+      setHasMore(items.length >= 30);
     } catch {}
   }, [slug, sort]);
 
