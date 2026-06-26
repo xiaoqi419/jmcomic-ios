@@ -84,7 +84,7 @@ export function ReaderScreen() {
   const totalPages = imageUrls.length;
 
   // 找到当前章节在列表中的下标
-  const currentEpIdx = episodes.findIndex((ep) => ep.id === chapterId);
+  const currentEpIdx = episodes.findIndex((ep) => ep.id === (useReaderStore.getState().chapterId || chapterId));
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
