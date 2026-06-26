@@ -67,6 +67,8 @@ export function ReaderScreen() {
         page: 0,
         readAt: Date.now(),
       });
+      // 切换章节后滚回顶部
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
     } catch {}
     setLoading(false);
   };
@@ -112,7 +114,7 @@ export function ReaderScreen() {
               <Image
                 key={i}
                 source={{ uri: url }}
-                style={{ width: W, minHeight: H }}
+                style={{ width: W, height: H }}
                 contentFit="contain"
                 transition={200}
               />
