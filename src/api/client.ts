@@ -81,8 +81,8 @@ export class ApiClient {
     // 路径以 / 开头则直接拼接，否则加 /
     const sep = path.startsWith('/') ? '' : '/';
     let url = `https://${domain}${sep}${path}`;
-    // Web 环境走本地 CORS 代理（绕过 Cloudflare 封锁）
-    if (typeof window !== 'undefined') {
+    // Web 环境走本地 CORS 代理（RN 中 window 也存在，需用 Platform）
+    if (typeof navigator !== 'undefined' && navigator.product !== 'ReactNative') {
       url = `http://localhost:3456/${domain}/${path}`;
     }
     if (config.query) {

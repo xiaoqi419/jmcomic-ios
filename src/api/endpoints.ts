@@ -199,7 +199,8 @@ export function getMainHost(): string { return apiClient.getMainHost(); }
 
 /** Web 环境图片走代理，iOS 原生直接请求 */
 function proxyUrl(url: string): string {
-  if (typeof window === 'undefined') return url;
+  // 只在浏览器 web 环境走代理，RN/iOS 直连
+  if (typeof navigator === 'undefined' || navigator.product === 'ReactNative') return url;
   // localhost:3456/{host}{path}
   const match = url.match(/https:\/\/([^/]+)(\/.*)/);
   if (match) return `http://localhost:3456/${match[1]}${match[2]}`;

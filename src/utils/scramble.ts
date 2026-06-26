@@ -26,7 +26,8 @@ export function needsScramble(scrambleId: number): boolean {
 }
 
 function proxyImgUrl(url: string): string {
-  if (typeof window === 'undefined') return url;
+  // 只在浏览器 web 环境走代理
+  if (typeof navigator === 'undefined' || navigator.product === 'ReactNative') return url;
   const m = url.match(/https:\/\/([^/]+)(\/.*)/);
   return m ? `http://localhost:3456/${m[1]}${m[2]}` : url;
 }
