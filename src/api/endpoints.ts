@@ -206,9 +206,9 @@ export function getMainHost(): string { return apiClient.getMainHost(); }
 
 /** Web 环境图片走代理，iOS 原生直接请求 */
 function proxyImage(u: string): string {
-  // Web: route through descramble proxy
+  // Web: route through Python descramble proxy
   if (typeof navigator !== 'undefined' && navigator.product !== 'ReactNative') {
-    return 'http://localhost:3456/' + u.replace('https://', '').replace('http://', '');
+    return 'http://localhost:8765/?url=' + encodeURIComponent(u);
   }
   return u;
 }
