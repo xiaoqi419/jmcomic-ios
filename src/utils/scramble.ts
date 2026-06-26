@@ -42,7 +42,13 @@ export function buildChapterImageUrls(
   chapterId: string,
   pageCount: number,
   scrambleId: number,
+  images?: { page: number; image: string }[],
 ): string[] {
+  // API 返回 images = [{page:1, image:"完整URL"}], 优先用 image 字段
+  if (images?.length) {
+    return images.map((item) => proxyImgUrl(item.image + (needsScramble(scrambleId) ? `?scramble=${scrambleId}` : '')));
+  }
+  // fallback
   const urls: string[] = [];
   for (let i = 1; i <= pageCount; i++) {
     let url = `https://${host}/media/photos/${chapterId}/${String(i).padStart(5, '0')}.webp`;

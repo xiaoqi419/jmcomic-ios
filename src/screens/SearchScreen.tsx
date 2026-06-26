@@ -36,7 +36,7 @@ export function SearchScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [sort, setSort] = useState('tf');
   const [history, setHistory] = useState<string[]>([]);
-  const [hotTags, setHotTags] = useState<{ name: string; value: string }[]>([]);
+  const [hotTags, setHotTags] = useState<string[]>([]);
   const [recommend, setRecommend] = useState<ComicItem[]>([]);
 
   // 加载历史、热标签、推荐
@@ -151,11 +151,11 @@ export function SearchScreen() {
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                       {hotTags.slice(0, 15).map((tag) => (
                         <Pressable
-                          key={tag.value || tag.name}
-                          onPress={() => { setQuery(tag.name); setTimeout(onSearch, 100); }}
+                          key={tag}
+                          onPress={() => { setQuery(tag); setTimeout(onSearch, 100); }}
                           style={styles.tag}
                         >
-                          <Text style={styles.tagText}>{tag.name}</Text>
+                          <Text style={styles.tagText}>{tag}</Text>
                         </Pressable>
                       ))}
                     </View>

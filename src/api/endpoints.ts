@@ -55,8 +55,8 @@ export async function searchComics(params: { search_query: string; page?: number
   return encryptedGet<SearchData>('search', { search_query: params.search_query, page: params.page || 1, o: params.o || 'tf' });
 }
 
-export async function fetchHotTags(): Promise<{ name: string; value: string }[]> {
-  return encryptedGet('hot_tags');
+export async function fetchHotTags(): Promise<string[]> {
+  return encryptedGet<string[]>('hot_tags');
 }
 
 export async function fetchRandomRecommend(): Promise<ComicItem[]> {
