@@ -88,6 +88,12 @@ export function generateScrambleScript(
 /**
  * 构建章节图片 URL 列表
  */
+function proxyImgUrl(url: string): string {
+  if (typeof window === 'undefined') return url;
+  const match = url.match(/https:\/\/([^/]+)(\/.*)/);
+  return match ? `http://localhost:3456/${match[1]}${match[2]}` : url;
+}
+
 export function buildChapterImageUrls(
   host: string,
   chapterId: string,
@@ -97,7 +103,7 @@ export function buildChapterImageUrls(
   const urls: string[] = [];
   for (let i = 1; i <= pageCount; i++) {
     const url = `https://${host}/media/photos/${chapterId}/${String(i).padStart(5, '0')}.jpg`;
-    urls.push(needsScramble(scrambleId) ? `${url}?scramble=${scrambleId}` : url);
+    urls.push(proxyImgUrl(needsScramble(scrambleId) ? `${url}?scramble=${scrambleId}` : url));
   }
   return urls;
 }
