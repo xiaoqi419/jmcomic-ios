@@ -1,5 +1,5 @@
-// 阅读历史 — 本地存储
-// @author Jason
+// 阅读历史
+// @author nyx
 
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,9 +16,9 @@ export interface HistoryItem {
 
 interface HistoryState {
   items: HistoryItem[];
-  addHistory: (item: HistoryItem) => Promise<void>;
-  clearHistory: () => Promise<void>;
-  loadHistory: () => Promise<void>;
+  add: (item: HistoryItem) => Promise<void>;
+  clear: () => Promise<void>;
+  load: () => Promise<void>;
 }
 
 const KEY = '@jmcomic.history';
@@ -26,23 +26,20 @@ const KEY = '@jmcomic.history';
 export const useHistoryStore = create<HistoryState>((set, get) => ({
   items: [],
 
-  addHistory: async (item) => {
-    let items = [...get().items];
-    // 去重
-    items = items.filter(i => i.id !== item.id);
+  add: async (item) => {
+    let items = get().items.filter((i) => i.id !== item.id);
     items.unshift(item);
-    // 最多保留 50 条
-    if (items.length > 50) items = items.slice(0, 50);
+    if (items.length > 100) items = items.slice(0, 100);
     set({ items });
     await AsyncStorage.setItem(KEY, JSON.stringify(items));
   },
 
-  clearHistory: async () => {
+  clear: async () => {
     set({ items: [] });
     await AsyncStorage.removeItem(KEY);
   },
 
-  loadHistory: async () => {
+  load: async () => {
     try {
       const json = await AsyncStorage.getItem(KEY);
       if (json) set({ items: JSON.parse(json) });

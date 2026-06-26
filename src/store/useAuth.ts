@@ -1,8 +1,9 @@
-// 用户认证存储 — 统一管理登录状态
-// @author Jason
+// 用户认证存储
+// @author nyx
 
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiClient } from '../api/client';
 
 interface AuthState {
   username: string;
@@ -15,7 +16,7 @@ interface AuthState {
   load: () => Promise<void>;
 }
 
-const AUTH_KEY = '@jmcomic.auth';
+const KEY = '@jmcomic.auth';
 
 export const useAuthStore = create<AuthState>((set) => ({
   username: '',
@@ -25,23 +26,26 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (username, avs, photo) => {
     set({ username, avs, photo, loggedIn: true });
-    await AsyncStorage.setItem(AUTH_KEY, JSON.stringify({ username, avs, photo }));
+    apiClient.setAvs(avs);
+    await AsyncStorage.setItem(KEY, JSON.stringify({ username, avs, photo }));
   },
 
   logout: async () => {
     set({ username: '', avs: '', photo: '', loggedIn: false });
-    await AsyncStorage.removeItem(AUTH_KEY);
+    apiClient.setAvs('');
+    await AsyncStorage.removeItem(KEY);
   },
 
   load: async () => {
     try {
-      const json = await AsyncStorage.getItem(AUTH_KEY);
+      const json = await AsyncStorage.getItem(KEY);
       if (json) {
-        const data = JSON.parse(json);
-        set({ username: data.username || '', avs: data.avs || '', photo: data.photo || '', loggedIn: !!data.avs });
+        const d = JSON.parse(json);
+        if (d.avs) {
+          apiClient.setAvs(d.avs);
+          set({ username: d.username || '', avs: d.avs, photo: d.photo || '', loggedIn: true });
+        }
       }
     } catch {}
   },
 }));
-
-export { AUTH_KEY };

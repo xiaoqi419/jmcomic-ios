@@ -13,3 +13,7 @@ _tmp/
 qrcode.png
 *.html
 .expo-session
+apk_src/
+apk_unpacked/
+apk_web/
+expo-url.txt

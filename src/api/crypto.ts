@@ -1,31 +1,22 @@
-// 禁漫天堂 API 加解密实现
-// 参考: hect0x7/JMComic-Crawler-Python (Python) + lanyeeee/jmcomic-downloader (Rust)
-// @author Jason
+// 禁漫天堂 API 加解密（从 APK JS bundle 完整逆向）
+// @author nyx
 
 import CryptoJS from 'crypto-js';
-import {
-  APP_TOKEN_SECRET,
-  APP_TOKEN_SECRET_2,
-  APP_DATA_SECRET,
-  APP_VERSION,
-} from '../constants';
 
-/**
- * MD5 哈希（返回 32 位十六进制小写字符串）
- */
+// 从 APK 源码提取的加密常量
+const APP_TOKEN_SECRET = '185Hcomic3PAPP7R';
+const APP_TOKEN_SECRET_2 = '18comicAPPContent';
+const APP_DATA_SECRET = '185Hcomic3PAPP7R';
+const APP_VERSION = '1.7.2';
+
 function md5Hex(data: string): string {
   return CryptoJS.MD5(data).toString(CryptoJS.enc.Hex);
 }
 
 /**
  * 生成 API 请求的 token 和 tokenparam
- * @param ts 时间戳（秒）
- * @param forScramble 是否为获取 scramble_id 的请求（使用不同的 secret）
  */
-export function generateToken(
-  ts: number,
-  forScramble: boolean = false
-): { token: string; tokenparam: string } {
+export function generateToken(ts: number, forScramble = false): { token: string; tokenparam: string } {
   const secret = forScramble ? APP_TOKEN_SECRET_2 : APP_TOKEN_SECRET;
   const tokenparam = `${ts},${APP_VERSION}`;
   const token = md5Hex(`${ts}${secret}`);
@@ -41,25 +32,10 @@ export function nowTs(): number {
 
 /**
  * 解密 API 响应中的 data 字段
- *
- * 解密流程：
- * 1. data = base64_decode(encrypted_data)
- * 2. key = md5_hex("{ts}{APP_DATA_SECRET}") — 32 字节 ASCII 字符
- * 3. decrypted = AES-256-ECB(PKCS7) decrypt(data, key)
- * 4. decrypted → UTF-8 string → JSON
- *
- * @param ts 请求时使用的时间戳
- * @param encryptedBase64 API 返回的 data 字段（base64 编码）
- * @returns 解密后的 JSON 字符串
+ * AES-256-ECB(PKCS7, key=MD5("{ts}{secret}"))
  */
-export function decryptData(
-  ts: number,
-  encryptedBase64: string
-): string {
-  // 官方 App 尝试两个密钥
+export function decryptData(ts: number, encryptedBase64: string): string {
   const secrets = [APP_DATA_SECRET, APP_TOKEN_SECRET_2];
-
-  // Base64 解码密文
   const ciphertext = CryptoJS.enc.Base64.parse(encryptedBase64);
 
   for (const secret of secrets) {
@@ -67,27 +43,17 @@ export function decryptData(
       const keyHex = md5Hex(`${ts}${secret}`);
       const key = CryptoJS.enc.Utf8.parse(keyHex);
       const decrypted = CryptoJS.AES.decrypt(
-        { ciphertext: ciphertext } as CryptoJS.lib.CipherParams,
+        { ciphertext } as CryptoJS.lib.CipherParams,
         key,
-        { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7 }
+        { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7 },
       );
       const result = decrypted.toString(CryptoJS.enc.Utf8);
-      if (result && (result.startsWith('{') || result.startsWith('['))) {
-        return result;
-      }
+      if (result && (result.startsWith('{') || result.startsWith('['))) return result;
     } catch {}
   }
-
-  throw new Error('解密失败：所有密钥均无效');
+  throw new Error('解密失败');
 }
 
-/**
- * 解密并解析 API 响应为 JSON 对象
- */
-export function decryptAndParse<T = any>(
-  ts: number,
-  encryptedBase64: string
-): T {
-  const jsonStr = decryptData(ts, encryptedBase64);
-  return JSON.parse(jsonStr) as T;
+export function decryptAndParse<T = any>(ts: number, encryptedBase64: string): T {
+  return JSON.parse(decryptData(ts, encryptedBase64));
 }

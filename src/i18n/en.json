@@ -1,0 +1,158 @@
+{
+  "nav": {
+    "home": "Home",
+    "categories": "Categories",
+    "game": "Games",
+    "movie": "Movies",
+    "forum": "Forum",
+    "member": "Profile"
+  },
+  "banner": {
+    "latest": "Latest",
+    "hot_ranking": "Hot Ranking",
+    "hanman": "Korean",
+    "single_book": "Single Vol.",
+    "novels": "Novels",
+    "games": "Games",
+    "movies": "Movies",
+    "library": "Library"
+  },
+  "home": {
+    "new_update": "Latest Updates",
+    "pull_to_load": "Pull to load more",
+    "no_more": "No more content",
+    "loading": "Loading..."
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search comics, IDs...",
+    "hot_tags": "Hot Tags",
+    "history": "Search History",
+    "clear_history": "Clear",
+    "no_result": "No results found",
+    "mode_comic": "Comics",
+    "mode_movie": "Movies",
+    "mode_video": "Videos",
+    "sort_tf": "Latest",
+    "sort_mv": "Most Viewed",
+    "sort_mp": "Most Images",
+    "sort_mr": "Most Favorited"
+  },
+  "detail": {
+    "menu_items": ["Info", "Chapters", "Comments"],
+    "start_reading": "Start Reading",
+    "continue_reading": "Continue Reading",
+    "author": "Author",
+    "tags": "Tags",
+    "views": "Views",
+    "likes": "Likes",
+    "comments": "Comments",
+    "update_at": "Updated",
+    "no_chapter": "No chapters",
+    "buy": "Buy Uncensored",
+    "buy_confirm": "Spend coins to unlock the uncensored version?",
+    "purchased": "Purchased",
+    "share": "Share",
+    "read_rules": ["Vertical Scroll", "Horizontal Flip"]
+  },
+  "reader": {
+    "page_progress": "%{current}/%{total}",
+    "chapter": "Chapter",
+    "prev_chapter": "Prev",
+    "next_chapter": "Next",
+    "switch_mode": "Switch Mode",
+    "volume_hint": "Use volume keys to turn pages"
+  },
+  "member": {
+    "login": "Login",
+    "register": "Register",
+    "forgot": "Forgot Password",
+    "logout": "Logout",
+    "welcome": "Welcome back",
+    "coin": "Coins",
+    "point": "Points",
+    "exp": "EXP",
+    "level": "Level",
+    "sign_in": "Daily Check-in",
+    "signed": "Checked in",
+    "sign_days": "%{days} day streak",
+    "achievements": "Achievements",
+    "notifications": "Notifications",
+    "my_comments": "My Comments",
+    "my_favorites": "My Favorites",
+    "settings": "Settings",
+    "reading_mode": "Reading Mode",
+    "scroll": "Scroll",
+    "page": "Page",
+    "language": "Language",
+    "about": "About",
+    "version": "Version"
+  },
+  "common": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "error": "Failed to load",
+    "retry": "Retry",
+    "empty": "No data",
+    "favorite": "Favorite",
+    "unfavorite": "Unfavorite",
+    "comment_placeholder": "Say something...",
+    "send": "Send",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "folder": "Folder",
+    "create": "Create",
+    "all": "All",
+    "no_more": "No more"
+  },
+  "week": {
+    "title": "Weekly Pick",
+    "all": "All"
+  },
+  "library": {
+    "title": "Library",
+    "by_creator": "By Creator",
+    "by_category": "By Category",
+    "empty": "No favorites yet",
+    "total": "%{n} items"
+  },
+  "forum": {
+    "title": "Forum",
+    "reply": "Reply",
+    "post": "New Post"
+  },
+  "movies": {
+    "title": "Movies",
+    "play": "Play",
+    "related": "Related",
+    "duration": "Duration",
+    "views": "Views"
+  },
+  "novels": {
+    "title": "Novels",
+    "chapters": "Chapters",
+    "reading": "Reading Progress",
+    "prev": "Previous",
+    "next": "Next"
+  },
+  "games": {
+    "title": "Games",
+    "hot": "Hot Games",
+    "all": "All Games",
+    "play": "Play"
+  },
+  "blogs": {
+    "title": "Blogs",
+    "related_comics": "Related Comics",
+    "related_blogs": "Related Posts"
+  },
+  "error": {
+    "network": "Network error",
+    "server": "Server error",
+    "unknown": "Unknown error",
+    "login_required": "Please login first"
+  }
+}

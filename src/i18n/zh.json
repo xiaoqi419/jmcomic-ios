@@ -1,0 +1,158 @@
+{
+  "nav": {
+    "home": "首頁",
+    "categories": "分類",
+    "game": "遊戲",
+    "movie": "影視",
+    "forum": "論壇",
+    "member": "我的"
+  },
+  "banner": {
+    "latest": "最新",
+    "hot_ranking": "熱門排行",
+    "hanman": "韓漫",
+    "single_book": "單行本",
+    "novels": "小說",
+    "games": "遊戲",
+    "movies": "影視",
+    "library": "收藏庫"
+  },
+  "home": {
+    "new_update": "最新更新",
+    "pull_to_load": "上拉加载更多",
+    "no_more": "沒有更多了",
+    "loading": "加载中..."
+  },
+  "search": {
+    "title": "搜索",
+    "placeholder": "搜索漫画、车号...",
+    "hot_tags": "热门搜索",
+    "history": "搜索历史",
+    "clear_history": "清空",
+    "no_result": "未找到相关结果",
+    "mode_comic": "成人A漫",
+    "mode_movie": "小電影",
+    "mode_video": "小視頻",
+    "sort_tf": "最新",
+    "sort_mv": "最多觀看",
+    "sort_mp": "最多圖片",
+    "sort_mr": "最多收藏"
+  },
+  "detail": {
+    "menu_items": ["简介", "章节", "评论"],
+    "start_reading": "開始閱讀",
+    "continue_reading": "繼續閱讀",
+    "author": "作者",
+    "tags": "標籤",
+    "views": "觀看",
+    "likes": "點讚",
+    "comments": "評論",
+    "update_at": "更新於",
+    "no_chapter": "暫無章節",
+    "buy": "購買去碼",
+    "buy_confirm": "確定花費金幣購買去碼版本？",
+    "purchased": "已購買",
+    "share": "分享",
+    "read_rules": ["竖屏滚动", "横屏翻页"]
+  },
+  "reader": {
+    "page_progress": "%{current}/%{total}",
+    "chapter": "章節",
+    "prev_chapter": "上一章",
+    "next_chapter": "下一章",
+    "switch_mode": "切換模式",
+    "volume_hint": "可使用音量鍵翻頁"
+  },
+  "member": {
+    "login": "登錄",
+    "register": "註冊",
+    "forgot": "忘記密碼",
+    "logout": "退出登录",
+    "welcome": "歡迎回來",
+    "coin": "金幣",
+    "point": "積分",
+    "exp": "經驗",
+    "level": "等級",
+    "sign_in": "每日簽到",
+    "signed": "已簽到",
+    "sign_days": "已連續簽到 %{days} 天",
+    "achievements": "成就",
+    "notifications": "通知",
+    "my_comments": "我的評論",
+    "my_favorites": "我的收藏",
+    "settings": "設置",
+    "reading_mode": "閱讀模式",
+    "scroll": "滚动",
+    "page": "翻页",
+    "language": "語言",
+    "about": "關於",
+    "version": "版本"
+  },
+  "common": {
+    "back": "返回",
+    "cancel": "取消",
+    "confirm": "確定",
+    "loading": "加载中...",
+    "error": "加载失败",
+    "retry": "重试",
+    "empty": "暫無數據",
+    "favorite": "收藏",
+    "unfavorite": "取消收藏",
+    "comment_placeholder": "說點什麼...",
+    "send": "發送",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "folder": "文件夹",
+    "create": "创建",
+    "all": "全部",
+    "no_more": "沒有更多了"
+  },
+  "week": {
+    "title": "每周必看",
+    "all": "全部"
+  },
+  "library": {
+    "title": "收藏庫",
+    "by_creator": "按作者",
+    "by_category": "按分類",
+    "empty": "還沒有收藏",
+    "total": "共 %{n} 部"
+  },
+  "forum": {
+    "title": "論壇",
+    "reply": "回覆",
+    "post": "發帖"
+  },
+  "movies": {
+    "title": "影視",
+    "play": "播放",
+    "related": "相關影片",
+    "duration": "時長",
+    "views": "觀看"
+  },
+  "novels": {
+    "title": "小說",
+    "chapters": "章節",
+    "reading": "閱讀進度",
+    "prev": "上一章",
+    "next": "下一章"
+  },
+  "games": {
+    "title": "遊戲",
+    "hot": "熱門遊戲",
+    "all": "全部遊戲",
+    "play": "開始遊戲"
+  },
+  "blogs": {
+    "title": "博客",
+    "related_comics": "相關漫畫",
+    "related_blogs": "相關文章"
+  },
+  "error": {
+    "network": "網絡錯誤",
+    "server": "服務器錯誤",
+    "unknown": "未知錯誤",
+    "login_required": "請先登錄"
+  }
+}
