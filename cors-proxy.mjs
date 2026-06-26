@@ -11,14 +11,20 @@ setGlobalDispatcher(new ProxyAgent('http://127.0.0.1:7897'));
 
 // Scramble descramble: 图像分割成 N 条水平带 → 反转顺序重组
 function calcGridSize(aid, filename, scrambleId) {
-  const aidNum = parseInt(aid) || 0;
-  if (aidNum < scrambleId) return 0;
-  if (aidNum < 268850) return 10;
-  const x = aidNum < 421926 ? 10 : 8;
-  const s = aid + filename;
+  // 原版 APK 算法: MD5(aid + scramble_id) → switch → gridSize
+  // (aid 是章节 ID, 如 287529)
+  const s = String(aid) + String(scrambleId);
   const hash = crypto.createHash('md5').update(s).digest('hex');
-  const num = (hash.charCodeAt(hash.length - 1) % x) * 2 + 2;
-  return num;
+  let r = hash.charCodeAt(hash.length - 1);
+  
+  if (scrambleId >= 268850 && scrambleId <= 421925) {
+    r %= 10;
+  } else if (scrambleId >= 421926) {
+    r %= 8;
+  }
+  
+  const gridMap = {0:2,1:4,2:6,3:8,4:10,5:12,6:14,7:16,8:18,9:20};
+  return gridMap[r] || 10;
 }
 
 async function descrambleImage(imageBuffer, albumId, filename, scrambleId) {

@@ -2,20 +2,21 @@
 // 网格数 = MD5(aid + 文件名) → 末位 charCode % x → * 2 + 2
 // @author nyx
 
-/** 计算网格数 (0=不需要解码) */
+/** 计算网格数 (原版 APK 算法) */
 export function calcGridSize(aid: string, filename: string, scrambleId: number): number {
-  const aidNum = parseInt(aid) || 0;
-  // aid < scramble_id → 无需解码
-  if (aidNum < scrambleId) return 0;
-  // aid < 268850 → 固定 10
-  if (aidNum < 268850) return 10;
-  // aid >= 268850 → MD5 计算
-  const x = aidNum < 421926 ? 10 : 8;
-  const s = aid + filename;
+  // MD5(aid + scrambleId) → switch → gridSize
+  const s = String(aid) + String(scrambleId);
   const hash = md5Simple(s);
-  const lastChar = hash[hash.length - 1];
-  const num = (lastChar.charCodeAt(0) % x) * 2 + 2;
-  return num;
+  let r = hash.charCodeAt(hash.length - 1);
+  
+  if (scrambleId >= 268850 && scrambleId <= 421925) {
+    r %= 10;
+  } else if (scrambleId >= 421926) {
+    r %= 8;
+  }
+  
+  const gridMap: Record<number, number> = {0:2,1:4,2:6,3:8,4:10,5:12,6:14,7:16,8:18,9:20};
+  return gridMap[r] || 10;
 }
 
 /** 简易 MD5 哈希 */
