@@ -79,6 +79,10 @@ export class ApiClient {
     // 优先用 mainHost（从 /api/setting 获取），否则用 fallback 域名轮询
     const domain = this.mainHost || this.domains[this.domainIdx % this.domains.length];
     let url = `https://${domain}${path}`;
+    // Web 环境走本地 CORS 代理（绕过 Cloudflare 封锁）
+    if (typeof window !== 'undefined') {
+      url = `http://localhost:3456/${domain}${path}`;
+    }
     if (config.query) {
       const p = new URLSearchParams();
       Object.entries(config.query).forEach(([k, v]) => p.append(k, String(v)));
