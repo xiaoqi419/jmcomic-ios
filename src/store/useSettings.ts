@@ -71,7 +71,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       img_host: data.img_host,
     }));
 
-    // 不更新 apiClient 的域名（CDN 域名用硬编码兜底，setting 的域名可能不可用）
+    // 用 setting 返回的 img_host（可能是代理重写后的域名如 jmdanjonproxy.vip）
+    // 注意去掉可能的协议前缀
+    const cleanHost = (data.img_host || '').replace(/^https?:\/\//, '');
+    if (cleanHost) apiClient.setImgHost(cleanHost);
 
     // 如果有被选中 shunt，使用它的域名
     const { selectedShuntKey } = get();
