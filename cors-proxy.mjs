@@ -4,34 +4,29 @@
 import http from 'http';
 import { setGlobalDispatcher, ProxyAgent } from 'undici';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
+import * as crypto from 'crypto';
 
 const PORT = 3456;
 setGlobalDispatcher(new ProxyAgent('http://127.0.0.1:7897'));
 
 // Scramble descramble: 图像分割成 N 条水平带 → 反转顺序重组
-function calcGridSize(scrambleId, albumId) {
-  const b64s = Buffer.from(String(scrambleId)).toString('base64');
-  const b64a = Buffer.from(albumId || '0').toString('base64');
-  const combined = b64s + b64a;
-  let hash = 0;
-  for (let i = 0; i < combined.length; i++) {
-    hash = ((hash << 5) - hash) + combined.charCodeAt(i);
-    hash |= 0;
-  }
-  const hex = Math.abs(hash).toString(16);
-  let r = hex.charCodeAt(hex.length - 1);
-  if (scrambleId >= 268850 && scrambleId <= 421925) r %= 10;
-  else if (scrambleId >= 421926) r %= 8;
-  const gridMap = { 0: 2, 1: 4, 2: 6, 3: 8, 4: 10, 5: 12, 6: 14, 7: 16, 8: 18, 9: 20 };
-  return gridMap[r] || 10;
+function calcGridSize(aid, filename, scrambleId) {
+  const aidNum = parseInt(aid) || 0;
+  if (aidNum < scrambleId) return 0;
+  if (aidNum < 268850) return 10;
+  const x = aidNum < 421926 ? 10 : 8;
+  const s = aid + filename;
+  const hash = crypto.createHash('md5').update(s).digest('hex');
+  const num = (hash.charCodeAt(hash.length - 1) % x) * 2 + 2;
+  return num;
 }
 
-async function descrambleImage(imageBuffer, scrambleId, albumId) {
+async function descrambleImage(imageBuffer, albumId, filename, scrambleId) {
   // 始终解码（CDN 对所有图片都做了 scramble）
 
   try {
     const img = await loadImage(imageBuffer);
-    const gridSize = calcGridSize(scrambleId, albumId);
+    const gridSize = calcGridSize(albumId, filename, scrambleId);
     const w = img.width, h = img.height;
     const canvas = createCanvas(w, h);
     const ctx = canvas.getContext('2d');
@@ -76,6 +71,7 @@ http.createServer(async (req, res) => {
   const isImage = restPath.match(/\.(webp|jpg|jpeg|png)$/i);
   const sc = parseInt(params.sc) || 0;
   const aid = params.aid || '0';
+  const fn = params.fn || '';
 
   try {
     const headers = {
@@ -102,7 +98,7 @@ http.createServer(async (req, res) => {
     if (isImage) {
       try {
         console.log(`[descramble] ${restPath} sc=${sc} aid=${aid}`);
-        respBody = await descrambleImage(respBody, sc, aid);
+        respBody = await descrambleImage(respBody, aid, fn, sc);
       } catch (e) {
         console.error(`[descramble FAIL] ${restPath}: ${e.message}`);
         // 解码失败返回原图
