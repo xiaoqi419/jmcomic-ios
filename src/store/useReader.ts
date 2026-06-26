@@ -9,10 +9,11 @@ interface ReaderState {
   chapterTitle: string;
   imageUrls: string[];
   currentPage: number;
+  scrambleId: number;
   direction: 'ltr' | 'rtl';
   isVertical: boolean;
 
-  startReading: (albumId: string, chapterId: string, chapterTitle: string, images: string[]) => void;
+  startReading: (albumId: string, chapterId: string, chapterTitle: string, images: string[], scrambleId?: number) => void;
   setPage: (p: number) => void;
   nextPage: () => void;
   prevPage: () => void;
@@ -25,12 +26,13 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
   chapterId: '',
   chapterTitle: '',
   imageUrls: [],
+  scrambleId: 0,
   currentPage: 0,
   direction: 'ltr',
   isVertical: true,
 
-  startReading: (albumId, chapterId, chapterTitle, images) => {
-    set({ albumId, chapterId, chapterTitle, imageUrls: images, currentPage: 0 });
+  startReading: (albumId, chapterId, chapterTitle, images, scrambleId = 0) => {
+    set({ albumId, chapterId, chapterTitle, imageUrls: images, currentPage: 0, scrambleId });
   },
 
   setPage: (p) => {

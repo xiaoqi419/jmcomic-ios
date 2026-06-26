@@ -8,6 +8,7 @@ import {
   ScrollView, Pressable, ActivityIndicator, Modal, Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { ScrambledImage } from '../components/ScrambledImage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -57,7 +58,7 @@ export function ReaderScreen() {
         data.scramble_id,
         data.images as any,
       );
-      startReading(albumId || data.album_id, chId, chName, images);
+      startReading(albumId || data.album_id, chId, chName, images, data.scramble_id);
       useHistoryStore.getState().add({
         id: albumId || data.album_id,
         title: chapterTitle || chName,
@@ -111,12 +112,11 @@ export function ReaderScreen() {
         >
           <TouchableOpacity activeOpacity={1} onPress={toggleUI} style={{ minHeight: H + 1 }}>
             {imageUrls.map((url, i) => (
-              <Image
+              <ScrambledImage
                 key={i}
-                source={{ uri: url }}
+                imageUrl={url}
+                scrambleId={useReaderStore.getState().scrambleId}
                 style={{ width: W, height: H }}
-                contentFit="contain"
-                transition={200}
               />
             ))}
           </TouchableOpacity>

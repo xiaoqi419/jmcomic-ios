@@ -85,7 +85,7 @@ export function ComicDetailScreen() {
       const host = getImgHost();
       const images = buildChapterImageUrls(host, chId, data.page_count || data.images?.length || 20, data.scramble_id, data.images as any);
 
-      useReaderStore.getState().startReading(albumId, chId, chName, images);
+      useReaderStore.getState().startReading(albumId, chId, chName, images, data.scramble_id);
       useHistoryStore.getState().add({
         id: albumId, title: detail?.name || '', coverUrl: getCoverUrl(albumId),
         chapterId: chId, chapterTitle: chName, page: 0, readAt: Date.now(),
