@@ -205,26 +205,16 @@ export function getImgHost(): string { return apiClient.getImgHost(); }
 export function getMainHost(): string { return apiClient.getMainHost(); }
 
 /** Web 环境图片走代理，iOS 原生直接请求 */
-function proxyUrl(url: string): string {
-  // 只在浏览器 web 环境走代理，RN/iOS 直连
-  if (typeof navigator === 'undefined' || navigator.product === 'ReactNative') return url;
-  // localhost:3456/{host}{path}
-  const match = url.match(/https:\/\/([^/]+)(\/.*)/);
-  if (match) return `http://localhost:3456/${match[1]}${match[2]}`;
-  return url;
-}
-
 export function getCoverUrl(albumId: string, host?: string, v?: string): string {
   const base = `https://${host || apiClient.getImgHost()}/media/albums/${albumId}_3x4.jpg`;
   const url = v ? `${base}?v=${v}` : base;
-  return proxyUrl(url);
+  return url;
 }
 
 export function getChapterImageUrl(chapterId: string, pageNum: number, host?: string): string {
-  const url = `https://${host || apiClient.getImgHost()}/media/photos/${chapterId}/${String(pageNum).padStart(5, '0')}.jpg`;
-  return proxyUrl(url);
+  return `https://${host || apiClient.getImgHost()}/media/photos/${chapterId}/${String(pageNum).padStart(5, '0')}.jpg`;
 }
 
 export function getPhotoUrl(chapterId: string, filename: string, host?: string): string {
-  return proxyUrl(`https://${host || apiClient.getImgHost()}/media/photos/${chapterId}/${filename}`);
+  return `https://${host || apiClient.getImgHost()}/media/photos/${chapterId}/${filename}`;
 }

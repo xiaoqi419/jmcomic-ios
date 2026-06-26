@@ -80,11 +80,8 @@ export class ApiClient {
     const domain = this.mainHost || this.domains[this.domainIdx % this.domains.length];
     // 路径以 / 开头则直接拼接，否则加 /
     const sep = path.startsWith('/') ? '' : '/';
+    // CDN 支持 CORS（Access-Control-Allow-Origin: *），直接请求
     let url = `https://${domain}${sep}${path}`;
-    // Web 环境走本地 CORS 代理（RN 中 window 也存在，需用 Platform）
-    if (typeof navigator !== 'undefined' && navigator.product !== 'ReactNative') {
-      url = `http://localhost:3456/${domain}/${path}`;
-    }
     if (config.query) {
       const p = new URLSearchParams();
       Object.entries(config.query).forEach(([k, v]) => p.append(k, String(v)));
