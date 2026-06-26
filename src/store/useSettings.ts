@@ -16,7 +16,7 @@ interface Shunt {
 interface SettingsState {
   language: 'zh' | 'en';
   darkMode: boolean;
-  readingMode: 'scroll' | 'page';
+  readingMode: 'page' | 'page';
   readingDirection: 'ltr' | 'rtl';
   loaded: boolean;
 
@@ -48,7 +48,7 @@ const KEY = '@jmcomic.settings';
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   language: 'zh',
   darkMode: true,
-  readingMode: 'scroll',
+  readingMode: 'page',
   readingDirection: 'ltr',
   loaded: false,
 

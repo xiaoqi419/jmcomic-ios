@@ -284,7 +284,7 @@ export function ComicDetailScreen() {
                 {seriesGroups[groupIdx]?.map((ep) => (
                   <Pressable key={ep.id} onPress={() => openChapter(ep.id, ep.name)} style={styles.episodeItem}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.epTitle}>{ep.name}</Text>
+                      <Text style={styles.epTitle}>{ep.name || "第" + ep.sort + "话"}</Text>
                       {ep.page_count ? <Text style={{ fontSize: FontSize.caption, color: Colors.textTertiary }}>{ep.page_count}P</Text> : null}
                     </View>
                     <MaterialIcons name="chevron-right" size={20} color={Colors.textTertiary} />
