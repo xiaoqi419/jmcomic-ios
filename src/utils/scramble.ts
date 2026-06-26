@@ -36,13 +36,6 @@ export function extractFilename(url: string): string {
   return m ? m[1] : '00001.webp';
 }
 
-function proxyImg(u: string): string {
-  if (typeof navigator !== 'undefined' && navigator.product !== 'ReactNative' && typeof window !== 'undefined') {
-    return 'http://localhost:8765/?url=' + encodeURIComponent(u);
-  }
-  return u;
-}
-
 export function buildChapterImageUrls(
   host: string,
   chapterId: string,
@@ -54,7 +47,7 @@ export function buildChapterImageUrls(
   if (images?.length) {
     return images.map((item) => {
       const fn = extractFilename(item.image);
-      return proxyImg(item.image + "?sc=" + scrambleId + "&aid=" + aid + "&fn=" + fn);
+      return (item.image + "?sc=" + scrambleId + "&aid=" + aid + "&fn=" + fn);
     });
   }
   const urls: string[] = [];
