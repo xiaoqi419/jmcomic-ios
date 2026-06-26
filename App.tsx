@@ -153,7 +153,7 @@ export default function App() {
           <Stack.Screen name="ComicDetail" component={ComicDetailScreen}
             options={{ title: '详情', headerBackTitle: '返回' }} />
           <Stack.Screen name="Reader" component={ReaderScreen}
-            options={{ headerShown: false, orientation: 'landscape' as const }} />
+            options={{ headerShown: false, orientation: 'default' as const }} />
           <Stack.Screen name="Novels" component={NovelsScreen}
             options={{ headerShown: false }} />
           <Stack.Screen name="NovelDetail" component={NovelDetailScreen}
