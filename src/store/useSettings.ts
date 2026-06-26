@@ -71,8 +71,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       img_host: data.img_host,
     }));
 
-    // 更新 API client
-    apiClient.setMainHost(data.main_web_host || '');
+    // 更新 API client（只更新 imgHost 不更新 mainHost，避免切换到被封锁的 18comic.vip）
     apiClient.setImgHost(data.img_host || '');
 
     // 如果有被选中 shunt，使用它的域名
@@ -92,8 +91,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const { shunts } = get();
     const shunt = shunts.find((s) => s.key === key);
     if (shunt) {
-      apiClient.setMainHost(shunt.main_web_host || '');
-      apiClient.setImgHost(shunt.img_host || '');
+      // shunts 只是 UI 标签，不切换 API 域名
+      apiClient.setImgHost(shunt.img_host || apiClient.getImgHost());
     }
     set({ selectedShuntKey: key });
     get().save();
