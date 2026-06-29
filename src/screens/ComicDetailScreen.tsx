@@ -14,7 +14,7 @@ import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Colors, Radius, Spacing, FontSize } from '../theme';
-import { fetchAlbumDetail, fetchComicRead, fetchComments, postComment, buyAlbum, getCoverUrl, getImgHost, fetchScrambleId } from '../api/endpoints';
+import { fetchAlbumDetail, fetchComicRead, fetchComments, postComment, buyAlbum, getCoverUrl, getImgHost } from '../api/endpoints';
 import { useFavoritesStore } from '../store/useFavorites';
 import { useReaderStore } from '../store/useReader';
 import { useHistoryStore } from '../store/useHistory';
@@ -94,9 +94,7 @@ export function ComicDetailScreen() {
         }
       }
 
-      let sid = data.scramble_id;
-      if (!sid) { try { sid = await fetchScrambleId(chId); } catch {} }
-      useReaderStore.getState().startReading(albumId, chId, chName, images, sid || 220980);
+      useReaderStore.getState().startReading(albumId, chId, chName, images, 220980);
       useHistoryStore.getState().add({
         id: albumId, title: detail?.name || '', coverUrl: getCoverUrl(albumId),
         chapterId: chId, chapterTitle: chName, page: 0, readAt: Date.now(),

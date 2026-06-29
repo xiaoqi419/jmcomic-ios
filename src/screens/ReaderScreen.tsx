@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useReaderStore } from '../store/useReader';
 import { useSettingsStore } from '../store/useSettings';
 import { useHistoryStore } from '../store/useHistory';
-import { fetchComicRead, fetchAlbumDetail, getImgHost, fetchScrambleId } from '../api/endpoints';
+import { fetchComicRead, fetchAlbumDetail, getImgHost } from '../api/endpoints';
 import { extractFilename, extractFilenameWithoutExt } from '../utils/scramble';
 import { Colors, FontSize, Radius, Spacing } from '../theme';
 import type { Episode } from '../api/types';
@@ -64,9 +64,7 @@ export function ReaderScreen() {
           images.push(`https://${host}/media/photos/${chId}/${fn}`);
         }
       }
-      let sid = data.scramble_id;
-      if (!sid) { try { sid = await fetchScrambleId(chId); } catch {} }
-      startReading(albumId || data.album_id, chId, chName, images, sid || 220980);
+      startReading(albumId || data.album_id, chId, chName, images, 220980);
       useHistoryStore.getState().add({
         id: albumId || data.album_id,
         title: chapterTitle || chName,
