@@ -79,11 +79,11 @@ export function ScrambledImage({
         });
         if (cancelled) return;
         const uri = `data:image/${ext.replace('jpg', 'jpeg')};base64,${base64}`;
-        if (JM_DEBUG) console.log(`[JM] dataUrl length=${base64.length} ext=${ext}`);
+        if (JM_DEBUG) console.log(`[JM] dataUrl len=${base64.length} ext=${ext}`);
         setDataUrl(uri);
       } catch (e) {
         if (!cancelled) {
-          if (JM_DEBUG) console.log(`[JM] download FAILED:`, e);
+          if (JM_DEBUG) console.log(`[JM] download FAILED:`, e instanceof Error ? e.message : String(e));
           setDownloadError(true);
           setDataUrl(imageUrl);
         }
@@ -111,8 +111,9 @@ export function ScrambledImage({
   }, [dataUrl, epsId, scId, picName, downloadError]);
 
   const handleMessage = useCallback((event: any) => {
-    if (JM_DEBUG) console.log(`[JM] WebView message:`, event.nativeEvent?.data);
-    if (event.nativeEvent?.data === 'loaded' && onLoad) {
+    const msg = event.nativeEvent?.data;
+    if (JM_DEBUG) console.log(`[JM] WebView:`, msg);
+    if (msg === 'loaded' && onLoad) {
       onLoad();
     }
   }, [onLoad]);

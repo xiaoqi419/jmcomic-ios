@@ -68,10 +68,10 @@ export function extractFilenameWithoutExt(url: string): string {
  * 生成用于 WebView Canvas 解扰的 HTML
  *
  * 该 HTML 会:
- * 1. 加载原始图片 (crossOrigin="anonymous")
- * 2. 计算分段数
- * 3. 将图片切成水平条带并按逆序重排
- * 4. 渲染到 Canvas 上
+ * 1. 加载图片 (data URL, 同源, 无 CORS 问题)
+ * 2. 将图片切成水平条带并按逆序重排
+ * 3. 渲染到 Canvas 上
+ * 4. 每一步都通过 postMessage 回传日志到 React Native
  */
 export function buildDescrambleHtml(
   imageUrl: string,
@@ -97,47 +97,65 @@ export function buildDescrambleHtml(
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:#000;overflow:hidden}
 canvas{display:block;width:100vw;height:100vh;object-fit:contain}
+#log{display:none;color:#0f0;font:12px monospace;position:fixed;bottom:0;left:0;z-index:99;background:rgba(0,0,0,.8);padding:4px;max-height:40vh;overflow:auto;white-space:pre-wrap;width:100%}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="log"></div>
 <script>
 (function(){
-  var img = new Image();
-  img.crossOrigin = "anonymous";
-  img.onload = function(){
-    var num = ${num};
-    var c = document.getElementById('c');
-    c.width = img.naturalWidth;
-    c.height = img.naturalHeight;
-    var ctx = c.getContext('2d');
+  function log(msg) {
+    var el = document.getElementById('log');
+    if (el) el.textContent += msg + '\\n';
+    try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage && window.ReactNativeWebView.postMessage('[WV] ' + msg); } catch(e) {}
+  }
+  try {
+    log('start');
+    var img = new Image();
+    img.onload = function() {
+      try {
+        log('img.onload w=' + img.naturalWidth + ' h=' + img.naturalHeight);
+        var num = ${num};
+        var c = document.getElementById('c');
+        c.width = img.naturalWidth;
+        c.height = img.naturalHeight;
+        var ctx = c.getContext('2d');
+        log('canvas ' + c.width + 'x' + c.height + ' num=' + num);
 
-    // 计算每块高度
-    var blockSize = Math.floor(img.naturalHeight / num);
-    var remainder = img.naturalHeight % num;
+        var blockSize = Math.floor(img.naturalHeight / num);
+        var remainder = img.naturalHeight % num;
+        log('blockSize=' + blockSize + ' remainder=' + remainder);
 
-    // 分配块: [{start, end}, ...]
-    var blocks = [];
-    for (var i = 0; i < num; i++) {
-      var start = i * blockSize;
-      var end = start + blockSize + (i === num - 1 ? remainder : 0);
-      blocks.push({ start: start, end: end });
-    }
+        var blocks = [];
+        for (var i = 0; i < num; i++) {
+          var start = i * blockSize;
+          var end = start + blockSize + (i === num - 1 ? remainder : 0);
+          blocks.push({ start: start, end: end });
+        }
 
-    // 逆序重排: 从最后一块开始绘制到 Canvas 顶部
-    var y = 0;
-    for (var i = blocks.length - 1; i >= 0; i--) {
-      var block = blocks[i];
-      var h = block.end - block.start;
-      ctx.drawImage(img, 0, block.start, img.naturalWidth, h, 0, y, img.naturalWidth, h);
-      y += h;
-    }
-  };
-  img.onerror = function(){
-    // 加载失败时直接显示原图
-    document.body.innerHTML = '<img src="' + '${safeUrl}' + '" style="max-width:100%;max-height:100vh;object-fit:contain">';
-  };
-  img.src = '${safeUrl}';
+        var y = 0;
+        for (var i = blocks.length - 1; i >= 0; i--) {
+          var block = blocks[i];
+          var h = block.end - block.start;
+          ctx.drawImage(img, 0, block.start, img.naturalWidth, h, 0, y, img.naturalWidth, h);
+          y += h;
+        }
+        log('done strips=' + blocks.length);
+      } catch(e) {
+        log('ERR draw: ' + e.message);
+        document.body.innerHTML = '<img src="' + '${safeUrl}' + '" style="max-width:100%;max-height:100vh;object-fit:contain">';
+      }
+    };
+    img.onerror = function() {
+      log('ERR img.onerror');
+      document.body.innerHTML = '<img src="' + '${safeUrl}' + '" style="max-width:100%;max-height:100vh;object-fit:contain">';
+    };
+    img.src = '${safeUrl}';
+    log('img.src set');
+  } catch(e) {
+    log('FATAL: ' + e.message);
+  }
 })();
 </script>
 </body>
