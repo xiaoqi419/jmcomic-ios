@@ -89,15 +89,19 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     get().save();
   },
 
-  selectShunt: (key: number) => {
-    const { shunts } = get();
-    const shunt = shunts.find((s) => s.key === key);
-    if (shunt) {
-      // shunts 只是 UI 标签，不切换 API 域名
-      apiClient.setImgHost(shunt.img_host || apiClient.getImgHost());
-    }
+  selectShunt: async (key: number) => {
     set({ selectedShuntKey: key });
     get().save();
+    // 异步设置图片 CDN
+    try {
+      const { getShuntImgHost } = await import('../utils/SourceSelector');
+      const imgHost = await getShuntImgHost(key);
+      if (imgHost) {
+        apiClient.setImgHost(imgHost);
+        set({ imgHost });
+        get().save();
+      }
+    } catch {}
   },
 
   load: async () => {

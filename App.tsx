@@ -17,6 +17,8 @@ import { Colors } from './src/theme';
 import { useSettingsStore } from './src/store/useSettings';
 import { useAuthStore } from './src/store/useAuth';
 import { fetchSetting } from './src/api/endpoints';
+import { SourceSelectModal } from './src/components/SourceSelectModal';
+import { loadSelectedShunt } from './src/utils/SourceSelector';
 
 // Screens
 import { MainScreen } from './src/screens/MainScreen';
@@ -104,18 +106,29 @@ function HomeTabs() {
 
 export default function App() {
   const [ready, setReady] = useState(false);
-  const { load: loadSettings, updateFromSetting } = useSettingsStore();
+  const { load: loadSettings, updateFromSetting, selectShunt } = useSettingsStore();
   const { load: loadAuth } = useAuthStore();
+  const [showSourceSelect, setShowSourceSelect] = useState(false);
+  const [savedShunt, setSavedShunt] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
       await loadSettings();
       await loadAuth();
 
+      // 检查已保存的源选择
+      const saved = await loadSelectedShunt();
+      setSavedShunt(saved);
+
       // 从 API 获取动态域名配置
       try {
         const setting = await fetchSetting();
         updateFromSetting(setting);
+
+        // 如果有已保存的源，直接应用
+        if (saved !== null) {
+          selectShunt(saved);
+        }
       } catch {
         // 使用硬编码兜底
       }
@@ -123,6 +136,16 @@ export default function App() {
       setReady(true);
     })();
   }, []);
+
+  // 加载完成后，如果没有保存的源且有 shunts 可选，弹出选择框
+  useEffect(() => {
+    if (ready && savedShunt === null) {
+      const { shunts } = useSettingsStore.getState();
+      if (shunts.length > 0) {
+        setShowSourceSelect(true);
+      }
+    }
+  }, [ready, savedShunt]);
 
   if (!ready) {
     return (
@@ -176,6 +199,7 @@ export default function App() {
             options={{ presentation: 'modal', headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
+      <SourceSelectModal visible={showSourceSelect} onDone={() => setShowSourceSelect(false)} />
     </SafeAreaProvider>
   );
 }
