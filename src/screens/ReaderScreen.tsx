@@ -7,7 +7,7 @@ import {
   View, Text, FlatList, TouchableOpacity, useWindowDimensions, StatusBar,
   ScrollView, Pressable, ActivityIndicator, Modal, Alert, StyleSheet,
 } from 'react-native';
-import { ScrambledImage } from '../components/ScrambledImage';
+import { SafeImage } from '../components/SafeImage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -121,11 +121,10 @@ export function ReaderScreen() {
               const store = useReaderStore.getState();
               const picName = extractFilename(url);
               return (
-                <ScrambledImage
+                <SafeImage
                   key={i}
                   imageUrl={url}
                   epsId={store.chapterId || chapterId}
-                  scrambleId={store.scrambleId}
                   pictureName={picName}
                   style={{ width: W, height: H }}
                 />
@@ -152,10 +151,9 @@ export function ReaderScreen() {
             const picName = extractFilename(item);
             return (
               <TouchableOpacity activeOpacity={1} onPress={toggleUI} style={{ width: W, height: H }}>
-                <ScrambledImage
+                <SafeImage
                   imageUrl={item}
                   epsId={store.chapterId || chapterId}
-                  scrambleId={store.scrambleId}
                   pictureName={picName}
                   style={{ width: W, height: H }}
                 />
