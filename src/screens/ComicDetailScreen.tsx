@@ -15,6 +15,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Colors, Radius, Spacing, FontSize } from '../theme';
 import { fetchAlbumDetail, fetchComicRead, fetchComments, postComment, buyAlbum, getCoverUrl, getImgHost } from '../api/endpoints';
+import { jmLogger } from '../utils/JmLogger';
 import { useFavoritesStore } from '../store/useFavorites';
 import { useReaderStore } from '../store/useReader';
 import { useHistoryStore } from '../store/useHistory';
@@ -61,12 +62,34 @@ export function ComicDetailScreen() {
     try {
       const d = await fetchAlbumDetail(albumId);
       setDetail(d);
+
+      // 日志：响应结构诊断
+      const keys = Object.keys(d as any);
+      const hasSeries = d.series?.length;
+      jmLogger.log(`【详情】albumId=${albumId} keys=${keys.join(',')} hasSeries=${!!hasSeries} seriesLen=${d.series?.length || 0}`);
+      if (hasSeries) {
+        jmLogger.log(`【详情】第一条章节: ${JSON.stringify(d.series![0])}`);
+      } else {
+        // 收集所有可能包含数据的字段
+        const sample: Record<string, any> = {};
+        for (const k of keys) {
+          const v = (d as any)[k];
+          if (Array.isArray(v)) sample[k] = `Array(${v.length})`;
+          else if (v && typeof v === 'object') sample[k] = Object.keys(v).join(',');
+          else if (typeof v === 'string' && v.length > 100) sample[k] = v.slice(0, 60) + '...';
+          else sample[k] = v;
+        }
+        jmLogger.log(`【详情】字段快照: ${JSON.stringify(sample)}`);
+      }
+
       // 章节分组（每 10 个一组，与原版一致）
       if (d.series?.length) {
         setSeriesGroups(chunkArray(d.series, 10));
       }
       loadComments();
-    } catch {}
+    } catch (e: any) {
+      jmLogger.err(`【详情】加载失败 albumId=${albumId}: ${e.message}`);
+    }
     setLoading(false);
   };
 
