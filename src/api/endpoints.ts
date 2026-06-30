@@ -114,41 +114,47 @@ function extractEpisodes(data: any): Episode[] {
  */
 async function tryAlbumWithSecret(albumId: string, tokenSecret: string, version: string, path = 'album'): Promise<AlbumDetail | null> {
   const ts = nowTs();
-  try {
-    const token = CryptoJS.MD5(`${ts}${tokenSecret}`).toString(CryptoJS.enc.Hex);
-    const tokenparam = `${ts},${version}`;
-    const domain = apiClient.getMainHost() || apiClient.getDomains()[0];
-    const url = `https://${domain}/${path}?id=${albumId}`;
-    const resp = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/138.0.0.0 Mobile Safari/537.36',
-        Accept: 'application/json, text/plain, */*',
-        'Accept-Encoding': 'gzip, deflate, br, zstd',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
-        'X-Requested-With': 'com.example.app',
-        token,
-        tokenparam,
-        Authorization: 'Bearer',
-        'Sec-Fetch-Storage-Access': 'active',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'cross-site',
-        Connection: 'keep-alive',
-        Origin: 'https://localhost',
-        Referer: 'https://localhost/',
-      },
-    });
-    const text = await resp.text();
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const json = JSON.parse(text);
-    const detail = decryptAndParse<AlbumDetail>(ts, json.data) as any;
-    if (!detail.series?.length) detail.series = extractEpisodes(detail);
-    jmLogger.log(`tryAlbumWithSecret(${tokenSecret.slice(0,8)}...) OK series=${detail.series?.length}`);
-    return detail as AlbumDetail;
-  } catch (e: any) {
-    jmLogger.warn(`tryAlbumWithSecret(${tokenSecret.slice(0,8)}...) fail: ${e.message}`);
-    return null;
+  // 遍历所有 CDN 代理域名，因为缓存分布不均
+  const domains = apiClient.getDomains();
+  for (const domain of domains) {
+    try {
+      const token = CryptoJS.MD5(`${ts}${tokenSecret}`).toString(CryptoJS.enc.Hex);
+      const tokenparam = `${ts},${version}`;
+      const url = `https://${domain}/${path}?id=${albumId}`;
+      const resp = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/138.0.0.0 Mobile Safari/537.36',
+          Accept: 'application/json, text/plain, */*',
+          'Accept-Encoding': 'gzip, deflate, br, zstd',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+          'X-Requested-With': 'com.example.app',
+          token,
+          tokenparam,
+          Authorization: 'Bearer',
+          'Sec-Fetch-Storage-Access': 'active',
+          'Sec-Fetch-Dest': 'empty',
+          'Sec-Fetch-Mode': 'cors',
+          'Sec-Fetch-Site': 'cross-site',
+          Connection: 'keep-alive',
+          Origin: 'https://localhost',
+          Referer: 'https://localhost/',
+        },
+      });
+      const text = await resp.text();
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      // 跳过空数据响应（CDN 未缓存）
+      if (text.includes('"data":[]') || text.length < 100) continue;
+      const json = JSON.parse(text);
+      const detail = decryptAndParse<AlbumDetail>(ts, json.data) as any;
+      if (!detail || !detail.id) continue; // 空数据，试下一个域名
+      if (!detail.series?.length) detail.series = extractEpisodes(detail);
+      jmLogger.log(`tryAlbumWithSecret(${tokenSecret.slice(0,8)}...) OK domain=${domain} series=${detail.series?.length}`);
+      return detail as AlbumDetail;
+    } catch (e: any) {
+      jmLogger.warn(`tryAlbumWithSecret(${tokenSecret.slice(0,8)}...) domain=${domain} fail: ${e.message}`);
+    }
   }
+  return null;
 }
 
 export async function fetchAlbumDetail(albumId: string): Promise<AlbumDetail> {
@@ -168,18 +174,33 @@ export async function fetchAlbumDetail(albumId: string): Promise<AlbumDetail> {
     }
   }
 
-  // 最后尝试: 明文 JSON
-  try {
-    const text = await apiClient.getWeb('album', { id: albumId });
-    const parsed = JSON.parse(text);
-    const detail = (parsed.data || parsed) as any;
-    if (!detail.series?.length) detail.series = extractEpisodes(detail);
-    jmLogger.log(`fetchAlbumDetail OK (plain) id=${albumId} series=${detail.series?.length || 0}`);
-    return detail as AlbumDetail;
-  } catch (e: any) {
-    jmLogger.err(`fetchAlbumDetail all attempts failed for id=${albumId}: ${e.message}`);
+  // 最后尝试: 遍历所有 CDN 域名 + 默认 secret
+  for (const domain of apiClient.getDomains()) {
+    try {
+      const ts = nowTs();
+      const token = CryptoJS.MD5(`${ts}${secrets[0]}`).toString(CryptoJS.enc.Hex);
+      const tokenparam = `${ts},${versions[0]}`;
+      const resp = await fetch(`https://${domain}/album?id=${albumId}`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K; wv) AppleWebKit/537.36',
+          Accept: 'application/json, text/plain, */*',
+          token, tokenparam,
+          'X-Requested-With': 'com.example.app',
+        },
+      });
+      const text = await resp.text();
+      if (!resp.ok || text.includes('"data":[]') || text.length < 100) continue;
+      const json = JSON.parse(text);
+      const detail = decryptAndParse<AlbumDetail>(ts, json.data) as any;
+      if (detail && detail.id) {
+        if (!detail.series?.length) detail.series = extractEpisodes(detail);
+        jmLogger.log(`fetchAlbumDetail OK (fallback domain=${domain}) id=${albumId} series=${detail.series?.length || 0}`);
+        return detail as AlbumDetail;
+      }
+    } catch {}
   }
 
+  jmLogger.err(`fetchAlbumDetail all attempts failed for id=${albumId}`);
   throw new Error(`获取漫画详情失败: ${albumId}`);
 }
 
