@@ -1,11 +1,11 @@
-// 阅读器 — 复刻 APK Read.tsx 全部功能
-// 竖屏滚动 + 横屏翻页 + scramble + 进度滑块 + 章节切换 + 阅读跟踪
+// 阅读器 v2 — 竖向 FlatList 虚拟化无缝滑动
+// 去掉点击翻页覆盖层，纯自然滚动体验
 // @author nyx
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, useWindowDimensions, StatusBar,
-  ScrollView, Pressable, ActivityIndicator, Modal, Alert, StyleSheet, Platform,
+  Pressable, ActivityIndicator, Modal, Alert, StyleSheet, Platform,
 } from 'react-native';
 import { SafeImage } from '../components/SafeImage';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +14,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useReaderStore } from '../store/useReader';
 import { useHistoryStore } from '../store/useHistory';
-import { fetchComicRead, fetchAlbumDetail, getImgHost } from '../api/endpoints';
+import { fetchComicRead, fetchAlbumDetail } from '../api/endpoints';
 import { extractFilename } from '../utils/scramble';
 import { Colors, FontSize, Radius, Spacing } from '../theme';
 import { DebugOverlay } from '../components/DebugOverlay';
@@ -37,7 +37,8 @@ export function ReaderScreen() {
   const [brightness, setBrightnessVal] = useState(1);
   const [showBrightness, setShowBrightness] = useState(false);
   const flatRef = useRef<FlatList>(null);
-  const scrollRef = useRef<ScrollView>(null);
+  const vertRef = useRef<FlatList>(null);
+  const [imageHeights, setImageHeights] = useState<Record<number, number>>({});
 
   const toggleUI = () => setShowUI((p) => !p);
 
@@ -57,10 +58,10 @@ export function ReaderScreen() {
   const switchChapter = async (chId: string, chName: string) => {
     setShowChapterModal(false);
     setLoading(true);
+    setImageHeights({});
     try {
       const data = await fetchComicRead(chId);
-      // 构建图片 URL 列表
-      const host = getImgHost();
+      const host = data.data_original_domain || (await import('../api/endpoints')).getImgHost();
       let images: string[];
       if (data.images?.length) {
         images = data.images.map((item) => item.image);
@@ -82,12 +83,6 @@ export function ReaderScreen() {
         page: 0,
         readAt: Date.now(),
       });
-      // 切换章节后滚回顶部
-      if (isVertical) {
-        scrollRef.current?.scrollTo({ y: 0, animated: false });
-      } else {
-        flatRef.current?.scrollToIndex({ index: 0, animated: false });
-      }
     } catch {}
     setLoading(false);
   };
@@ -102,24 +97,18 @@ export function ReaderScreen() {
 
   const goPrev = () => {
     if (currentPage > 0) {
-      const target = currentPage - 1;
-      setPage(target);
-      if (isVertical) {
-        scrollRef.current?.scrollTo({ y: target * W * 1.45, animated: true });
-      } else {
-        flatRef.current?.scrollToIndex({ index: target, animated: true });
+      setPage(currentPage - 1);
+      if (!isVertical) {
+        flatRef.current?.scrollToIndex({ index: currentPage - 1, animated: true });
       }
     }
   };
 
   const goNext = () => {
     if (currentPage < totalPages - 1) {
-      const target = currentPage + 1;
-      setPage(target);
-      if (isVertical) {
-        scrollRef.current?.scrollTo({ y: target * W * 1.45, animated: true });
-      } else {
-        flatRef.current?.scrollToIndex({ index: target, animated: true });
+      setPage(currentPage + 1);
+      if (!isVertical) {
+        flatRef.current?.scrollToIndex({ index: currentPage + 1, animated: true });
       }
     }
   };
@@ -146,55 +135,132 @@ export function ReaderScreen() {
 
   const handleBrightness = async (val: number) => {
     setBrightnessVal(val);
-    try {
-      await Brightness.setBrightnessAsync(val);
-    } catch {}
+    try { await Brightness.setBrightnessAsync(val); } catch {}
   };
+
+  const handleDimension = useCallback((index: number, w: number, h: number) => {
+    if (w > 0 && h > 0) {
+      setImageHeights((prev) => ({ ...prev, [index]: (W * h) / w }));
+    }
+  }, [W]);
 
   const totalPages = imageUrls.length;
 
-  // 找到当前章节在列表中的下标
   const currentEpIdx = episodes.findIndex((ep) => ep.id === (useReaderStore.getState().chapterId || chapterId));
+
+  // 竖向模式 — 追加上一章/下一章
+  const hasPrevChapter = currentEpIdx > 0;
+  const hasNextChapter = currentEpIdx < episodes.length - 1;
+
+  // 竖向 FlatList 可见项变化追踪当前页
+  const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
+    if (viewableItems?.length) {
+      const first = viewableItems[0];
+      if (first && typeof first.index === 'number') {
+        setPage(first.index);
+      }
+    }
+  }, [setPage]);
+
+  const viewabilityConfig = useMemo(() => ({ itemVisiblePercentThreshold: 30 }), []);
+
+  const renderVerticalItem = useCallback(({ item, index }: { item: string; index: number }) => {
+    const picName = extractFilename(item);
+    const store = useReaderStore.getState();
+    return (
+      <Pressable key={index} onPress={toggleUI}>
+        <SafeImage
+          imageUrl={item}
+          epsId={store.chapterId || chapterId}
+          pictureName={picName}
+          containerWidth={W}
+          height={imageHeights[index]}
+          onDimension={(w, h) => handleDimension(index, w, h)}
+        />
+      </Pressable>
+    );
+  }, [W, chapterId, imageHeights, handleDimension, toggleUI]);
+
+  const renderHorizontalItem = useCallback(({ item, index }: { item: string; index: number }) => {
+    const picName = extractFilename(item);
+    const store = useReaderStore.getState();
+    return (
+      <TouchableOpacity activeOpacity={1} onPress={toggleUI} style={{ width: W, height: H }}>
+        <SafeImage
+          imageUrl={item}
+          epsId={store.chapterId || chapterId}
+          pictureName={picName}
+          containerWidth={W}
+        />
+      </TouchableOpacity>
+    );
+  }, [W, H, chapterId, handleDimension, toggleUI]);
+
+  // 底部"下一章"按钮（竖向模式底部）
+  const listFooter = useMemo(() => {
+    if (!isVertical) return null;
+    return (
+      <View style={V.footer}>
+        {hasPrevChapter && (
+          <TouchableOpacity
+            onPress={() => {
+              const prev = episodes[currentEpIdx - 1];
+              if (prev) switchChapter(prev.id, prev.name);
+            }}
+            style={V.chapterBtn}
+          >
+            <MaterialIcons name="skip-previous" size={20} color={Colors.textPrimary} />
+            <Text style={V.chapterBtnText}>上一章</Text>
+          </TouchableOpacity>
+        )}
+        {hasNextChapter && (
+          <TouchableOpacity
+            onPress={() => {
+              const next = episodes[currentEpIdx + 1];
+              if (next) switchChapter(next.id, next.name);
+            }}
+            style={V.chapterBtn}
+          >
+            <Text style={V.chapterBtnText}>下一章</Text>
+            <MaterialIcons name="skip-next" size={20} color={Colors.textPrimary} />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  }, [isVertical, hasPrevChapter, hasNextChapter, episodes, currentEpIdx]);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <StatusBar hidden={!showUI} />
 
       {loading && (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.7)' }}>
+        <View style={V.loadingOverlay}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       )}
 
-      {/* 主内容 — 默认纵向 ScrollView 无缝衔接 */}
+      {/* 竖向模式 — FlatList 虚拟化自然滑动 */}
       {isVertical ? (
-        <ScrollView
-          ref={scrollRef}
-          onScroll={(e) => {
-            const offsetY = e.nativeEvent.contentOffset.y;
-            const maxScroll = Math.max(1, e.nativeEvent.contentSize.height - H);
-            const progress = Math.min(totalPages, Math.round((offsetY / maxScroll) * totalPages));
-            setPage(Math.min(progress, totalPages - 1));
-          }}
-          scrollEventThrottle={16}
-          style={{ flex: 1 }}
-        >
-          <TouchableOpacity activeOpacity={1} onPress={toggleUI}>
-            {imageUrls.map((url, i) => {
-              const store = useReaderStore.getState();
-              const picName = extractFilename(url);
-              return (
-                <SafeImage
-                  key={i}
-                  imageUrl={url}
-                  epsId={store.chapterId || chapterId}
-                  pictureName={picName}
-                  containerWidth={W}
-                />
-              );
-            })}
-          </TouchableOpacity>
-        </ScrollView>
+        <FlatList
+          key={'v' + (useReaderStore.getState().chapterId || chapterId)}
+          ref={vertRef}
+          data={imageUrls}
+          keyExtractor={(_, i) => String(i)}
+          renderItem={renderVerticalItem}
+          windowSize={3}
+          maxToRenderPerBatch={3}
+          initialNumToRender={3}
+          removeClippedSubviews={Platform.OS === 'android'}
+          showsVerticalScrollIndicator={false}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          ListFooterComponent={listFooter}
+          ListEmptyComponent={
+            <View style={{ width: W, height: H, justifyContent: 'center', alignItems: 'center' }}>
+              <ActivityIndicator size="large" color={Colors.primary} />
+            </View>
+          }
+        />
       ) : (
         <FlatList
           ref={flatRef}
@@ -210,41 +276,30 @@ export function ReaderScreen() {
             const page = Math.round(e.nativeEvent.contentOffset.x / W);
             setPage(page);
           }}
-          renderItem={({ item, index }) => {
-            const store = useReaderStore.getState();
-            const picName = extractFilename(item);
-            return (
-              <TouchableOpacity activeOpacity={1} onPress={toggleUI} style={{ width: W, height: H }}>
-                <SafeImage
-                  imageUrl={item}
-                  epsId={store.chapterId || chapterId}
-                  pictureName={picName}
-                  containerWidth={W}
-                />
-              </TouchableOpacity>
-            );
-          }}
+          renderItem={renderHorizontalItem}
         />
       )}
 
-      {/* 点击翻页覆盖层 */}
-      <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, flexDirection: 'row' }} pointerEvents="box-none">
-        <Pressable style={{ flex: 3 }} onPress={goPrev} />
-        <View style={{ flex: 4 }} />
-        <Pressable style={{ flex: 3 }} onPress={goNext} />
-      </View>
+      {/* 竖向模式去掉点击翻页覆盖层，纯自然滑动 */}
+      {/* 横屏保留点击翻页 */}
+      {!isVertical && (
+        <View style={V.tapZones} pointerEvents="box-none">
+          <Pressable style={{ flex: 3 }} onPress={goPrev} />
+          <View style={{ flex: 4 }} />
+          <Pressable style={{ flex: 3 }} onPress={goNext} />
+        </View>
+      )}
 
       {/* 顶部栏 */}
       {showUI && (
-        <SafeAreaView edges={["top"]} style={styles.topBar}>
+        <SafeAreaView edges={['top']} style={V.topBar}>
           <TouchableOpacity onPress={() => nav.goBack()} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <MaterialIcons name="arrow-back" size={22} color="#fff" />
-            <Text style={styles.topText}>{t('common.back')}</Text>
+            <Text style={V.topText}>{t('common.back')}</Text>
           </TouchableOpacity>
 
-          {/* 章节切换 */}
           <TouchableOpacity onPress={() => setShowChapterModal(true)} style={{ flex: 1, alignItems: 'center', paddingHorizontal: 8 }}>
-            <Text style={[styles.topText, { fontSize: 13 }]} numberOfLines={1}>
+            <Text style={[V.topText, { fontSize: 13 }]} numberOfLines={1}>
               {chapterTitle || `第${currentEpIdx + 1}话`}
             </Text>
             <Text style={{ color: '#aaa', fontSize: 11 }}>
@@ -253,19 +308,15 @@ export function ReaderScreen() {
           </TouchableOpacity>
 
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            {/* 保存图片 */}
             <TouchableOpacity onPress={handleSaveImage}>
               <MaterialIcons name="save-alt" size={22} color="#fff" />
             </TouchableOpacity>
-            {/* 亮度 */}
             <TouchableOpacity onPress={() => setShowBrightness(!showBrightness)}>
               <MaterialIcons name={showBrightness ? 'brightness-high' : 'brightness-low'} size={22} color="#fff" />
             </TouchableOpacity>
-            {/* 切换阅读模式 */}
             <TouchableOpacity onPress={() => setVertical(!isVertical)}>
               <MaterialIcons name={isVertical ? 'view-carousel' : 'view-stream'} size={22} color="#fff" />
             </TouchableOpacity>
-            {/* 上一章 */}
             <TouchableOpacity
               onPress={() => {
                 const prev = episodes[currentEpIdx - 1];
@@ -275,7 +326,6 @@ export function ReaderScreen() {
             >
               <MaterialIcons name="skip-previous" size={22} color={currentEpIdx > 0 ? '#fff' : '#555'} />
             </TouchableOpacity>
-            {/* 下一章 */}
             <TouchableOpacity
               onPress={() => {
                 const next = episodes[currentEpIdx + 1];
@@ -291,12 +341,11 @@ export function ReaderScreen() {
 
       {/* 底部栏 */}
       {showUI && (
-        <SafeAreaView edges={["top"]} style={styles.bottomBar}>
-          {/* 进度滑块 */}
-          <View style={styles.sliderContainer}>
-            <Text style={styles.progressLabel}>1</Text>
+        <SafeAreaView edges={['top']} style={V.bottomBar}>
+          <View style={V.sliderContainer}>
+            <Text style={V.progressLabel}>1</Text>
             <View
-              style={styles.sliderTrack}
+              style={V.sliderTrack}
               onStartShouldSetResponder={() => true}
               onResponderGrant={(e) => {
                 const x = e.nativeEvent.locationX;
@@ -311,18 +360,17 @@ export function ReaderScreen() {
                 goPage(Math.round(ratio * (totalPages - 1)));
               }}
             >
-              <View style={[styles.sliderFill, { width: `${((currentPage + 1) / Math.max(1, totalPages)) * 100}%` }]} />
-              <View style={[styles.sliderThumb, { left: `${((currentPage + 1) / Math.max(1, totalPages)) * 100}%` }]} />
+              <View style={[V.sliderFill, { width: `${((currentPage + 1) / Math.max(1, totalPages)) * 100}%` }]} />
+              <View style={[V.sliderThumb, { left: `${((currentPage + 1) / Math.max(1, totalPages)) * 100}%` }]} />
             </View>
-            <Text style={styles.progressLabel}>{totalPages}</Text>
+            <Text style={V.progressLabel}>{totalPages}</Text>
           </View>
 
-          {/* 亮度滑块 */}
           {showBrightness && (
-            <View style={styles.sliderContainer}>
+            <View style={V.sliderContainer}>
               <MaterialIcons name="brightness-low" size={16} color="#aaa" />
               <View
-                style={styles.sliderTrack}
+                style={V.sliderTrack}
                 onStartShouldSetResponder={() => true}
                 onResponderGrant={(e) => {
                   const x = e.nativeEvent.locationX;
@@ -335,8 +383,8 @@ export function ReaderScreen() {
                   handleBrightness(Math.max(0, Math.min(1, x / trackW)));
                 }}
               >
-                <View style={[styles.sliderFill, { width: `${brightness * 100}%` }]} />
-                <View style={[styles.sliderThumb, { left: `${brightness * 100}%` }]} />
+                <View style={[V.sliderFill, { width: `${brightness * 100}%` }]} />
+                <View style={[V.sliderThumb, { left: `${brightness * 100}%` }]} />
               </View>
               <MaterialIcons name="brightness-high" size={16} color="#aaa" />
             </View>
@@ -346,10 +394,10 @@ export function ReaderScreen() {
 
       {/* 章节选择弹窗 */}
       <Modal visible={showChapterModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('reader.chapter')}</Text>
+        <View style={V.modalOverlay}>
+          <View style={V.modalContent}>
+            <View style={V.modalHeader}>
+              <Text style={V.modalTitle}>{t('reader.chapter')}</Text>
               <TouchableOpacity onPress={() => setShowChapterModal(false)}>
                 <MaterialIcons name="close" size={24} color={Colors.textPrimary} />
               </TouchableOpacity>
@@ -363,9 +411,9 @@ export function ReaderScreen() {
                     if (item.id !== chapterId) switchChapter(item.id, item.name);
                     else setShowChapterModal(false);
                   }}
-                  style={[styles.chapterItem, item.id === chapterId && styles.chapterItemActive]}
+                  style={[V.chapterItem, item.id === chapterId && V.chapterItemActive]}
                 >
-                  <Text style={[styles.chapterItemText, item.id === chapterId && styles.chapterItemTextActive]}>
+                  <Text style={[V.chapterItemText, item.id === chapterId && V.chapterItemTextActive]}>
                     {item.name}
                   </Text>
                   {item.id === chapterId && <MaterialIcons name="check" size={18} color={Colors.primary} />}
@@ -376,85 +424,77 @@ export function ReaderScreen() {
           </View>
         </View>
       </Modal>
+
       <DebugOverlay />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  topBar: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, zIndex: 100,
+const V = StyleSheet.create({
+  loadingOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    zIndex: 200, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  tapZones: {
+    position: 'absolute', top: 0, bottom: 0, left: 0, right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  },
+  topBar: {
+    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 14, paddingTop: 8, paddingBottom: 4,
     backgroundColor: 'rgba(0,0,0,0.6)',
   },
   topText: { color: '#fff', fontSize: 15, fontWeight: '600' },
   bottomBar: {
-    position: 'absolute',
-    bottom: 0, left: 0, right: 0, zIndex: 100,
+    position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 100,
     paddingHorizontal: 14, paddingBottom: 24, paddingTop: 8,
     backgroundColor: 'rgba(0,0,0,0.6)',
   },
-  sliderContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
+  sliderContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   progressLabel: { color: '#aaa', fontSize: 11, width: 30, textAlign: 'center' },
-  sliderTrack: {
-    flex: 1,
-    height: 32,
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  sliderFill: {
-    height: 4,
-    backgroundColor: Colors.primary,
-    borderRadius: 2,
-  },
+  sliderTrack: { flex: 1, height: 32, justifyContent: 'center', position: 'relative' },
+  sliderFill: { height: 4, backgroundColor: Colors.primary, borderRadius: 2 },
   sliderThumb: {
-    position: 'absolute',
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: Colors.primary,
-    marginLeft: -8,
-    top: 8,
+    position: 'absolute', width: 16, height: 16, borderRadius: 8,
+    backgroundColor: Colors.primary, marginLeft: -8, top: 8,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    maxHeight: '70%',
-    paddingBottom: 40,
+    backgroundColor: Colors.surface, borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl, maxHeight: '70%', paddingBottom: 40,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.divider,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    padding: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.divider,
   },
   modalTitle: { fontSize: FontSize.headline, fontWeight: '700', color: Colors.textPrimary },
   chapterItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: Spacing.md,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.divider,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: 12, paddingHorizontal: Spacing.md,
+    borderBottomWidth: 0.5, borderBottomColor: Colors.divider,
   },
   chapterItemActive: { backgroundColor: Colors.primary + '15' },
   chapterItemText: { fontSize: FontSize.body, color: Colors.textSecondary },
   chapterItemTextActive: { color: Colors.primary, fontWeight: '600' },
+  footer: {
+    paddingVertical: 24,
+    paddingHorizontal: Spacing.marginEdge,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  chapterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.surface,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: Radius.button,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  chapterBtnText: { color: Colors.textPrimary, fontSize: FontSize.body, fontWeight: '600' },
 });
