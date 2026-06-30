@@ -76,12 +76,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const cleanHost = (data.img_host || '').replace(/^https?:\/\//, '');
     if (cleanHost) apiClient.setImgHost(cleanHost);
 
-    // 关键修复：设置 API 主域名，后续所有 API 请求都用这个域名
-    const cleanMainHost = (data.main_web_host || '').replace(/^https?:\/\//, '');
-    if (cleanMainHost) {
-      apiClient.setMainHost(cleanMainHost);
-      apiClient.setDomains([cleanMainHost]);
-    }
+    // 注意：API 域名保留 FALLBACK_DOMAINS（CDN 代理域名），
+    // main_web_host 是主站域名带 Cloudflare，直接请求会超时
 
     // 如果有被选中 shunt，使用它的域名
     const { selectedShuntKey } = get();

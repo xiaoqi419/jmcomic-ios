@@ -33,7 +33,8 @@ export interface ShuntInfo {
 export async function getShuntImgHost(key: number): Promise<string> {
   const ts = nowTs();
   const { token, tokenparam } = generateToken(ts);
-  const domain = apiClient.getMainHost() || apiClient.getDomains()[0];
+  // 不能用 getMainHost（主站带 Cloudflare），要用 CDN 代理域名
+  const domain = apiClient.getDomains()[0];
   const url = `https://${domain}/setting?app_img_shunt=${key}`;
   const resp = await fetch(url, {
     headers: {
