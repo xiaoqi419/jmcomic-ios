@@ -47,7 +47,9 @@ export function ScrambledImage({
   const [downloadError, setDownloadError] = useState(false);
   const webRef = useRef<any>(null);
 
-  const picName = pictureName || extractFilenameWithoutExt(imageUrl) + '.webp';
+  // pictureName 必须是无扩展名的纯文件名（如 "00001"），不能带 .webp
+  // 因为 getSegmentationNum 中 MD5(epsId + pictureName) 使用纯数字
+  const picName = (pictureName || extractFilenameWithoutExt(imageUrl)).replace(/\.\w+$/, '');
   const scId = String(scrambleId);
 
   // Step 1: 通过 expo-file-system 原生 HTTP 下载图片 — 完全绕过浏览器 CORS

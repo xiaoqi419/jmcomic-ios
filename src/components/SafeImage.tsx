@@ -1,11 +1,22 @@
-// SafeImage - expo-file-system -> base64 -> WebView Canvas
+// SafeImage — 原生下载 + base64 DataURL + Canvas 解扰
+// 先通过 expo-file-system 原生 HTTP 下载图片（绕过 CORS），
+// 转为 base64 data URL（同源），再传给 WebView Canvas 解扰
 // @author Jason
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { buildDescrambleHtml, buildSimpleImageHtml, extractFilename } from '../utils/scramble';
+
+const IMG_HEADERS: Record<string, string> = {
+  Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+  Referer: 'https://localhost/',
+  'Sec-Fetch-Mode': 'no-cors',
+  'Sec-Fetch-Site': 'cross-site',
+  'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K; wv) AppleWebKit/537.36 Chrome/138.0.0.0 Mobile Safari/537.36',
+  'X-Requested-With': 'com.example.app',
+};
 
 interface Props { imageUrl: string; epsId: string; pictureName?: string; style?: any; onLoad?: () => void; }
 
@@ -14,7 +25,7 @@ const SC_ID = '220980';
 async function urlToDataUri(url: string): Promise<string> {
   const ext = (url.split('.').pop() || 'webp').replace(/\?.*/, '');
   const dest = FileSystem.cacheDirectory + 'jm_' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext;
-  const dl = await FileSystem.downloadAsync(url, dest);
+  const dl = await FileSystem.downloadAsync(url, dest, { headers: IMG_HEADERS });
   if (dl.status !== 200) throw new Error('Download ' + dl.status);
   const b64 = await FileSystem.readAsStringAsync(dl.uri, { encoding: FileSystem.EncodingType.Base64 });
   FileSystem.deleteAsync(dl.uri, { idempotent: true }).catch(() => {});
@@ -24,7 +35,7 @@ async function urlToDataUri(url: string): Promise<string> {
 export function SafeImage({ imageUrl, epsId, pictureName, style, onLoad }: Props) {
   const [dataUri, setDataUri] = useState<string | null>(null);
   const [fallback, setFallback] = useState(false);
-  const picName = pictureName || extractFilename(imageUrl);
+  const picName = (pictureName || extractFilename(imageUrl)).replace(/\.\w+$/, '');
 
   useEffect(() => {
     let cancel = false;
