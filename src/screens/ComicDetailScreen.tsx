@@ -284,7 +284,9 @@ export function ComicDetailScreen() {
             {detail.tags?.length > 0 && (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                 {detail.tags.map((tag, i) => (
-                  <View key={i} style={S.tagChip}><Text style={S.tagText}>{tag}</Text></View>
+                  <Pressable key={i} onPress={() => nav.navigate('Main', { screen: 'Search', params: { query: tag } })}>
+                    <View style={S.tagChip}><Text style={S.tagText}>{tag}</Text></View>
+                  </Pressable>
                 ))}
               </View>
             )}

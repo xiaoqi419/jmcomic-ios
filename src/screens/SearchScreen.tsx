@@ -33,6 +33,7 @@ const SOURCE_BADGE: Record<string, { label: string; color: string }> = {
 export function SearchScreen() {
   const nav = useNavigation<any>();
   const { t } = useTranslation();
+  const routeParams = useRoute<any>().params;
 
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SourceItem[]>([]);
@@ -52,6 +53,14 @@ export function SearchScreen() {
     fetchHotTags().then(setHotTags).catch(() => {});
     fetchRandomRecommend().then(setRecommend).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const q = routeParams?.query;
+    if (q && typeof q === 'string' && q !== query) {
+      setQuery(q);
+      setTimeout(() => doSearch(q, 1, true), 100);
+    }
+  }, [routeParams?.query]);
 
   const doSearch = useCallback(async (q: string, p = 1, refresh = false) => {
     if (!q.trim()) return;

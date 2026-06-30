@@ -90,9 +90,9 @@ export function PicaDetailScreen() {
           {detail.tags.length > 0 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
               {detail.tags.map((tag) => (
-                <View key={tag} style={S.tag}>
-                  <Text style={S.tagText}>{tag}</Text>
-                </View>
+                <Pressable key={tag} onPress={() => nav.navigate('Main', { screen: 'Search', params: { query: tag } })}>
+                  <View style={S.tag}><Text style={S.tagText}>{tag}</Text></View>
+                </Pressable>
               ))}
             </View>
           )}
