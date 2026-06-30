@@ -8,6 +8,7 @@ import { WebView } from 'react-native-webview';
 import * as FileSystem from 'expo-file-system/legacy';
 import { buildDescrambleHtml, buildSimpleImageHtml, extractFilename } from '../utils/scramble';
 import { jmLogger } from '../utils/JmLogger';
+import { downloadQueue } from '../utils/DownloadQueue';
 
 const IMG_HEADERS: Record<string, string> = {
   Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
@@ -43,7 +44,7 @@ export function SafeImage({ imageUrl, epsId, pictureName, style, onLoad }: Props
   useEffect(() => {
     let cancel = false;
     jmLogger.log(`SafeImage: epsId=${epsId} picName=${picName} fallback=${fallback}`);
-    urlToDataUri(imageUrl)
+    downloadQueue.enqueue(() => urlToDataUri(imageUrl))
       .then(uri => { if (!cancel) { jmLogger.ok('下载完成, 准备解扰'); setDataUri(uri); } })
       .catch(e => { if (!cancel) { jmLogger.err(`下载失败: ${e.message}, 降级到原始 URL`); setDataUri(imageUrl); setFallback(true); } });
     return () => { cancel = true; };
