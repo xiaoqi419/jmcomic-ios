@@ -1,4 +1,4 @@
-// SafeImage — expo-file-system 下载 → base64 → WebView Canvas
+// SafeImage - expo-file-system -> base64 -> WebView Canvas
 // @author Jason
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -12,13 +12,13 @@ interface Props { imageUrl: string; epsId: string; pictureName?: string; style?:
 const SC_ID = '220980';
 
 async function urlToDataUri(url: string): Promise<string> {
-  const ext = url.split('.').pop()?.replace(/\?.*/, '') || 'webp';
-  const dest = \`\${FileSystem.cacheDirectory}jm_\${Date.now()}_\${Math.random().toString(36).slice(2)}.\${ext}\`;
+  const ext = (url.split('.').pop() || 'webp').replace(/\?.*/, '');
+  const dest = FileSystem.cacheDirectory + 'jm_' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext;
   const dl = await FileSystem.downloadAsync(url, dest);
-  if (dl.status !== 200) throw new Error(\`Download \${dl.status}\`);
+  if (dl.status !== 200) throw new Error('Download ' + dl.status);
   const b64 = await FileSystem.readAsStringAsync(dl.uri, { encoding: FileSystem.EncodingType.Base64 });
   FileSystem.deleteAsync(dl.uri, { idempotent: true }).catch(() => {});
-  return \`data:image/\${ext};base64,\${b64}\`;
+  return 'data:image/' + ext + ';base64,' + b64;
 }
 
 export function SafeImage({ imageUrl, epsId, pictureName, style, onLoad }: Props) {
