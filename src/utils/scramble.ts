@@ -1,9 +1,11 @@
 // 图片 Scramble 解码 — 精确算法 (从 PicaComic / JMComic-qt 移植)
-// 网格数 = MD5(epsId + 文件名) → 末位 charCode % N → * 2 + 2
+// 网格数 = MD5(epsId + 纯数字文件名) → 末位 charCode % N → * 2 + 2
 // 图片重组 = 将水平条带逆序重排 (最后一块放到最上面)
 // @author nyx
 
 import CryptoJS from 'crypto-js';
+
+const JM_DEBUG = true;
 
 /**
  * 计算分段数 (即百叶窗的叶片数)
@@ -11,7 +13,7 @@ import CryptoJS from 'crypto-js';
  *
  * @param epsId      章节 ID (albumId 或 chapterId)
  * @param scrambleId 从 API 获取的 scramble_id，回退值 220980
- * @param pictureName 文件名，如 "00001.webp"
+ * @param pictureName 纯数字文件名，不带扩展名，如 "00001"（不能用 "00001.webp"）
  */
 export function getSegmentationNum(
   epsId: string,
@@ -23,24 +25,23 @@ export function getSegmentationNum(
   let num = 0;
 
   if (epsID < scrambleID) {
-    // 早期章节无保护
     num = 0;
   } else if (epsID < 268850) {
-    // 固定 10 段 (旧保护方式)
     num = 10;
   } else if (epsID > 421926) {
-    // MD5(epsId + pictureName) → 末位 charCode % 8 → * 2 + 2
-    const hash = CryptoJS.MD5(epsId + pictureName).toString(CryptoJS.enc.Hex);
+    const md5Input = epsId + pictureName;
+    const hash = CryptoJS.MD5(md5Input).toString(CryptoJS.enc.Hex);
     const charCode = hash.charCodeAt(hash.length - 1);
     const remainder = charCode % 8;
-    num = remainder * 2 + 2; // 结果: 2,4,6,8,10,12,14,16
+    num = remainder * 2 + 2;
+    if (JM_DEBUG) console.log(`[JM] MD5("${md5Input}")=${hash} last=${charCode} %8=${remainder} *2+2=${num}`);
   } else {
-    // 268850 <= epsID <= 421926
-    // MD5(epsId + pictureName) → 末位 charCode % 10 → * 2 + 2
-    const hash = CryptoJS.MD5(epsId + pictureName).toString(CryptoJS.enc.Hex);
+    const md5Input = epsId + pictureName;
+    const hash = CryptoJS.MD5(md5Input).toString(CryptoJS.enc.Hex);
     const charCode = hash.charCodeAt(hash.length - 1);
     const remainder = charCode % 10;
-    num = remainder * 2 + 2; // 结果: 2,4,6,8,10,12,14,16,18,20
+    num = remainder * 2 + 2;
+    if (JM_DEBUG) console.log(`[JM] MD5("${md5Input}")=${hash} last=${charCode} %10=${remainder} *2+2=${num}`);
   }
   return num;
 }

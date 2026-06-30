@@ -1,0 +1,20 @@
+// 阅读器 — 复刻 APK Read.tsx 全部功能
+// 竖屏滚动 + 横屏翻页 + scramble + 进度滑块 + 章节切换 + 阅读跟踪
+// @author nyx
+
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import {
+  View, Text, FlatList, TouchableOpacity, useWindowDimensions, StatusBar,
+  ScrollView, Pressable, ActivityIndicator, Modal, Alert, StyleSheet,
+} from 'react-native';
+import { SafeImage } from '../components/SafeImage';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { useReaderStore } from '../store/useReader';
+import { useSettingsStore } from '../store/useSettings';
+import { useHistoryStore } from '../store/useHistory';
+import { fetchComicRead, fetchAlbumDetail, getImgHost } from '../api/endpoints';
+import { extractFilename, extractFilenameWithoutExt } from '../utils/scramble';
+import { Colors, FontSize, Radius, Spacing } from '../theme';

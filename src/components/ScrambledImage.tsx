@@ -10,6 +10,8 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { Colors } from '../theme';
 import { buildDescrambleHtml, buildSimpleImageHtml, extractFilenameWithoutExt } from '../utils/scramble';
 
+const JM_DEBUG = true;
+
 /**
  * 图片请求头 — 完全对齐 PicaComic 的 getImgHeaders
  * referer 使用实际 JM API 域名（不能用 localhost，部分 CDN 会检查）
@@ -51,8 +53,9 @@ export function ScrambledImage({
 
   // pictureName 必须是无扩展名的纯文件名（如 "00001"），不能带 .webp
   // 因为 getSegmentationNum 中 MD5(epsId + pictureName) 使用纯数字
-  const picName = (pictureName || extractFilenameWithoutExt(imageUrl)).replace(/\.\w+$/, '');
   const scId = String(scrambleId);
+  const picName = (pictureName || extractFilenameWithoutExt(imageUrl)).replace(/\.\w+$/, '');
+  if (JM_DEBUG) console.log(`[JM] ScrambledImage picName="${picName}" epsId="${epsId}" scId="${scId}"`);
 
   // Step 1: 通过 expo-file-system 原生 HTTP 下载图片 — 完全绕过浏览器 CORS
   useEffect(() => {
@@ -65,18 +68,22 @@ export function ScrambledImage({
 
     (async () => {
       try {
+        if (JM_DEBUG) console.log(`[JM] download start: ${imageUrl} -> ${dest}`);
         const dl = await FileSystem.downloadAsync(imageUrl, dest, { headers: IMG_HEADERS });
         if (cancelled) return;
+        if (JM_DEBUG) console.log(`[JM] download done: status=${dl.status} uri=${dl.uri}`);
         if (dl.status !== 200) throw new Error(`HTTP ${dl.status}`);
 
         const base64 = await FileSystem.readAsStringAsync(dl.uri, {
           encoding: FileSystem.EncodingType.Base64,
         });
         if (cancelled) return;
-        setDataUrl(`data:image/${ext.replace('jpg', 'jpeg')};base64,${base64}`);
-      } catch {
+        const uri = `data:image/${ext.replace('jpg', 'jpeg')};base64,${base64}`;
+        if (JM_DEBUG) console.log(`[JM] dataUrl length=${base64.length} ext=${ext}`);
+        setDataUrl(uri);
+      } catch (e) {
         if (!cancelled) {
-          // 下载失败: 降级直接用原始 URL（WebView 可能受限，但试试看）
+          if (JM_DEBUG) console.log(`[JM] download FAILED:`, e);
           setDownloadError(true);
           setDataUrl(imageUrl);
         }
@@ -89,15 +96,22 @@ export function ScrambledImage({
   // Step 2: 生成解扰 HTML
   const html = useMemo(() => {
     if (!dataUrl) return '';
-    if (downloadError) return buildSimpleImageHtml(dataUrl);
+    if (downloadError) {
+      if (JM_DEBUG) console.log(`[JM] buildSimpleImageHtml (download failed, using raw URL)`);
+      return buildSimpleImageHtml(dataUrl);
+    }
     try {
-      return buildDescrambleHtml(dataUrl, epsId, scId, picName);
-    } catch {
+      const h = buildDescrambleHtml(dataUrl, epsId, scId, picName);
+      if (JM_DEBUG) console.log(`[JM] buildDescrambleHtml OK segments from getSegmentationNum`);
+      return h;
+    } catch (e) {
+      if (JM_DEBUG) console.log(`[JM] buildDescrambleHtml FAILED:`, e);
       return buildSimpleImageHtml(dataUrl);
     }
   }, [dataUrl, epsId, scId, picName, downloadError]);
 
   const handleMessage = useCallback((event: any) => {
+    if (JM_DEBUG) console.log(`[JM] WebView message:`, event.nativeEvent?.data);
     if (event.nativeEvent?.data === 'loaded' && onLoad) {
       onLoad();
     }
