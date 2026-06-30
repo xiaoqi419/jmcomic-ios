@@ -19,7 +19,7 @@ import type {
 
 async function encryptedGet<T>(path: string, q?: Record<string, string | number>): Promise<T> {
   const ts = nowTs();
-  const data = await apiClient.get<string>(path, q);
+  const data = await apiClient.get<string>(path, q, ts);
   return decryptAndParse<T>(ts, data);
 }
 
@@ -35,7 +35,7 @@ async function cachedGet<T>(path: string, q: Record<string, string | number> | u
 
 async function encryptedPost<T>(path: string, f?: Record<string, string | number>): Promise<T> {
   const ts = nowTs();
-  const data = await apiClient.post<string>(path, f);
+  const data = await apiClient.post<string>(path, f, ts);
   return decryptAndParse<T>(ts, data);
 }
 
@@ -235,6 +235,18 @@ export async function toggleFavorite(albumId: string): Promise<any> {
 
 export async function createFolder(name: string): Promise<any> {
   return encryptedPost('favorite_folder', { name });
+}
+
+export async function deleteFolder(folderId: string): Promise<any> {
+  return encryptedPost('favorite_folder_del', { folder_id: folderId });
+}
+
+export async function renameFolder(folderId: string, name: string): Promise<any> {
+  return encryptedPost('favorite_folder_edit', { folder_id: folderId, name });
+}
+
+export async function moveToFolder(folderId: string, albumId: string): Promise<any> {
+  return encryptedPost('favorite_move', { folder_id: folderId, aid: Number(albumId) });
 }
 
 export async function login(username: string, password: string): Promise<LoginData> {

@@ -21,6 +21,7 @@ import { useReaderStore } from '../store/useReader';
 import { useHistoryStore } from '../store/useHistory';
 import { useAuthStore } from '../store/useAuth';
 import { chunkArray } from '../utils/helpers';
+import { DebugOverlay } from '../components/DebugOverlay';
 import type { AlbumDetail, Episode, CommentItem as ApiComment } from '../api/types';
 
 export function ComicDetailScreen() {
@@ -40,14 +41,19 @@ export function ComicDetailScreen() {
   const [showBuy, setShowBuy] = useState(false);
   const [seriesGroups, setSeriesGroups] = useState<Episode[][]>([]);
   const [groupIdx, setGroupIdx] = useState(0);
-  const { isFav, addLocal, removeLocal } = useFavoritesStore();
+  const { isFav, addLocal, removeLocal, folders, createFolder, deleteFolder, renameFolder, moveToFolder, loadOnline } = useFavoritesStore();
   const fav = isFav(albumId);
+  const [showFolderPicker, setShowFolderPicker] = useState(false);
+  const [showFolderManager, setShowFolderManager] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [folderRename, setFolderRename] = useState<{ id: string; name: string } | null>(null);
 
   // 从 AsyncStorage 读取上次阅读位置
   const [readEp, setReadEp] = useState<{ readId: string; episode: string } | null>(null);
 
   useEffect(() => {
     load();
+    if (loggedIn) loadOnline();
     // 异步加载上次阅读位置
     try {
       const { default: AsyncStorage } = require('@react-native-async-storage/async-storage');
@@ -165,11 +171,42 @@ export function ComicDetailScreen() {
   };
 
   const handleToggleFav = () => {
-    if (fav) removeLocal(albumId);
-    else addLocal({
+    if (fav) {
+      removeLocal(albumId);
+    } else if (loggedIn && folders.length > 0) {
+      setShowFolderPicker(true);
+    } else if (loggedIn) {
+      setShowFolderPicker(true);
+    } else {
+      addLocal({
+        id: albumId, title: detail?.name || '', coverUrl: getCoverUrl(albumId),
+        author: detail?.author?.join(', ') || '', addedAt: Date.now(),
+      });
+    }
+  };
+
+  const handleFolderSelect = async (folderId?: string) => {
+    if (folderId) {
+      await moveToFolder(folderId, albumId);
+    }
+    addLocal({
       id: albumId, title: detail?.name || '', coverUrl: getCoverUrl(albumId),
       author: detail?.author?.join(', ') || '', addedAt: Date.now(),
     });
+    setShowFolderPicker(false);
+  };
+
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    await createFolder(newFolderName.trim());
+    setNewFolderName('');
+  };
+
+  const handleDeleteFolder = async (id: string) => {
+    Alert.alert('删除文件夹', '确定删除？收藏不会丢失', [
+      { text: '取消', style: 'cancel' },
+      { text: '删除', style: 'destructive', onPress: () => deleteFolder(id) },
+    ]);
   };
 
   const handleComment = async () => {
@@ -406,6 +443,91 @@ export function ComicDetailScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* 收藏文件夹选择 */}
+      <Modal visible={showFolderPicker} transparent animationType="slide">
+        <View style={styles.buyOverlay}>
+          <View style={[styles.buyDialog, { maxWidth: 360 }]}>
+            <Text style={{ color: Colors.textPrimary, fontSize: FontSize.bodyLarge, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>收藏到文件夹</Text>
+            <ScrollView style={{ maxHeight: 300 }}>
+              {folders.map((f) => (
+                <Pressable
+                  key={f.folder_id}
+                  onPress={() => handleFolderSelect(f.folder_id)}
+                  style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 8, borderBottomWidth: 0.5, borderBottomColor: Colors.divider }}
+                >
+                  <MaterialIcons name="folder" size={20} color={Colors.primary} style={{ marginRight: 8 }} />
+                  <Text style={{ flex: 1, color: Colors.textPrimary, fontSize: FontSize.body }}>{f.name}</Text>
+                  <Text style={{ color: Colors.textTertiary, fontSize: FontSize.caption }}>{f.count || '0'}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+              <TextInput
+                style={{ flex: 1, height: 36, backgroundColor: Colors.surfaceLight, borderRadius: 6, paddingHorizontal: 10, color: Colors.textPrimary, fontSize: FontSize.body, borderWidth: 1, borderColor: Colors.border }}
+                placeholder="新建文件夹"
+                placeholderTextColor={Colors.textTertiary}
+                value={newFolderName}
+                onChangeText={setNewFolderName}
+                onSubmitEditing={handleCreateFolder}
+              />
+              <Pressable onPress={handleCreateFolder} style={{ width: 36, height: 36, borderRadius: 6, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}>
+                <MaterialIcons name="add" size={20} color="#fff" />
+              </Pressable>
+            </View>
+            <Pressable onPress={() => setShowFolderManager(true)} style={{ marginTop: 8 }}>
+              <Text style={{ color: Colors.textSecondary, fontSize: FontSize.label, textAlign: 'center' }}>管理文件夹</Text>
+            </Pressable>
+            <Pressable onPress={() => handleFolderSelect()} style={{ marginTop: 4 }}>
+              <Text style={{ color: Colors.textTertiary, fontSize: FontSize.label, textAlign: 'center' }}>（不选择，仅本地收藏）</Text>
+            </Pressable>
+            <Pressable onPress={() => setShowFolderPicker(false)} style={{ marginTop: 8 }}>
+              <Text style={{ color: Colors.textSecondary, textAlign: 'center' }}>{t('common.cancel')}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 文件夹管理（重命名/删除） */}
+      <Modal visible={showFolderManager} transparent animationType="slide">
+        <View style={styles.buyOverlay}>
+          <View style={[styles.buyDialog, { maxWidth: 360 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <Text style={{ color: Colors.textPrimary, fontSize: FontSize.bodyLarge, fontWeight: '700' }}>管理文件夹</Text>
+              <Pressable onPress={() => setShowFolderManager(false)}>
+                <MaterialIcons name="close" size={22} color={Colors.textSecondary} />
+              </Pressable>
+            </View>
+            <ScrollView style={{ maxHeight: 300 }}>
+              {folders.map((f) => (
+                <View key={f.folder_id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: Colors.divider }}>
+                  {folderRename?.id === f.folder_id ? (
+                    <TextInput
+                      style={{ flex: 1, height: 32, backgroundColor: Colors.surfaceLight, borderRadius: 4, paddingHorizontal: 8, color: Colors.textPrimary, fontSize: FontSize.body }}
+                      value={folderRename.name}
+                      onChangeText={(t) => setFolderRename({ ...folderRename, name: t })}
+                      onSubmitEditing={() => { renameFolder(f.folder_id, folderRename.name); setFolderRename(null); }}
+                      autoFocus
+                    />
+                  ) : (
+                    <>
+                      <MaterialIcons name="folder" size={18} color={Colors.primary} style={{ marginRight: 6 }} />
+                      <Text style={{ flex: 1, color: Colors.textPrimary, fontSize: FontSize.body }}>{f.name}</Text>
+                      <Pressable onPress={() => setFolderRename({ id: f.folder_id, name: f.name })} hitSlop={8} style={{ padding: 4 }}>
+                        <MaterialIcons name="edit" size={18} color={Colors.textSecondary} />
+                      </Pressable>
+                      <Pressable onPress={() => handleDeleteFolder(f.folder_id)} hitSlop={8} style={{ padding: 4 }}>
+                        <MaterialIcons name="delete-outline" size={18} color={Colors.error} />
+                      </Pressable>
+                    </>
+                  )}
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+      <DebugOverlay />
     </SafeAreaView>
   );
 }

@@ -96,8 +96,9 @@ export class ApiClient {
     query?: Record<string, string | number>;
     form?: Record<string, string | number>;
     isMobile?: boolean;
+    ts?: number;
   } = {}, retry = 0): Promise<T> {
-    const ts = nowTs();
+    const ts = config.ts || nowTs();
     const method = config.method || 'GET';
     const isMobile = config.isMobile !== false;
 
@@ -146,11 +147,11 @@ export class ApiClient {
     }
   }
 
-  async get<T>(path: string, q?: Record<string, string | number>) {
-    return this.request<T>(path, { method: 'GET', query: q });
+  async get<T>(path: string, q?: Record<string, string | number>, ts?: number) {
+    return this.request<T>(path, { method: 'GET', query: q, ts });
   }
-  async post<T>(path: string, f?: Record<string, string | number>) {
-    return this.request<T>(path, { method: 'POST', form: f });
+  async post<T>(path: string, f?: Record<string, string | number>, ts?: number) {
+    return this.request<T>(path, { method: 'POST', form: f, ts });
   }
   async getWeb(path: string, q?: Record<string, string | number>) {
     return this.request<string>(path, { method: 'GET', query: q, isMobile: false });

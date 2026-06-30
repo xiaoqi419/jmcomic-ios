@@ -8,15 +8,28 @@ import { WebView } from 'react-native-webview';
 import { buildDescrambleHtml, buildSimpleImageHtml, extractFilename } from '../utils/scramble';
 import { jmLogger } from '../utils/JmLogger';
 import { downloadQueue } from '../utils/DownloadQueue';
+import { generateToken, nowTs } from '../api/crypto';
 
-const IMG_HEADERS: Record<string, string> = {
+const IMG_HEADERS_BASE: Record<string, string> = {
   Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-  Referer: 'https://www.jmapibranch2.cc/',
+  Referer: 'https://18comic.vip/',
   'Sec-Fetch-Mode': 'no-cors',
   'Sec-Fetch-Site': 'cross-site',
   'User-Agent': 'Mozilla/5.0 (Linux; Android 13; WD5DDE5 Build/TQ1A.230205.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/114.0.5735.196 Safari/537.36',
   'X-Requested-With': 'com.jiaohua_browser',
 };
+
+function buildImgHeaders(): Record<string, string> {
+  const ts = nowTs();
+  const { token, tokenparam } = generateToken(ts);
+  return {
+    ...IMG_HEADERS_BASE,
+    Token: token,
+    token: token,
+    Tokenparam: tokenparam,
+    tokenparam: tokenparam,
+  };
+}
 
 interface Props { imageUrl: string; epsId: string; pictureName?: string; containerWidth: number; height?: number; onLoad?: () => void; onDimension?: (w: number, h: number) => void; }
 
@@ -28,7 +41,7 @@ async function urlToDataUri(url: string): Promise<string> {
   const cached = await getCachedImageDataUri(url);
   if (cached) { jmLogger.log(`cache hit: ${url.slice(0, 60)}`); return cached; }
   jmLogger.log(`fetch: ${url}`);
-  const response = await fetch(url, { headers: IMG_HEADERS });
+  const response = await fetch(url, { headers: buildImgHeaders() });
   if (!response.ok) throw new Error(`fetch HTTP ${response.status}`);
   const blob = await response.blob();
   jmLogger.ok(`blob size=${blob.size}`);

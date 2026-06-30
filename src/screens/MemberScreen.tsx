@@ -32,7 +32,11 @@ export function MemberScreen() {
   useEffect(() => {
     if (loggedIn) {
       loadInfo();
-      loadSign();
+      loadSign().then(() => {
+        if (!useMemberStore.getState().signed) {
+          doSignIn().catch(() => {});
+        }
+      });
       loadAchievements();
       loadNotifications();
     }

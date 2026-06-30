@@ -5,7 +5,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, useWindowDimensions, StatusBar,
-  ScrollView, Pressable, ActivityIndicator, Modal, Alert, StyleSheet,
+  ScrollView, Pressable, ActivityIndicator, Modal, Alert, StyleSheet, Platform,
 } from 'react-native';
 import { SafeImage } from '../components/SafeImage';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +19,8 @@ import { extractFilename } from '../utils/scramble';
 import { Colors, FontSize, Radius, Spacing } from '../theme';
 import { DebugOverlay } from '../components/DebugOverlay';
 import type { Episode } from '../api/types';
+import * as Brightness from 'expo-brightness';
+import * as MediaLibrary from 'expo-media-library';
 
 export function ReaderScreen() {
   const { width: W, height: H } = useWindowDimensions();
@@ -32,10 +34,16 @@ export function ReaderScreen() {
   const [loading, setLoading] = useState(false);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [showChapterModal, setShowChapterModal] = useState(false);
+  const [brightness, setBrightnessVal] = useState(1);
+  const [showBrightness, setShowBrightness] = useState(false);
   const flatRef = useRef<FlatList>(null);
   const scrollRef = useRef<ScrollView>(null);
 
   const toggleUI = () => setShowUI((p) => !p);
+
+  useEffect(() => {
+    Brightness.getBrightnessAsync().then(setBrightnessVal).catch(() => {});
+  }, []);
 
   // 加载章节列表
   useEffect(() => {
@@ -90,6 +98,57 @@ export function ReaderScreen() {
     if (!isVertical) {
       flatRef.current?.scrollToIndex({ index: clamped, animated: true });
     }
+  };
+
+  const goPrev = () => {
+    if (currentPage > 0) {
+      const target = currentPage - 1;
+      setPage(target);
+      if (isVertical) {
+        scrollRef.current?.scrollTo({ y: target * W * 1.45, animated: true });
+      } else {
+        flatRef.current?.scrollToIndex({ index: target, animated: true });
+      }
+    }
+  };
+
+  const goNext = () => {
+    if (currentPage < totalPages - 1) {
+      const target = currentPage + 1;
+      setPage(target);
+      if (isVertical) {
+        scrollRef.current?.scrollTo({ y: target * W * 1.45, animated: true });
+      } else {
+        flatRef.current?.scrollToIndex({ index: target, animated: true });
+      }
+    }
+  };
+
+  const handleSaveImage = async () => {
+    const url = imageUrls[currentPage];
+    if (!url) return;
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('', '需要相册权限才能保存');
+        return;
+      }
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const uri = URL.createObjectURL(blob);
+      await MediaLibrary.saveToLibraryAsync(uri);
+      URL.revokeObjectURL(uri);
+      Alert.alert('', '已保存到相册');
+    } catch (e: any) {
+      Alert.alert('保存失败', e.message);
+    }
+  };
+
+  const handleBrightness = async (val: number) => {
+    setBrightnessVal(val);
+    try {
+      await Brightness.setBrightnessAsync(val);
+    } catch {}
   };
 
   const totalPages = imageUrls.length;
@@ -168,6 +227,13 @@ export function ReaderScreen() {
         />
       )}
 
+      {/* 点击翻页覆盖层 */}
+      <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, flexDirection: 'row' }} pointerEvents="box-none">
+        <Pressable style={{ flex: 3 }} onPress={goPrev} />
+        <View style={{ flex: 4 }} />
+        <Pressable style={{ flex: 3 }} onPress={goNext} />
+      </View>
+
       {/* 顶部栏 */}
       {showUI && (
         <SafeAreaView edges={["top"]} style={styles.topBar}>
@@ -187,6 +253,14 @@ export function ReaderScreen() {
           </TouchableOpacity>
 
           <View style={{ flexDirection: 'row', gap: 12 }}>
+            {/* 保存图片 */}
+            <TouchableOpacity onPress={handleSaveImage}>
+              <MaterialIcons name="save-alt" size={22} color="#fff" />
+            </TouchableOpacity>
+            {/* 亮度 */}
+            <TouchableOpacity onPress={() => setShowBrightness(!showBrightness)}>
+              <MaterialIcons name={showBrightness ? 'brightness-high' : 'brightness-low'} size={22} color="#fff" />
+            </TouchableOpacity>
             {/* 切换阅读模式 */}
             <TouchableOpacity onPress={() => setVertical(!isVertical)}>
               <MaterialIcons name={isVertical ? 'view-carousel' : 'view-stream'} size={22} color="#fff" />
@@ -215,7 +289,7 @@ export function ReaderScreen() {
         </SafeAreaView>
       )}
 
-      {/* 底部进度条 */}
+      {/* 底部栏 */}
       {showUI && (
         <SafeAreaView edges={["top"]} style={styles.bottomBar}>
           {/* 进度滑块 */}
@@ -226,7 +300,7 @@ export function ReaderScreen() {
               onStartShouldSetResponder={() => true}
               onResponderGrant={(e) => {
                 const x = e.nativeEvent.locationX;
-                const trackW = e.nativeEvent.target ? W - 120 : W - 120;
+                const trackW = W - 120;
                 const ratio = Math.max(0, Math.min(1, x / trackW));
                 goPage(Math.round(ratio * (totalPages - 1)));
               }}
@@ -242,6 +316,31 @@ export function ReaderScreen() {
             </View>
             <Text style={styles.progressLabel}>{totalPages}</Text>
           </View>
+
+          {/* 亮度滑块 */}
+          {showBrightness && (
+            <View style={styles.sliderContainer}>
+              <MaterialIcons name="brightness-low" size={16} color="#aaa" />
+              <View
+                style={styles.sliderTrack}
+                onStartShouldSetResponder={() => true}
+                onResponderGrant={(e) => {
+                  const x = e.nativeEvent.locationX;
+                  const trackW = W - 80;
+                  handleBrightness(Math.max(0, Math.min(1, x / trackW)));
+                }}
+                onResponderMove={(e) => {
+                  const x = e.nativeEvent.locationX;
+                  const trackW = W - 80;
+                  handleBrightness(Math.max(0, Math.min(1, x / trackW)));
+                }}
+              >
+                <View style={[styles.sliderFill, { width: `${brightness * 100}%` }]} />
+                <View style={[styles.sliderThumb, { left: `${brightness * 100}%` }]} />
+              </View>
+              <MaterialIcons name="brightness-high" size={16} color="#aaa" />
+            </View>
+          )}
         </SafeAreaView>
       )}
 

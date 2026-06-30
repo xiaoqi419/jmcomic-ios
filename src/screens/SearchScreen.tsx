@@ -180,13 +180,18 @@ export function SearchScreen() {
                     </View>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                       {history.map((h) => (
-                        <Pressable
-                          key={h}
-                          onPress={() => { setQuery(h); setTimeout(onSearch, 100); }}
-                          style={styles.tag}
-                        >
-                          <Text style={styles.tagText}>{h}</Text>
-                        </Pressable>
+                        <View key={h} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border }}>
+                          <Pressable onPress={() => { setQuery(h); setTimeout(onSearch, 100); }}>
+                            <Text style={styles.tagText}>{h}</Text>
+                          </Pressable>
+                          <Pressable onPress={() => {
+                            const newHistory = history.filter((x) => x !== h);
+                            setHistory(newHistory);
+                            AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory));
+                          }} hitSlop={8} style={{ marginLeft: 6 }}>
+                            <MaterialIcons name="close" size={14} color={Colors.textTertiary} />
+                          </Pressable>
+                        </View>
                       ))}
                     </View>
                   </View>
