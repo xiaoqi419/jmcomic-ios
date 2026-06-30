@@ -1,4 +1,4 @@
-// 游戏 — 复刻 APK Games.tsx
+// 游戏 v2
 // @author nyx
 
 import React, { useEffect, useState } from 'react';
@@ -12,7 +12,7 @@ import { fetchGames } from '../api/endpoints';
 import type { GameItem } from '../api/types';
 
 const { width: W } = Dimensions.get('window');
-const CARD_W = (W - Spacing.marginEdge * 2 - 8) / 2;
+const CARD_W = (W - Spacing.marginEdge * 2 - 10) / 2;
 
 export function GamesScreen() {
   const { t } = useTranslation();
@@ -31,11 +31,11 @@ export function GamesScreen() {
     <Pressable
       key={item.gid}
       onPress={() => { if (item.link) Linking.openURL(item.link); }}
-      style={{ width: CARD_W, margin: 4, marginBottom: 12 }}
+      style={S.gameCard}
     >
-      <Image source={{ uri: item.photo }} style={{ width: CARD_W, height: CARD_W * 0.75, borderRadius: Radius.sm, backgroundColor: Colors.surfaceContainer }} contentFit="cover" />
-      <Text style={{ fontSize: FontSize.body, fontWeight: '600', color: Colors.text, marginTop: 4 }} numberOfLines={2}>{item.title}</Text>
-      <Text style={{ fontSize: FontSize.caption, color: Colors.textTertiary }}>{item.tags}</Text>
+      <Image source={{ uri: item.photo }} style={S.gameCover} contentFit="cover" />
+      <Text style={S.gameTitle} numberOfLines={2}>{item.title}</Text>
+      <Text style={S.gameTag}>{item.tags}</Text>
     </Pressable>
   );
 
@@ -48,16 +48,19 @@ export function GamesScreen() {
         contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}
         ListHeaderComponent={
           <View>
-            <Text style={{ fontSize: FontSize.largeTitle, fontWeight: '800', color: Colors.textPrimary, marginBottom: 12 }}>{t('games.title')}</Text>
+            <Text style={S.pageTitle}>{t('games.title')}</Text>
             {hot.length > 0 && (
               <View style={{ marginBottom: 20 }}>
-                <Text style={{ fontSize: FontSize.headline, fontWeight: '700', color: Colors.primary, marginBottom: 8 }}>{t('games.hot')}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <MaterialIcons name="whatshot" size={18} color={Colors.primary} />
+                  <Text style={S.sectionTitle}>{t('games.hot')}</Text>
+                </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                   {hot.map(renderGame)}
                 </View>
               </View>
             )}
-            <Text style={{ fontSize: FontSize.headline, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 }}>{t('games.all')}</Text>
+            <Text style={S.sectionTitle}>{t('games.all')}</Text>
           </View>
         }
         renderItem={({ item }) => renderGame(item)}
@@ -66,3 +69,12 @@ export function GamesScreen() {
     </SafeAreaView>
   );
 }
+
+const S = StyleSheet.create({
+  pageTitle: { fontSize: FontSize.largeTitle, fontWeight: '800', color: Colors.textPrimary, marginBottom: 14 },
+  sectionTitle: { fontSize: FontSize.headline, fontWeight: '700', color: Colors.textPrimary },
+  gameCard: { width: CARD_W, margin: 4, marginBottom: 14 },
+  gameCover: { width: CARD_W, height: CARD_W * 0.75, borderRadius: Radius.card, backgroundColor: Colors.surfaceContainer },
+  gameTitle: { fontSize: FontSize.body, fontWeight: '600', color: Colors.text, marginTop: 6 },
+  gameTag: { fontSize: FontSize.caption, color: Colors.textTertiary, marginTop: 2 },
+});

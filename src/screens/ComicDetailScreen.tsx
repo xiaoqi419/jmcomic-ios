@@ -1,4 +1,4 @@
-// 漫画详情 — 复刻 APK Detail.tsx
+// 漫画详情 v2 — 暖琥珀暗色重设计
 // 3-Tab: 简介 | 章节（分组） | 评论 + 购买 + 分享 + 阅读历史
 // @author nyx
 
@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Colors, Radius, Spacing, FontSize } from '../theme';
@@ -48,13 +49,11 @@ export function ComicDetailScreen() {
   const [newFolderName, setNewFolderName] = useState('');
   const [folderRename, setFolderRename] = useState<{ id: string; name: string } | null>(null);
 
-  // 从 AsyncStorage 读取上次阅读位置
   const [readEp, setReadEp] = useState<{ readId: string; episode: string } | null>(null);
 
   useEffect(() => {
     load();
     if (loggedIn) loadOnline();
-    // 异步加载上次阅读位置
     try {
       const { default: AsyncStorage } = require('@react-native-async-storage/async-storage');
       AsyncStorage.getItem(`@jmcomic.readEp.${albumId}`).then((json: string | null) => {
@@ -68,15 +67,12 @@ export function ComicDetailScreen() {
     try {
       const d = await fetchAlbumDetail(albumId);
       setDetail(d);
-
-      // 日志：响应结构诊断
       const keys = Object.keys(d as any);
       const hasSeries = d.series?.length;
       jmLogger.log(`【详情】albumId=${albumId} keys=${keys.join(',')} hasSeries=${!!hasSeries} seriesLen=${d.series?.length || 0}`);
       if (hasSeries) {
         jmLogger.log(`【详情】第一条章节: ${JSON.stringify(d.series![0])}`);
       } else {
-        // 收集所有可能包含数据的字段
         const sample: Record<string, any> = {};
         for (const k of keys) {
           const v = (d as any)[k];
@@ -87,8 +83,6 @@ export function ComicDetailScreen() {
         }
         jmLogger.log(`【详情】字段快照: ${JSON.stringify(sample)}`);
       }
-
-      // 章节分组（每 10 个一组，与原版一致）
       if (d.series?.length) {
         setSeriesGroups(chunkArray(d.series, 10));
       }
@@ -122,19 +116,15 @@ export function ComicDetailScreen() {
           images.push(`https://${host}/media/photos/${chId}/${fn}`);
         }
       }
-
       useReaderStore.getState().startReading(albumId, chId, chName, images, 220980);
       useHistoryStore.getState().add({
         id: albumId, title: detail?.name || '', coverUrl: getCoverUrl(albumId),
         chapterId: chId, chapterTitle: chName, page: 0, readAt: Date.now(),
       });
-
-      // 保存上次阅读位置
       try {
         const { default: AsyncStorage } = require('@react-native-async-storage/async-storage');
         AsyncStorage.setItem(`@jmcomic.readEp.${albumId}`, JSON.stringify({ readId: chId, episode: chName }));
       } catch {}
-
       nav.navigate('Reader', { chapterId: chId, albumId, chapterTitle: chName });
     } catch (e: any) {
       Alert.alert('错误', e.message || '加载失败');
@@ -143,13 +133,10 @@ export function ComicDetailScreen() {
 
   const handleStartReading = () => {
     if (!detail?.series?.length) return;
-
-    // 如果有上次阅读记录，从那里继续
     if (readEp?.readId) {
       const ep = detail.series.find((s) => s.id === readEp.readId);
       openChapter(readEp.readId, ep?.name || readEp.episode);
     } else {
-      // 否则从头开始
       openChapter(detail.series[0].id, detail.series[0].name);
     }
   };
@@ -220,10 +207,7 @@ export function ComicDetailScreen() {
 
   const handleShare = async () => {
     try {
-      await Share.share({
-        title: detail?.name || '',
-        url: `https://18comic.vip/album/${albumId}/`,
-      });
+      await Share.share({ title: detail?.name || '', url: `https://18comic.vip/album/${albumId}/` });
     } catch {}
     setShowShare(false);
   };
@@ -232,17 +216,17 @@ export function ComicDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.cont}>
+      <SafeAreaView style={S.cont}>
         <StatusBar style="light" />
-        <View style={styles.center}><ActivityIndicator size="large" color={Colors.primary} /></View>
+        <View style={S.center}><ActivityIndicator size="large" color={Colors.primary} /></View>
       </SafeAreaView>
     );
   }
   if (!detail) {
     return (
-      <SafeAreaView style={styles.cont}>
+      <SafeAreaView style={S.cont}>
         <StatusBar style="light" />
-        <View style={styles.center}>
+        <View style={S.center}>
           <Text style={{ color: Colors.error }}>{t('common.error')}</Text>
           <Pressable onPress={load} style={{ marginTop: 12 }}><Text style={{ color: Colors.primary }}>{t('common.retry')}</Text></Pressable>
         </View>
@@ -253,34 +237,43 @@ export function ComicDetailScreen() {
   const purchased = detail.purchased !== undefined || detail.bought === true;
 
   return (
-    <SafeAreaView style={styles.cont} edges={['top']}>
+    <SafeAreaView style={S.cont} edges={['top']}>
       <StatusBar style="light" />
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
-        {/* 封面大图 */}
+        {/* 封面 + 渐变 */}
         <View style={{ position: 'relative' }}>
           <Image source={{ uri: getCoverUrl(albumId) }} style={{ width: '100%', height: 300 }} contentFit="cover" />
-          <View style={styles.coverOverlay} />
-          <View style={styles.coverInfo}>
-            <Text style={styles.title}>{detail.name}</Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={S.coverGrad} pointerEvents="none" />
+          <View style={S.coverInfo}>
+            <Text style={S.title}>{detail.name}</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
               {(detail.author || []).map((a, i) => (
-                <Text key={i} style={{ color: Colors.primary, fontSize: FontSize.body }}>{a}</Text>
+                <Text key={i} style={{ color: Colors.primaryLight, fontSize: FontSize.body }}>{a}</Text>
               ))}
             </View>
           </View>
         </View>
 
-        {/* 开始阅读 / 继续阅读 */}
-        <Pressable onPress={handleStartReading} style={styles.readBtn}>
-          <MaterialIcons name={readEp ? 'play-arrow' : 'play-circle-outline'} size={20} color={Colors.textOnPrimary} />
-          <Text style={styles.readBtnText}>{readEp ? t('detail.continue_reading') : t('detail.start_reading')}</Text>
+        {/* 开始阅读按钮 */}
+        <Pressable onPress={handleStartReading} style={S.readBtn}>
+          <MaterialIcons name={readEp ? 'play-arrow' : 'play-circle-outline'} size={22} color={Colors.textOnPrimary} />
+          <Text style={S.readBtnText}>{readEp ? t('detail.continue_reading') : t('detail.start_reading')}</Text>
         </Pressable>
 
+        {/* 状态栏 */}
+        <View style={S.statRow}>
+          <View style={S.statItem}><MaterialIcons name="visibility" size={16} color={Colors.textSecondary} /><Text style={S.statLabel}>{fmt(detail.total_views)}</Text></View>
+          <View style={S.statDot} />
+          <View style={S.statItem}><MaterialIcons name="favorite-border" size={16} color={Colors.textSecondary} /><Text style={S.statLabel}>{fmt(detail.likes)}</Text></View>
+          <View style={S.statDot} />
+          <View style={S.statItem}><MaterialIcons name="chat-bubble-outline" size={16} color={Colors.textSecondary} /><Text style={S.statLabel}>{fmt(detail.comment_total)}</Text></View>
+        </View>
+
         {/* 3-Tab 导航 */}
-        <View style={styles.tabBar}>
+        <View style={S.tabBar}>
           {(t('detail.menu_items', { returnObjects: true }) as string[]).map((label: string, i: number) => (
-            <Pressable key={i} onPress={() => setTab(i + 1)} style={[styles.tab, tab === i + 1 && styles.tabActive]}>
-              <Text style={[styles.tabText, tab === i + 1 && styles.tabTextActive]}>{label}</Text>
+            <Pressable key={i} onPress={() => setTab(i + 1)} style={[S.tab, tab === i + 1 && S.tabActive]}>
+              <Text style={[S.tabText, tab === i + 1 && S.tabTextActive]}>{label}</Text>
             </Pressable>
           ))}
         </View>
@@ -288,73 +281,67 @@ export function ComicDetailScreen() {
         {/* Tab 1: 简介 */}
         {tab === 1 && (
           <View style={{ paddingHorizontal: Spacing.marginEdge, paddingTop: Spacing.md }}>
-            <View style={{ flexDirection: 'row', gap: 16, marginBottom: 8 }}>
-              <View style={{flexDirection:"row",alignItems:"center",gap:4}}><MaterialIcons name="visibility" size={16} color={Colors.textSecondary} /><Text style={styles.stat}>{fmt(detail.total_views)}</Text></View>
-              <View style={{flexDirection:"row",alignItems:"center",gap:4}}><MaterialIcons name="favorite-border" size={16} color={Colors.textSecondary} /><Text style={styles.stat}>{fmt(detail.likes)}</Text></View>
-              <View style={{flexDirection:"row",alignItems:"center",gap:4}}><MaterialIcons name="chat-bubble-outline" size={16} color={Colors.textSecondary} /><Text style={styles.stat}>{fmt(detail.comment_total)}</Text></View>
-            </View>
             {detail.tags?.length > 0 && (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                 {detail.tags.map((tag, i) => (
-                  <View key={i} style={styles.tagChip}><Text style={styles.tagText}>{tag}</Text></View>
+                  <View key={i} style={S.tagChip}><Text style={S.tagText}>{tag}</Text></View>
                 ))}
               </View>
             )}
-            <Text style={{ color: Colors.textSecondary, fontSize: FontSize.body, lineHeight: 20 }}>{detail.description}</Text>
+            <Text style={{ color: Colors.textSecondary, fontSize: FontSize.body, lineHeight: 22 }}>{detail.description}</Text>
 
-            {/* 购买去码 */}
             {!purchased && (
-              <Pressable onPress={() => setShowBuy(true)} style={styles.buyBtn}>
+              <Pressable onPress={() => setShowBuy(true)} style={S.buyBtn}>
                 <MaterialIcons name="lock-open" size={18} color={Colors.textOnPrimary} />
-                <Text style={styles.buyText}>{t('detail.buy')}</Text>
+                <Text style={S.buyText}>{t('detail.buy')}</Text>
               </Pressable>
             )}
 
-            {/* 操作按钮 */}
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 12, marginBottom: 20 }}>
-              <Pressable onPress={handleToggleFav} style={[styles.actionBtn, fav && { backgroundColor: Colors.primary }]}>
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16, marginBottom: 20 }}>
+              <Pressable onPress={handleToggleFav} style={[S.actionBtn, fav && S.actionBtnActive]}>
                 <MaterialIcons name={fav ? 'favorite' : 'favorite-border'} size={18} color={fav ? Colors.textOnPrimary : Colors.primary} />
-                <Text style={{ color: fav ? Colors.textOnPrimary : Colors.primary, fontWeight: '600', fontSize: FontSize.body }}>
+                <Text style={[S.actionBtnText, fav && { color: Colors.textOnPrimary }]}>
                   {fav ? t('common.unfavorite') : t('common.favorite')}
                 </Text>
               </Pressable>
-              <Pressable onPress={() => setShowShare(true)} style={styles.actionBtn}>
+              <Pressable onPress={() => setShowShare(true)} style={S.actionBtn}>
                 <MaterialIcons name="share" size={18} color={Colors.primary} />
-                <Text style={{ color: Colors.primary, fontWeight: '600', fontSize: FontSize.body }}>{t('detail.share')}</Text>
+                <Text style={S.actionBtnText}>{t('detail.share')}</Text>
               </Pressable>
             </View>
           </View>
         )}
 
-        {/* Tab 2: 章节（分组） */}
+        {/* Tab 2: 章节 */}
         {tab === 2 && (
           <View style={{ paddingHorizontal: Spacing.marginEdge, paddingTop: 8 }}>
             {seriesGroups.length === 0 ? (
               <Text style={{ color: Colors.textTertiary, textAlign: 'center', padding: 20 }}>{t('detail.no_chapter')}</Text>
             ) : (
               <>
-                {/* 分组标签 */}
                 {seriesGroups.length > 1 && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
                     {seriesGroups.map((_, i) => (
                       <Pressable
                         key={i}
                         onPress={() => setGroupIdx(i)}
-                        style={[styles.groupTab, groupIdx === i && styles.groupTabActive]}
+                        style={[S.groupTab, groupIdx === i && S.groupTabActive]}
                       >
-                        <Text style={[styles.groupTabText, groupIdx === i && styles.groupTabTextActive]}>
+                        <Text style={[S.groupTabText, groupIdx === i && S.groupTabTextActive]}>
                           {i * 10 + 1}-{Math.min((i + 1) * 10, detail.series.length)}
                         </Text>
                       </Pressable>
                     ))}
                   </ScrollView>
                 )}
-                {/* 当前分组章节列表 */}
                 {seriesGroups[groupIdx]?.map((ep) => (
-                  <Pressable key={ep.id} onPress={() => openChapter(ep.id, ep.name)} style={styles.episodeItem}>
+                  <Pressable key={ep.id} onPress={() => openChapter(ep.id, ep.name)} style={S.episodeItem}>
+                    <View style={S.epBadge}>
+                      <MaterialIcons name="auto-stories" size={16} color={Colors.primary} />
+                    </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.epTitle}>{ep.name || "第" + ep.sort + "话"}</Text>
-                      {ep.page_count ? <Text style={{ fontSize: FontSize.caption, color: Colors.textTertiary }}>{ep.page_count}P</Text> : null}
+                      <Text style={S.epTitle}>{ep.name || "第" + ep.sort + "话"}</Text>
+                      {ep.page_count ? <Text style={S.epPage}>{ep.page_count}P</Text> : null}
                     </View>
                     <MaterialIcons name="chevron-right" size={20} color={Colors.textTertiary} />
                   </Pressable>
@@ -368,16 +355,16 @@ export function ComicDetailScreen() {
         {tab === 3 && (
           <View style={{ paddingHorizontal: Spacing.marginEdge, paddingTop: 8 }}>
             {loggedIn && (
-              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+              <View style={S.commentInputWrap}>
                 <TextInput
-                  style={styles.commentInput}
+                  style={S.commentInput}
                   placeholder={t('common.comment_placeholder')}
                   placeholderTextColor={Colors.textTertiary}
                   value={commentText}
                   onChangeText={setCommentText}
                   multiline
                 />
-                <Pressable onPress={handleComment} style={styles.sendBtn}>
+                <Pressable onPress={handleComment} style={S.sendBtn}>
                   <Text style={{ color: '#fff', fontWeight: '600' }}>{t('common.send')}</Text>
                 </Pressable>
               </View>
@@ -386,13 +373,13 @@ export function ComicDetailScreen() {
               <Text style={{ color: Colors.textTertiary, textAlign: 'center', padding: 20 }}>{t('common.empty')}</Text>
             ) : (
               comments.map((c, i) => (
-                <View key={c.CID || i} style={styles.commentItem}>
+                <View key={c.CID || i} style={S.commentItem}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View style={styles.avatar}><Text style={{ color: '#fff', fontWeight: '700' }}>{(c.username || '?')[0]}</Text></View>
+                    <View style={S.avatar}><Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>{(c.username || '?')[0]}</Text></View>
                     <Text style={{ fontWeight: '600', color: Colors.textPrimary, fontSize: FontSize.body }}>{c.username}</Text>
                     <Text style={{ fontSize: FontSize.caption, color: Colors.textTertiary }}>{c.addtime}</Text>
                   </View>
-                  <Text style={{ color: Colors.textSecondary, marginTop: 4, lineHeight: 18 }}>{c.content}</Text>
+                  <Text style={{ color: Colors.textSecondary, marginTop: 4, lineHeight: 20 }}>{c.content}</Text>
                   {c.replys?.length > 0 && (
                     <View style={{ marginTop: 6, paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: Colors.divider }}>
                       {c.replys.slice(0, 2).map((r, ri) => (
@@ -409,17 +396,16 @@ export function ComicDetailScreen() {
         )}
       </ScrollView>
 
-      {/* 购买弹窗 */}
       <Modal visible={showBuy} transparent animationType="fade">
-        <View style={styles.buyOverlay}>
-          <View style={styles.buyDialog}>
+        <View style={S.modalOverlay}>
+          <View style={S.modalDialog}>
             <MaterialIcons name="lock" size={40} color={Colors.primary} style={{ alignSelf: 'center', marginBottom: 12 }} />
             <Text style={{ color: Colors.textPrimary, fontSize: FontSize.bodyLarge, textAlign: 'center', marginBottom: 8 }}>{t('detail.buy_confirm')}</Text>
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
-              <Pressable onPress={() => setShowBuy(false)} style={[styles.dialogBtn, { backgroundColor: Colors.surfaceLight }]}>
+              <Pressable onPress={() => setShowBuy(false)} style={[S.dialogBtn, { backgroundColor: Colors.surfaceLight }]}>
                 <Text style={{ color: Colors.textSecondary, fontWeight: '600' }}>{t('common.cancel')}</Text>
               </Pressable>
-              <Pressable onPress={handleBuy} style={[styles.dialogBtn, { backgroundColor: Colors.primary }]}>
+              <Pressable onPress={handleBuy} style={[S.dialogBtn, { backgroundColor: Colors.primary }]}>
                 <Text style={{ color: Colors.textOnPrimary, fontWeight: '600' }}>{t('common.confirm')}</Text>
               </Pressable>
             </View>
@@ -427,14 +413,13 @@ export function ComicDetailScreen() {
         </View>
       </Modal>
 
-      {/* 分享弹窗 */}
       <Modal visible={showShare} transparent animationType="fade">
-        <View style={styles.buyOverlay}>
-          <View style={styles.buyDialog}>
+        <View style={S.modalOverlay}>
+          <View style={S.modalDialog}>
             <MaterialIcons name="share" size={40} color={Colors.primary} style={{ alignSelf: 'center', marginBottom: 12 }} />
             <Text style={{ color: Colors.textPrimary, fontSize: FontSize.bodyLarge, textAlign: 'center', marginBottom: 4 }}>{t('detail.share')}</Text>
             <Text style={{ color: Colors.textTertiary, fontSize: FontSize.body, textAlign: 'center', marginBottom: 12 }}>{detail.name}</Text>
-            <Pressable onPress={handleShare} style={[styles.dialogBtn, { backgroundColor: Colors.primary }]}>
+            <Pressable onPress={handleShare} style={[S.dialogBtn, { backgroundColor: Colors.primary }]}>
               <Text style={{ color: Colors.textOnPrimary, fontWeight: '600' }}>分享到...</Text>
             </Pressable>
             <Pressable onPress={() => setShowShare(false)} style={{ marginTop: 8 }}>
@@ -444,17 +429,16 @@ export function ComicDetailScreen() {
         </View>
       </Modal>
 
-      {/* 收藏文件夹选择 */}
       <Modal visible={showFolderPicker} transparent animationType="slide">
-        <View style={styles.buyOverlay}>
-          <View style={[styles.buyDialog, { maxWidth: 360 }]}>
+        <View style={S.modalOverlay}>
+          <View style={[S.modalDialog, { maxWidth: 360 }]}>
             <Text style={{ color: Colors.textPrimary, fontSize: FontSize.bodyLarge, fontWeight: '700', textAlign: 'center', marginBottom: 12 }}>收藏到文件夹</Text>
             <ScrollView style={{ maxHeight: 300 }}>
               {folders.map((f) => (
                 <Pressable
                   key={(f.FID || f.folder_id)}
                   onPress={() => handleFolderSelect((f.FID || f.folder_id))}
-                  style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 8, borderBottomWidth: 0.5, borderBottomColor: Colors.divider }}
+                  style={S.folderItem}
                 >
                   <MaterialIcons name="folder" size={20} color={Colors.primary} style={{ marginRight: 8 }} />
                   <Text style={{ flex: 1, color: Colors.textPrimary, fontSize: FontSize.body }}>{f.name}</Text>
@@ -464,14 +448,14 @@ export function ComicDetailScreen() {
             </ScrollView>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
               <TextInput
-                style={{ flex: 1, height: 36, backgroundColor: Colors.surfaceLight, borderRadius: 6, paddingHorizontal: 10, color: Colors.textPrimary, fontSize: FontSize.body, borderWidth: 1, borderColor: Colors.border }}
+                style={S.modalInput}
                 placeholder="新建文件夹"
                 placeholderTextColor={Colors.textTertiary}
                 value={newFolderName}
                 onChangeText={setNewFolderName}
                 onSubmitEditing={handleCreateFolder}
               />
-              <Pressable onPress={handleCreateFolder} style={{ width: 36, height: 36, borderRadius: 6, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}>
+              <Pressable onPress={handleCreateFolder} style={S.modalAddBtn}>
                 <MaterialIcons name="add" size={20} color="#fff" />
               </Pressable>
             </View>
@@ -488,10 +472,9 @@ export function ComicDetailScreen() {
         </View>
       </Modal>
 
-      {/* 文件夹管理（重命名/删除） */}
       <Modal visible={showFolderManager} transparent animationType="slide">
-        <View style={styles.buyOverlay}>
-          <View style={[styles.buyDialog, { maxWidth: 360 }]}>
+        <View style={S.modalOverlay}>
+          <View style={[S.modalDialog, { maxWidth: 360 }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <Text style={{ color: Colors.textPrimary, fontSize: FontSize.bodyLarge, fontWeight: '700' }}>管理文件夹</Text>
               <Pressable onPress={() => setShowFolderManager(false)}>
@@ -500,10 +483,10 @@ export function ComicDetailScreen() {
             </View>
             <ScrollView style={{ maxHeight: 300 }}>
               {folders.map((f) => (
-                <View key={(f.FID || f.folder_id)} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: Colors.divider }}>
+                <View key={(f.FID || f.folder_id)} style={S.folderRow}>
                   {folderRename?.id === (f.FID || f.folder_id) ? (
                     <TextInput
-                      style={{ flex: 1, height: 32, backgroundColor: Colors.surfaceLight, borderRadius: 4, paddingHorizontal: 8, color: Colors.textPrimary, fontSize: FontSize.body }}
+                      style={S.folderRenameInput}
                       value={folderRename.name}
                       onChangeText={(t) => setFolderRename({ ...folderRename, name: t })}
                       onSubmitEditing={() => { renameFolder((f.FID || f.folder_id), folderRename.name); setFolderRename(null); }}
@@ -527,44 +510,125 @@ export function ComicDetailScreen() {
           </View>
         </View>
       </Modal>
+
       <DebugOverlay />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const S = StyleSheet.create({
   cont: { flex: 1, backgroundColor: Colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  coverOverlay: {
-    position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%',
-    backgroundColor: 'rgba(0,0,0,0.65)',
+  coverGrad: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%' },
+  coverInfo: { position: 'absolute', bottom: 14, left: Spacing.marginEdge, right: Spacing.marginEdge },
+  title: { fontSize: FontSize.title, fontWeight: '700', color: '#fff', marginBottom: 2 },
+
+  readBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: Colors.primary, paddingVertical: 14, marginHorizontal: Spacing.marginEdge,
+    marginTop: -20, borderRadius: Radius.button,
+    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
   },
-  coverInfo: { position: 'absolute', bottom: 12, left: 14, right: 14 },
-  title: { fontSize: FontSize.title, fontWeight: '700', color: '#fff', marginBottom: 4 },
-  readBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: Colors.primary, padding: 14 },
   readBtnText: { color: Colors.textOnPrimary, fontSize: FontSize.bodyLarge, fontWeight: '700' },
-  tabBar: { flexDirection: 'row', backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.divider },
-  tab: { flex: 1, alignItems: 'center', paddingVertical: 12 },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: Colors.primary },
-  tabText: { fontSize: FontSize.body, color: Colors.textSecondary },
-  tabTextActive: { color: Colors.primary, fontWeight: '600' },
-  stat: { fontSize: FontSize.body, color: Colors.textSecondary },
-  tagChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radius.chip, backgroundColor: Colors.surfaceLight, borderWidth: 1, borderColor: Colors.primaryLight },
+
+  statRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 14, gap: 8,
+  },
+  statItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  statLabel: { fontSize: FontSize.body, color: Colors.textSecondary },
+  statDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: Colors.textTertiary },
+
+  tabBar: {
+    flexDirection: 'row', marginHorizontal: Spacing.marginEdge,
+    backgroundColor: Colors.surface, borderRadius: Radius.sm,
+    padding: 3, marginBottom: 8,
+  },
+  tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: Radius.sm - 2 },
+  tabActive: { backgroundColor: Colors.primary },
+  tabText: { fontSize: FontSize.body, color: Colors.textSecondary, fontWeight: '500' },
+  tabTextActive: { color: Colors.textOnPrimary, fontWeight: '700' },
+
+  tagChip: {
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radius.chip,
+    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.primary + '40',
+  },
   tagText: { fontSize: FontSize.label, color: Colors.primary, fontWeight: '500' },
-  buyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: Colors.primary, padding: 12, borderRadius: Radius.button, marginTop: 12 },
+
+  buyBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    backgroundColor: Colors.primary, padding: 12, borderRadius: Radius.button, marginTop: 12,
+  },
   buyText: { color: Colors.textOnPrimary, fontWeight: '700' },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10, borderRadius: Radius.button, borderWidth: 1, borderColor: Colors.primary },
-  episodeItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, backgroundColor: Colors.surface, borderRadius: Radius.sm, marginBottom: 6 },
+
+  actionBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 18, paddingVertical: 10,
+    borderRadius: Radius.button, borderWidth: 1, borderColor: Colors.primary,
+  },
+  actionBtnActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  actionBtnText: { color: Colors.primary, fontWeight: '600', fontSize: FontSize.body },
+
+  episodeItem: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 12, paddingHorizontal: 12,
+    backgroundColor: Colors.surface, borderRadius: Radius.card,
+    marginBottom: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2, shadowRadius: 4, elevation: 2,
+  },
+  epBadge: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: Colors.primary + '20', justifyContent: 'center', alignItems: 'center',
+    marginRight: 10,
+  },
   epTitle: { fontSize: FontSize.body, color: Colors.textPrimary, fontWeight: '500' },
-  commentInput: { flex: 1, minHeight: 40, maxHeight: 80, backgroundColor: Colors.surface, borderRadius: Radius.sm, borderWidth: 1, borderColor: Colors.border, paddingHorizontal: 12, color: Colors.textPrimary, fontSize: FontSize.body },
-  sendBtn: { height: 40, paddingHorizontal: 16, backgroundColor: Colors.primary, borderRadius: Radius.sm, justifyContent: 'center', alignItems: 'center' },
-  commentItem: { backgroundColor: Colors.surface, borderRadius: Radius.sm, padding: 12, marginBottom: 8 },
+  epPage: { fontSize: FontSize.caption, color: Colors.textTertiary, marginTop: 2 },
+
+  commentInputWrap: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  commentInput: {
+    flex: 1, minHeight: 40, maxHeight: 80,
+    backgroundColor: Colors.surface, borderRadius: Radius.sm,
+    borderWidth: 1, borderColor: Colors.border,
+    paddingHorizontal: 12, color: Colors.textPrimary, fontSize: FontSize.body,
+  },
+  sendBtn: { height: 40, paddingHorizontal: 18, backgroundColor: Colors.primary, borderRadius: Radius.sm, justifyContent: 'center', alignItems: 'center' },
+  commentItem: { backgroundColor: Colors.surface, borderRadius: Radius.card, padding: 12, marginBottom: 10 },
   avatar: { width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' },
-  groupTab: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.sm, backgroundColor: Colors.surfaceLight, marginRight: 6, borderWidth: 1, borderColor: Colors.border },
+
+  groupTab: {
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: Radius.xl,
+    backgroundColor: Colors.surfaceLight, marginRight: 8,
+    borderWidth: 1, borderColor: Colors.border,
+  },
   groupTabActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   groupTabText: { fontSize: FontSize.label, color: Colors.textSecondary },
   groupTabTextActive: { color: Colors.textOnPrimary, fontWeight: '600' },
-  buyOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 40 },
-  buyDialog: { backgroundColor: Colors.surface, borderRadius: Radius.card, padding: 24, width: '100%', maxWidth: 320 },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 40 },
+  modalDialog: {
+    backgroundColor: Colors.surface, borderRadius: Radius.xl,
+    padding: 24, width: '100%', maxWidth: 320,
+  },
   dialogBtn: { flex: 1, padding: 12, borderRadius: Radius.button, alignItems: 'center' },
+
+  folderItem: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 8,
+    borderBottomWidth: 0.5, borderBottomColor: Colors.divider,
+  },
+  modalInput: {
+    flex: 1, height: 36, backgroundColor: Colors.surfaceLight, borderRadius: Radius.sm,
+    paddingHorizontal: 10, color: Colors.textPrimary, fontSize: FontSize.body,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  modalAddBtn: { width: 36, height: 36, borderRadius: Radius.sm, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' },
+  folderRow: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 8,
+    borderBottomWidth: 0.5, borderBottomColor: Colors.divider,
+  },
+  folderRenameInput: {
+    flex: 1, height: 32, backgroundColor: Colors.surfaceLight, borderRadius: Radius.sm,
+    paddingHorizontal: 8, color: Colors.textPrimary, fontSize: FontSize.body,
+  },
 });

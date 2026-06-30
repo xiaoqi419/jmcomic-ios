@@ -1,14 +1,14 @@
-// 收藏库 — 复刻 APK Library.tsx
+// 收藏库 v2
 // @author nyx
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, FontSize } from '../theme';
+import { Colors, Radius, Spacing, FontSize, Shadow } from '../theme';
 import { useAuthStore } from '../store/useAuth';
 import { useFavoritesStore } from '../store/useFavorites';
 import { fetchFavorites, getCoverUrl as getCover } from '../api/endpoints';
@@ -38,22 +38,23 @@ export function LibraryScreen() {
   const items: any[] = loggedIn && online.length > 0 ? online : local;
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: Colors.background }}>
+    <SafeAreaView edges={["top"]} style={S.cont}>
       <FlatList
         data={items}
         keyExtractor={(i) => i.id}
         contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}
         ListHeaderComponent={
           <View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ fontSize: FontSize.largeTitle, fontWeight: '800', color: Colors.textPrimary }}>{t('library.title')}</Text>
-              <Text style={{ color: Colors.textSecondary }}>{t('library.total', { n: total || items.length })}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <Text style={S.title}>{t('library.title')}</Text>
+              <Text style={S.total}>{t('library.total', { n: total || items.length })}</Text>
             </View>
             {folders.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
                 {folders.map((f) => (
-                  <Pressable key={f.FID} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: Radius.xl, backgroundColor: Colors.surfaceLight, marginRight: 6, borderWidth: 1, borderColor: Colors.border }}>
-                    <Text style={{ fontSize: FontSize.label, color: Colors.textSecondary }}>{f.name}</Text>
+                  <Pressable key={f.FID} style={S.folderChip}>
+                    <MaterialIcons name="folder" size={14} color={Colors.primary} style={{ marginRight: 4 }} />
+                    <Text style={S.folderChipText}>{f.name}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -61,18 +62,48 @@ export function LibraryScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <Pressable onPress={() => nav.navigate('ComicDetail', { albumId: item.id })} style={{ flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Radius.sm, padding: 10, marginBottom: 8 }}>
-            <Image source={{ uri: (item as any).image || (item as any).coverUrl || getCover(item.id) }} style={{ width: 60, height: 80, borderRadius: Radius.xs, backgroundColor: Colors.surfaceContainer }} contentFit="cover" />
-            <View style={{ flex: 1, marginLeft: 10, justifyContent: 'center' }}>
-              <Text style={{ fontWeight: '600', color: Colors.textPrimary }} numberOfLines={2}>{(item as any).name || (item as any).title}</Text>
-              {(item as any).author && <Text style={{ fontSize: FontSize.label, color: Colors.textSecondary, marginTop: 2 }}>{(item as any).author}</Text>}
+          <Pressable onPress={() => nav.navigate('ComicDetail', { albumId: item.id })} style={S.item}>
+            <Image
+              source={{ uri: (item as any).image || (item as any).coverUrl || getCover(item.id) }}
+              style={S.itemCover}
+              contentFit="cover"
+            />
+            <View style={{ flex: 1, marginLeft: 12, justifyContent: 'center' }}>
+              <Text style={S.itemTitle} numberOfLines={2}>{(item as any).name || (item as any).title}</Text>
+              {(item as any).author && <Text style={S.itemAuthor}>{(item as any).author}</Text>}
             </View>
           </Pressable>
         )}
-        ListEmptyComponent={<View style={{ alignItems: 'center', marginTop: 60 }}><MaterialIcons name="bookmark-border" size={48} color={Colors.textTertiary} /><Text style={{ color: Colors.textSecondary, marginTop: 12 }}>{t('library.empty')}</Text></View>}
+        ListEmptyComponent={
+          <View style={{ alignItems: 'center', marginTop: 80 }}>
+            <MaterialIcons name="bookmark-border" size={48} color={Colors.textTertiary} />
+            <Text style={{ color: Colors.textSecondary, marginTop: 12, fontSize: FontSize.body }}>{t('library.empty')}</Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );
 }
 
-import { ScrollView } from 'react-native';
+const S = StyleSheet.create({
+  cont: { flex: 1, backgroundColor: Colors.background },
+  title: { fontSize: FontSize.largeTitle, fontWeight: '800', color: Colors.textPrimary },
+  total: { color: Colors.textSecondary, fontSize: FontSize.body },
+  folderChip: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: Radius.xl,
+    backgroundColor: Colors.surface, marginRight: 8,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  folderChipText: { fontSize: FontSize.label, color: Colors.textSecondary },
+  item: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surface, borderRadius: Radius.card,
+    padding: 12, marginBottom: 10,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2, shadowRadius: 4, elevation: 2,
+  },
+  itemCover: { width: 60, height: 80, borderRadius: Radius.sm, backgroundColor: Colors.surfaceContainer },
+  itemTitle: { fontWeight: '600', color: Colors.textPrimary, fontSize: FontSize.body },
+  itemAuthor: { fontSize: FontSize.label, color: Colors.textSecondary, marginTop: 4 },
+});

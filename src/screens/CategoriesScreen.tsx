@@ -1,4 +1,4 @@
-// 分类浏览 — 复刻 APK Categories.tsx
+// 分类浏览 v2
 // @author nyx
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -70,7 +70,7 @@ export function CategoriesScreen() {
   const getCoverUrl = (id: string) => getCover(id);
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.cont}>
+    <SafeAreaView edges={["top"]} style={S.cont}>
       <FlatList
         data={list}
         numColumns={3}
@@ -78,29 +78,27 @@ export function CategoriesScreen() {
         contentContainerStyle={{ paddingHorizontal: Spacing.marginEdge, paddingBottom: 100 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} colors={[Colors.primary]} />}
         ListHeaderComponent={
-          <View>
-            <Text style={styles.title}>分类</Text>
-            {/* 分类标签 */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+          <View style={{ paddingBottom: Spacing.md }}>
+            <Text style={S.title}>分类</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
               {CATS.map((c) => (
                 <Pressable
                   key={c.id}
                   onPress={() => { setSlug(c.id); setPage(1); }}
-                  style={[styles.chip, slug === c.id && styles.chipActive]}
+                  style={[S.chip, slug === c.id && S.chipActive]}
                 >
-                  <Text style={[styles.chipText, slug === c.id && styles.chipTextActive]}>{c.label}</Text>
+                  <Text style={[S.chipText, slug === c.id && S.chipTextActive]}>{c.label}</Text>
                 </Pressable>
               ))}
             </ScrollView>
-            {/* 排序 */}
-            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4 }}>
               {SORTS.map((s) => (
                 <Pressable
                   key={s.id}
                   onPress={() => { setSort(s.id); setPage(1); }}
-                  style={[styles.sortBtn, sort === s.id && styles.sortBtnActive]}
+                  style={[S.sortBtn, sort === s.id && S.sortBtnActive]}
                 >
-                  <Text style={[styles.sortText, sort === s.id && styles.sortTextActive]}>{t(s.labelKey)}</Text>
+                  <Text style={[S.sortText, sort === s.id && S.sortTextActive]}>{t(s.labelKey)}</Text>
                 </Pressable>
               ))}
             </View>
@@ -117,14 +115,21 @@ export function CategoriesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const S = StyleSheet.create({
   cont: { flex: 1, backgroundColor: Colors.background },
-  title: { fontSize: FontSize.largeTitle, fontWeight: '800', color: Colors.textPrimary, marginBottom: 12 },
-  chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: Radius.xl, backgroundColor: Colors.surfaceLight, marginRight: 6, borderWidth: 1, borderColor: Colors.border },
+  title: { fontSize: FontSize.largeTitle, fontWeight: '800', color: Colors.textPrimary, marginBottom: 14, marginTop: 4 },
+  chip: {
+    paddingHorizontal: 18, paddingVertical: 9, borderRadius: Radius.xl,
+    backgroundColor: Colors.surface, marginRight: 8,
+    borderWidth: 1, borderColor: Colors.border,
+  },
   chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   chipText: { fontSize: FontSize.label, fontWeight: '600', color: Colors.textSecondary },
   chipTextActive: { color: Colors.textOnPrimary },
-  sortBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.sm, backgroundColor: Colors.surfaceLight, borderWidth: 1, borderColor: Colors.border },
+  sortBtn: {
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: Radius.xl,
+    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
+  },
   sortBtnActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   sortText: { fontSize: FontSize.label, color: Colors.textSecondary },
   sortTextActive: { color: Colors.textOnPrimary, fontWeight: '600' },

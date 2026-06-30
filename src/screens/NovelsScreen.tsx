@@ -1,4 +1,4 @@
-// 小说模块 — 列表 + 详情 + 阅读器
+// 小说 v2
 // @author nyx
 
 import React, { useEffect, useState } from 'react';
@@ -23,23 +23,23 @@ export function NovelsScreen() {
   }, []);
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: Colors.background }}>
+    <SafeAreaView edges={["top"]} style={S.cont}>
       <FlatList
         data={list}
         keyExtractor={(i) => i.id}
         contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}
-        ListHeaderComponent={<Text style={{ fontSize: FontSize.largeTitle, fontWeight: '800', color: Colors.textPrimary, marginBottom: 12 }}>{t('novels.title')}</Text>}
+        ListHeaderComponent={<Text style={S.pageTitle}>{t('novels.title')}</Text>}
         renderItem={({ item }) => (
-          <Pressable onPress={() => nav.navigate('NovelDetail', { novelId: item.id })} style={{ flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Radius.sm, padding: 10, marginBottom: 8 }}>
-            <Image source={{ uri: item.photo }} style={{ width: 60, height: 80, borderRadius: Radius.xs, backgroundColor: Colors.surfaceContainer }} contentFit="cover" />
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={{ fontWeight: '600', color: Colors.textPrimary, fontSize: FontSize.bodyLarge }}>{item.title}</Text>
-              <Text style={{ fontSize: FontSize.body, color: Colors.textSecondary, marginTop: 2 }}>{item.author}</Text>
-              <Text style={{ fontSize: FontSize.caption, color: Colors.textTertiary, marginTop: 2 }} numberOfLines={2}>{item.description}</Text>
+          <Pressable onPress={() => nav.navigate('NovelDetail' as never, { novelId: item.id } as never)} style={S.card}>
+            <Image source={{ uri: item.photo }} style={S.cardCover} contentFit="cover" />
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={S.cardTitle}>{item.title}</Text>
+              <Text style={S.cardAuthor}>{item.author}</Text>
+              <Text style={S.cardDesc} numberOfLines={2}>{item.description}</Text>
             </View>
           </Pressable>
         )}
-        ListEmptyComponent={loading ? <ActivityIndicator color={Colors.primary} /> : <Text style={{ color: Colors.textTertiary, textAlign: 'center', marginTop: 40 }}>{t('common.empty')}</Text>}
+        ListEmptyComponent={loading ? <ActivityIndicator color={Colors.primary} /> : <Text style={S.empty}>{t('common.empty')}</Text>}
       />
     </SafeAreaView>
   );
@@ -61,24 +61,30 @@ export function NovelDetailScreen() {
     }).finally(() => setLoading(false));
   }, [novelId]);
 
-  if (loading) return <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: Colors.background, justifyContent: 'center' }}><ActivityIndicator color={Colors.primary} /></SafeAreaView>;
+  if (loading) return <SafeAreaView edges={["top"]} style={S.cont}><View style={S.center}><ActivityIndicator color={Colors.primary} /></View></SafeAreaView>;
   if (!novel) return null;
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: Colors.background }}>
+    <SafeAreaView edges={["top"]} style={S.cont}>
       <ScrollView contentContainerStyle={{ padding: Spacing.marginEdge }}>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <Image source={{ uri: novel.photo }} style={{ width: 100, height: 140, borderRadius: Radius.sm, backgroundColor: Colors.surfaceContainer }} contentFit="cover" />
+        <View style={{ flexDirection: 'row', gap: 14 }}>
+          <Image source={{ uri: novel.photo }} style={S.novelCover} contentFit="cover" />
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: FontSize.title, fontWeight: '700', color: Colors.textPrimary }}>{novel.title}</Text>
-            <Text style={{ color: Colors.primary, marginTop: 4 }}>{novel.author}</Text>
-            <Text style={{ color: Colors.textTertiary, fontSize: FontSize.body, marginTop: 4 }} numberOfLines={3}>{novel.description}</Text>
+            <Text style={S.novelTitle}>{novel.title}</Text>
+            <Text style={S.novelAuthor}>{novel.author}</Text>
+            <Text style={S.novelDesc} numberOfLines={3}>{novel.description}</Text>
           </View>
         </View>
-        <Text style={{ fontSize: FontSize.headline, fontWeight: '700', color: Colors.textPrimary, marginTop: 20, marginBottom: 8 }}>{t('novels.chapters')} ({chapters.length})</Text>
+        <Text style={S.chapterHeader}>
+          {t('novels.chapters')} ({chapters.length})
+        </Text>
         {chapters.map((ch) => (
-          <Pressable key={ch.id} onPress={() => nav.navigate('NovelReader', { novelId, chapterId: ch.id, title: ch.title })} style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 12, backgroundColor: Colors.surface, borderRadius: Radius.sm, marginBottom: 4 }}>
-            <Text style={{ color: Colors.textPrimary, flex: 1 }}>{ch.title}</Text>
+          <Pressable
+            key={ch.id}
+            onPress={() => nav.navigate('NovelReader' as never, { novelId, chapterId: ch.id, title: ch.title } as never)}
+            style={S.chapterItem}
+          >
+            <Text style={S.chapterText} numberOfLines={1}>{ch.title}</Text>
             <MaterialIcons name="chevron-right" size={20} color={Colors.textTertiary} />
           </Pressable>
         ))}
@@ -99,30 +105,77 @@ export function NovelReaderScreen() {
     fetchNovelContent(chapterId).then(setContent).finally(() => setLoading(false));
   }, [chapterId]);
 
-  if (loading) return <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: Colors.background, justifyContent: 'center' }}><ActivityIndicator color={Colors.primary} /></SafeAreaView>;
+  if (loading) return <SafeAreaView edges={["top"]} style={S.cont}><View style={S.center}><ActivityIndicator color={Colors.primary} /></View></SafeAreaView>;
   if (!content) return null;
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: Colors.background }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: Colors.surface }}>
+    <SafeAreaView edges={["top"]} style={S.cont}>
+      <View style={S.readerHeader}>
         <Pressable onPress={() => nav.goBack()}><MaterialIcons name="arrow-back" size={24} color={Colors.textPrimary} /></Pressable>
-        <Text style={{ color: Colors.textPrimary, fontSize: 17, fontWeight: '600', marginLeft: 12, flex: 1 }} numberOfLines={1}>{content.title}</Text>
+        <Text style={S.readerTitle} numberOfLines={1}>{content.title}</Text>
+        <View style={{ width: 24 }} />
       </View>
       <ScrollView contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 60 }}>
-        <Text style={{ color: Colors.textPrimary, fontSize: FontSize.bodyLarge, lineHeight: 26 }}>{content.content}</Text>
+        <Text style={S.readerContent}>{content.content}</Text>
       </ScrollView>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 14, backgroundColor: Colors.surface }}>
+      <View style={S.readerNav}>
         {content.prev_id ? (
-          <Pressable onPress={() => { nav.replace('NovelReader', { novelId, chapterId: content.prev_id }); }}>
-            <Text style={{ color: Colors.primary }}>{t('novels.prev')}</Text>
+          <Pressable onPress={() => { nav.replace('NovelReader' as never, { novelId, chapterId: content.prev_id } as never); }}>
+            <Text style={S.navBtn}>{t('novels.prev')}</Text>
           </Pressable>
         ) : <View />}
         {content.next_id ? (
-          <Pressable onPress={() => { nav.replace('NovelReader', { novelId, chapterId: content.next_id }); }}>
-            <Text style={{ color: Colors.primary }}>{t('novels.next')}</Text>
+          <Pressable onPress={() => { nav.replace('NovelReader' as never, { novelId, chapterId: content.next_id } as never); }}>
+            <Text style={S.navBtn}>{t('novels.next')}</Text>
           </Pressable>
         ) : <View />}
       </View>
     </SafeAreaView>
   );
 }
+
+const S = StyleSheet.create({
+  cont: { flex: 1, backgroundColor: Colors.background },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  pageTitle: { fontSize: FontSize.largeTitle, fontWeight: '800', color: Colors.textPrimary, marginBottom: 14 },
+  empty: { color: Colors.textTertiary, textAlign: 'center', marginTop: 40 },
+
+  card: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surface, borderRadius: Radius.card,
+    padding: 12, marginBottom: 10,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2, shadowRadius: 4, elevation: 2,
+  },
+  cardCover: { width: 60, height: 80, borderRadius: Radius.sm, backgroundColor: Colors.surfaceContainer },
+  cardTitle: { fontWeight: '600', color: Colors.textPrimary, fontSize: FontSize.bodyLarge },
+  cardAuthor: { color: Colors.primary, fontSize: FontSize.body, marginTop: 2 },
+  cardDesc: { color: Colors.textTertiary, fontSize: FontSize.body, marginTop: 4, lineHeight: 18 },
+
+  novelCover: { width: 100, height: 140, borderRadius: Radius.card, backgroundColor: Colors.surfaceContainer },
+  novelTitle: { fontSize: FontSize.title, fontWeight: '700', color: Colors.textPrimary },
+  novelAuthor: { color: Colors.primary, fontSize: FontSize.body, marginTop: 4 },
+  novelDesc: { color: Colors.textTertiary, fontSize: FontSize.body, marginTop: 6, lineHeight: 20 },
+  chapterHeader: { fontSize: FontSize.headline, fontWeight: '700', color: Colors.textPrimary, marginTop: 20, marginBottom: 10 },
+  chapterItem: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 12, paddingHorizontal: 14,
+    backgroundColor: Colors.surface, borderRadius: Radius.card,
+    marginBottom: 6,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15, shadowRadius: 3, elevation: 1,
+  },
+  chapterText: { color: Colors.textPrimary, flex: 1, fontSize: FontSize.body },
+
+  readerHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 14, paddingVertical: 10, backgroundColor: Colors.surface,
+  },
+  readerTitle: { color: Colors.textPrimary, fontSize: FontSize.headline, fontWeight: '600', flex: 1, textAlign: 'center' },
+  readerContent: { color: Colors.textPrimary, fontSize: FontSize.bodyLarge, lineHeight: 26 },
+  readerNav: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    padding: Spacing.marginEdge, backgroundColor: Colors.surface,
+  },
+  navBtn: { color: Colors.primary, fontSize: FontSize.body, fontWeight: '600' },
+});

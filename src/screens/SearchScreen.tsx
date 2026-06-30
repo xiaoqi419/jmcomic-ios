@@ -1,11 +1,10 @@
-// 搜索页 — 复刻 APK Search.tsx
-// 搜索历史 + 热门标签 + 随机推荐 + 多类型切换 + 排序
+// 搜索页 v2
 // @author nyx
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, FlatList, TextInput, Pressable, StyleSheet, RefreshControl,
-  ActivityIndicator, ScrollView, Alert,
+  ActivityIndicator, ScrollView, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -13,10 +12,14 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSize, Radius } from '../theme';
 import { ComicCard } from '../components/ComicCard';
 import { searchComics, fetchHotTags, fetchRandomRecommend, getCoverUrl as getCover } from '../api/endpoints';
 import type { ComicItem } from '../api/types';
+
+const { width: W } = Dimensions.get('window');
 
 const SORT_OPTS = ['tf', 'mv', 'mp', 'mr'];
 const HISTORY_KEY = '@jmcomic.search';
@@ -39,7 +42,6 @@ export function SearchScreen() {
   const [hotTags, setHotTags] = useState<string[]>([]);
   const [recommend, setRecommend] = useState<ComicItem[]>([]);
 
-  // 加载历史、热标签、推荐
   useEffect(() => {
     AsyncStorage.getItem(HISTORY_KEY).then((json) => {
       if (json) setHistory(JSON.parse(json));
@@ -51,7 +53,6 @@ export function SearchScreen() {
   const doSearch = useCallback(async (q: string, p = 1, refresh = false) => {
     if (!q.trim()) return;
     setLoading(true);
-    // ID 直达：全数字直接跳详情
     if (/^\d{4,}$/.test(q.trim())) {
       setLoading(false);
       setSearched(true);
@@ -74,7 +75,6 @@ export function SearchScreen() {
       setTotal(parseInt(String(String(data.total))) || items.length);
       setHasMore(items.length >= 80);
       setSearched(true);
-      // 存历史
       if (p === 1) {
         const newHistory = [q, ...history.filter((h) => h !== q)].slice(0, 20);
         setHistory(newHistory);
@@ -99,7 +99,7 @@ export function SearchScreen() {
   const getCoverUrl = (id: string) => getCover(id);
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.cont}>
+    <SafeAreaView edges={["top"]} style={S.cont}>
       <StatusBar style="light" />
       <FlatList
         data={results}
@@ -110,10 +110,10 @@ export function SearchScreen() {
         ListHeaderComponent={
           <View style={{ paddingTop: 8 }}>
             {/* 搜索框 */}
-            <View style={styles.searchWrap}>
-              <MaterialIcons name="search" size={20} color={Colors.textTertiary} style={{ marginLeft: 10 }} />
+            <View style={S.searchWrap}>
+              <MaterialIcons name="search" size={20} color={Colors.textTertiary} style={{ marginLeft: 12 }} />
               <TextInput
-                style={styles.input}
+                style={S.input}
                 placeholder={t('search.placeholder')}
                 placeholderTextColor={Colors.textTertiary}
                 value={query}
@@ -123,20 +123,20 @@ export function SearchScreen() {
               />
               {query.length > 0 && (
                 <Pressable onPress={() => { setQuery(''); setSearched(false); setResults([]); }} hitSlop={8}>
-                  <MaterialIcons name="close" size={18} color={Colors.textTertiary} style={{ marginRight: 8 }} />
+                  <MaterialIcons name="close" size={18} color={Colors.textTertiary} style={{ marginRight: 10 }} />
                 </Pressable>
               )}
             </View>
 
             {/* 排序 */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 8 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 10 }}>
               {SORT_OPTS.map((s) => (
                 <Pressable
                   key={s}
                   onPress={() => { setSort(s); if (searched) doSearch(query, 1, true); }}
-                  style={[styles.sortBtn, sort === s && styles.sortBtnActive]}
+                  style={[S.sortBtn, sort === s && S.sortBtnActive]}
                 >
-                  <Text style={[styles.sortText, sort === s && styles.sortTextActive]}>
+                  <Text style={[S.sortText, sort === s && S.sortTextActive]}>
                     {t(`search.sort_${s}`)}
                   </Text>
                 </Pressable>
@@ -144,45 +144,43 @@ export function SearchScreen() {
             </ScrollView>
 
             {/* 搜索按钮 */}
-            <Pressable onPress={onSearch} style={({ pressed }) => [styles.searchBtn, { opacity: pressed ? 0.7 : 1 }]}>
+            <Pressable onPress={onSearch} style={({ pressed }) => [S.searchBtn, { opacity: pressed ? 0.7 : 1 }]}>
               <MaterialIcons name="search" size={18} color="#fff" />
-              <Text style={styles.searchBtnText}>{t('search.title')}</Text>
+              <Text style={S.searchBtnText}>{t('search.title')}</Text>
             </Pressable>
 
             {!searched && (
               <>
-                {/* 热门标签 */}
                 {hotTags.length > 0 && (
                   <View style={{ marginTop: 16 }}>
-                    <Text style={styles.sectionTitle}>{t('search.hot_tags')}</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                    <Text style={S.sectionTitle}>{t('search.hot_tags')}</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {hotTags.slice(0, 15).map((tag) => (
                         <Pressable
                           key={tag}
                           onPress={() => { setQuery(tag); setTimeout(onSearch, 100); }}
-                          style={styles.tag}
+                          style={S.tag}
                         >
-                          <Text style={styles.tagText}>{tag}</Text>
+                          <Text style={S.tagText}>{tag}</Text>
                         </Pressable>
                       ))}
                     </View>
                   </View>
                 )}
 
-                {/* 搜索历史 */}
                 {history.length > 0 && (
-                  <View style={{ marginTop: 16 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={styles.sectionTitle}>{t('search.history')}</Text>
+                  <View style={{ marginTop: 20 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <Text style={S.sectionTitle}>{t('search.history')}</Text>
                       <Pressable onPress={() => { setHistory([]); AsyncStorage.removeItem(HISTORY_KEY); }}>
                         <Text style={{ color: Colors.error, fontSize: FontSize.label }}>{t('search.clear_history')}</Text>
                       </Pressable>
                     </View>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {history.map((h) => (
-                        <View key={h} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border }}>
+                        <View key={h} style={S.historyChip}>
                           <Pressable onPress={() => { setQuery(h); setTimeout(onSearch, 100); }}>
-                            <Text style={styles.tagText}>{h}</Text>
+                            <Text style={S.tagText}>{h}</Text>
                           </Pressable>
                           <Pressable onPress={() => {
                             const newHistory = history.filter((x) => x !== h);
@@ -197,29 +195,26 @@ export function SearchScreen() {
                   </View>
                 )}
 
-                {/* 随机推荐 */}
                 {recommend.length > 0 && (
-                  <View style={{ marginTop: 16 }}>
-                    <Text style={styles.sectionTitle}>随机推荐</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                      {recommend.slice(0, 3).map((item) => (
-                        <Pressable key={item.id} onPress={() => nav.navigate('ComicDetail', { albumId: item.id })}>
-                          <View style={{ width: (W - Spacing.marginEdge * 2 - 16) / 3 }}>
-                            <Image source={{ uri: getCoverUrl(item.id) }} style={{ width: '100%', aspectRatio: 0.72, borderRadius: Radius.sm, backgroundColor: Colors.surfaceContainer }} contentFit="cover" />
-                            <Text style={[styles.tagText, { marginTop: 4 }]} numberOfLines={2}>{item.name}</Text>
-                          </View>
+                  <View style={{ marginTop: 20 }}>
+                    <Text style={S.sectionTitle}>随机推荐</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      {recommend.slice(0, 6).map((item) => (
+                        <Pressable key={item.id} onPress={() => nav.navigate('ComicDetail', { albumId: item.id })} style={{ marginRight: 10, width: W * 0.35 }}>
+                          <Image source={{ uri: getCoverUrl(item.id) }} style={{ width: '100%', aspectRatio: 0.7, borderRadius: Radius.card, backgroundColor: Colors.surfaceContainer }} contentFit="cover" />
+                          <Text style={S.recommendTitle} numberOfLines={2}>{item.name}</Text>
                         </Pressable>
                       ))}
-                    </View>
+                    </ScrollView>
                   </View>
                 )}
               </>
             )}
 
             {searched && results.length === 0 && !loading && (
-              <View style={{ alignItems: 'center', marginTop: 40 }}>
+              <View style={{ alignItems: 'center', marginTop: 50 }}>
                 <MaterialIcons name="search-off" size={48} color={Colors.textTertiary} />
-                <Text style={{ color: Colors.textSecondary, marginTop: 8 }}>{t('search.no_result')}</Text>
+                <Text style={{ color: Colors.textSecondary, marginTop: 10, fontSize: FontSize.body }}>{t('search.no_result')}</Text>
               </View>
             )}
           </View>
@@ -235,22 +230,40 @@ export function SearchScreen() {
   );
 }
 
-import { Image } from 'expo-image';
-
-const { width: W } = Dimensions.get('window');
-import { Dimensions } from 'react-native';
-
-const styles = StyleSheet.create({
+const S = StyleSheet.create({
   cont: { flex: 1, backgroundColor: Colors.background },
-  sectionTitle: { fontSize: FontSize.headline, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 },
-  searchWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, borderRadius: 10, borderWidth: 1, borderColor: Colors.border },
-  input: { flex: 1, height: 40, paddingHorizontal: 8, color: Colors.textPrimary, fontSize: 15 },
-  searchBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 40, borderRadius: 10, backgroundColor: Colors.primary, gap: 6, marginBottom: 8 },
-  searchBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  sortBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.sm, backgroundColor: Colors.surfaceLight, marginRight: 6, borderWidth: 1, borderColor: Colors.border },
+  sectionTitle: { fontSize: FontSize.headline, fontWeight: '700', color: Colors.textPrimary },
+  searchWrap: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: Colors.surface, borderRadius: Radius.card,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  input: { flex: 1, height: 44, paddingHorizontal: 8, color: Colors.textPrimary, fontSize: FontSize.body },
+  searchBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    height: 44, borderRadius: Radius.button, backgroundColor: Colors.primary, gap: 6, marginBottom: 4,
+  },
+  searchBtnText: { color: '#fff', fontWeight: '700', fontSize: FontSize.body },
+  sortBtn: {
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: Radius.xl,
+    backgroundColor: Colors.surface, marginRight: 8,
+    borderWidth: 1, borderColor: Colors.border,
+  },
   sortBtnActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   sortText: { fontSize: FontSize.label, color: Colors.textSecondary },
   sortTextActive: { color: Colors.textOnPrimary, fontWeight: '600' },
-  tag: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border },
-  tagText: { fontSize: 12, color: Colors.textSecondary },
+  tag: {
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: Radius.xl,
+    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
+  },
+  tagText: { fontSize: FontSize.label, color: Colors.textSecondary },
+  historyChip: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.xl,
+    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
+  },
+  recommendTitle: {
+    fontSize: FontSize.label, color: Colors.textPrimary,
+    marginTop: 6, fontWeight: '500',
+  },
 });

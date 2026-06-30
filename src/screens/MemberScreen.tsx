@@ -1,5 +1,4 @@
-// 个人中心 — 复刻 APK Member.tsx
-// 用户卡片 + 签到 + 成就 + 通知 + 设置
+// 个人中心 v2
 // @author nyx
 
 import React, { useEffect, useState } from 'react';
@@ -12,18 +11,15 @@ import { Colors, Radius, Spacing, FontSize } from '../theme';
 import { useAuthStore } from '../store/useAuth';
 import { useMemberStore } from '../store/useMember';
 import { useSettingsStore } from '../store/useSettings';
-import { getImgHost } from '../api/endpoints';
-import { login, register as apiRegister, forgotPassword } from '../api/endpoints';
-import type { LoginData } from '../api/types';
+import { login } from '../api/endpoints';
 
 export function MemberScreen() {
   const nav = useNavigation<any>();
   const { t, i18n } = useTranslation();
   const { username, loggedIn, login: doLogin, logout: doLogout } = useAuthStore();
   const { info, signData, signed, doSignIn, loadInfo, loadSign, loadAchievements, achievements, notifications, loadNotifications, unread } = useMemberStore();
-  const { language, setLanguage, readingMode, setReadingMode, darkMode, setDarkMode, shunts, selectedShuntKey, selectShunt } = useSettingsStore();
+  const { language, setLanguage, readingMode, setReadingMode, shunts, selectedShuntKey, selectShunt } = useSettingsStore();
 
-  // Login form state
   const [showLogin, setShowLogin] = useState(false);
   const [loginUser, setLoginUser] = useState('');
   const [loginPass, setLoginPass] = useState('');
@@ -76,48 +72,54 @@ export function MemberScreen() {
 
   const Section = ({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) => (
     <View style={{ marginBottom: Spacing.lg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8, marginLeft: 4 }}>
-        <MaterialIcons name={icon as any} size={16} color={Colors.primary} />
-        <Text style={{ fontSize: FontSize.label, fontWeight: '700', color: Colors.primary, textTransform: 'uppercase' }}>{title}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10, marginLeft: 4 }}>
+        <MaterialIcons name={icon as any} size={18} color={Colors.primary} />
+        <Text style={{ fontSize: FontSize.body, fontWeight: '700', color: Colors.primary }}>{title}</Text>
       </View>
-      <View style={{ backgroundColor: Colors.surfaceLowest, borderRadius: Radius.card, padding: Spacing.md, borderWidth: 1, borderColor: Colors.divider }}>
-        {children}
-      </View>
+      <View style={S.sectionCard}>{children}</View>
     </View>
   );
 
   const Row = ({ label, right }: { label: string; right: React.ReactNode }) => (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 }}>
-      <Text style={{ fontSize: FontSize.bodyLarge, color: Colors.textPrimary }}>{label}</Text>
+    <View style={S.row}>
+      <Text style={S.rowLabel}>{label}</Text>
       {right}
     </View>
   );
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: Colors.background }}>
+    <SafeAreaView edges={["top"]} style={S.cont}>
       <ScrollView contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}>
-        <Text style={{ fontSize: FontSize.largeTitle, fontWeight: '800', color: Colors.textPrimary, marginBottom: Spacing.lg }}>
+        <Text style={S.pageTitle}>
           {loggedIn ? t('member.welcome') : t('member.login')}
         </Text>
 
-        {/* 用户卡片 / 登录区 */}
+        {/* 用户卡片 / 登录 */}
         {loggedIn ? (
-          <View style={{ backgroundColor: Colors.surfaceLowest, borderRadius: Radius.card, padding: Spacing.md, marginBottom: Spacing.lg, borderWidth: 1, borderColor: Colors.divider }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>{(username || 'U')[0].toUpperCase()}</Text>
+          <View style={S.userCard}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <View style={S.avatar}>
+                <Text style={S.avatarText}>{(username || 'U')[0].toUpperCase()}</Text>
               </View>
-              <View>
-                <Text style={{ fontSize: FontSize.title, fontWeight: '700', color: Colors.textPrimary }}>{username}</Text>
-                <View style={{ flexDirection: 'row', gap: 16, marginTop: 4 }}>
-                  <Text style={{ color: Colors.textSecondary }}>🪙 {info?.coin || '-'}</Text>
-                  <Text style={{ color: Colors.textSecondary }}>⭐ {info?.level || '-'}</Text>
-                  <Text style={{ color: Colors.textSecondary }}>📊 {info?.experience || '-'}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={S.username}>{username}</Text>
+                <View style={{ flexDirection: 'row', gap: 14, marginTop: 6 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <MaterialIcons name="monetization-on" size={14} color={Colors.primary} />
+                    <Text style={S.statVal}>{info?.coin || '-'}</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <MaterialIcons name="star" size={14} color={Colors.primary} />
+                    <Text style={S.statVal}>Lv.{info?.level || '-'}</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <MaterialIcons name="trending-up" size={14} color={Colors.primary} />
+                    <Text style={S.statVal}>{info?.experience || '-'}</Text>
+                  </View>
                 </View>
               </View>
             </View>
-            {/* 签到 */}
-            <Pressable onPress={signed ? undefined : handleSign} style={[s.signBtn, signed && { backgroundColor: Colors.surfaceLight }]}>
+            <Pressable onPress={signed ? undefined : handleSign} style={[S.signBtn, signed && S.signedBtn]}>
               <MaterialIcons name={signed ? 'check-circle' : 'today'} size={20} color={signed ? Colors.success : Colors.primary} />
               <Text style={{ color: signed ? Colors.success : Colors.primary, fontWeight: '600' }}>
                 {signed ? `${t('member.signed')}${signData?.days ? ` (${signData.days}d)` : ''}` : t('member.sign_in')}
@@ -125,36 +127,45 @@ export function MemberScreen() {
             </Pressable>
           </View>
         ) : showLogin ? (
-          <View style={{ backgroundColor: Colors.surfaceLowest, borderRadius: Radius.card, padding: Spacing.md, marginBottom: Spacing.lg, borderWidth: 1, borderColor: Colors.divider }}>
-            <TextInput style={s.input} placeholder="用户名" placeholderTextColor={Colors.textTertiary} value={loginUser} onChangeText={setLoginUser} autoCapitalize="none" />
-            <TextInput style={s.input} placeholder="密码" placeholderTextColor={Colors.textTertiary} value={loginPass} onChangeText={setLoginPass} secureTextEntry />
-            <Pressable onPress={handleLogin} disabled={loginLoading} style={s.primaryBtn}>
-              <Text style={{ color: Colors.textOnPrimary, fontWeight: '700' }}>{loginLoading ? '...' : t('member.login')}</Text>
+          <View style={S.loginCard}>
+            <TextInput style={S.input} placeholder="用户名" placeholderTextColor={Colors.textTertiary} value={loginUser} onChangeText={setLoginUser} autoCapitalize="none" />
+            <TextInput style={S.input} placeholder="密码" placeholderTextColor={Colors.textTertiary} value={loginPass} onChangeText={setLoginPass} secureTextEntry />
+            <Pressable onPress={handleLogin} disabled={loginLoading} style={S.primaryBtn}>
+              <Text style={S.primaryBtnText}>{loginLoading ? '...' : t('member.login')}</Text>
             </Pressable>
-            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 8 }}>
-              <Pressable onPress={() => nav.navigate('Register')}><Text style={{ color: Colors.primary }}>{t('member.register')}</Text></Pressable>
-              <Pressable onPress={() => nav.navigate('ForgotPassword')}><Text style={{ color: Colors.primary }}>{t('member.forgot')}</Text></Pressable>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 10 }}>
+              <Pressable onPress={() => nav.navigate('Register' as never)}>
+                <Text style={{ color: Colors.primary, fontSize: FontSize.body }}>{t('member.register')}</Text>
+              </Pressable>
+              <Pressable onPress={() => nav.navigate('ForgotPassword' as never)}>
+                <Text style={{ color: Colors.primary, fontSize: FontSize.body }}>{t('member.forgot')}</Text>
+              </Pressable>
             </View>
           </View>
         ) : (
-          <View style={{ backgroundColor: Colors.surfaceLowest, borderRadius: Radius.card, padding: Spacing.md, marginBottom: Spacing.lg, borderWidth: 1, borderColor: Colors.divider }}>
-            <Pressable onPress={() => setShowLogin(true)} style={s.primaryBtn}>
-              <Text style={{ color: Colors.textOnPrimary, fontWeight: '700' }}>{t('member.login')}</Text>
+          <View style={S.loginCard}>
+            <Pressable onPress={() => setShowLogin(true)} style={S.primaryBtn}>
+              <Text style={S.primaryBtnText}>{t('member.login')}</Text>
             </Pressable>
-            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 8 }}>
-              <Pressable onPress={() => nav.navigate('Register')}><Text style={{ color: Colors.primary }}>{t('member.register')}</Text></Pressable>
-              <Pressable onPress={() => nav.navigate('ForgotPassword')}><Text style={{ color: Colors.primary }}>{t('member.forgot')}</Text></Pressable>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 10 }}>
+              <Pressable onPress={() => nav.navigate('Register' as never)}>
+                <Text style={{ color: Colors.primary, fontSize: FontSize.body }}>{t('member.register')}</Text>
+              </Pressable>
+              <Pressable onPress={() => nav.navigate('ForgotPassword' as never)}>
+                <Text style={{ color: Colors.primary, fontSize: FontSize.body }}>{t('member.forgot')}</Text>
+              </Pressable>
             </View>
           </View>
         )}
 
         {/* 未读通知 */}
         {loggedIn && unread && (unread.comic_follow > 0 || unread.site_notice > 0) && (
-          <Pressable onPress={() => loadNotifications()} style={{ backgroundColor: Colors.primary + '20', borderRadius: Radius.sm, padding: 10, marginBottom: Spacing.md, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Pressable onPress={() => loadNotifications()} style={S.notifBanner}>
             <MaterialIcons name="notifications" size={20} color={Colors.primary} />
-            <Text style={{ color: Colors.primary, fontWeight: '600' }}>
+            <Text style={{ color: Colors.primary, fontWeight: '600', flex: 1 }}>
               未读通知: {unread.comic_follow + unread.site_notice}
             </Text>
+            <MaterialIcons name="chevron-right" size={20} color={Colors.primary} />
           </Pressable>
         )}
 
@@ -163,9 +174,11 @@ export function MemberScreen() {
           <Section title={t('member.achievements')} icon="emoji-events">
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {achievements.slice(0, 6).map((a) => (
-                <View key={a.id} style={{ alignItems: 'center', width: '30%' }}>
-                  <Text style={{ fontSize: 24 }}>{a.icon || '🏆'}</Text>
-                  <Text style={{ fontSize: FontSize.caption, color: Colors.textSecondary, textAlign: 'center' }}>{a.name}</Text>
+                <View key={a.id} style={{ alignItems: 'center', width: '30%', paddingVertical: 6 }}>
+                  <View style={S.achieveIcon}>
+                    <MaterialIcons name="emoji-events" size={22} color={Colors.primary} />
+                  </View>
+                  <Text style={S.achieveLabel} numberOfLines={1}>{a.name}</Text>
                 </View>
               ))}
             </View>
@@ -176,9 +189,9 @@ export function MemberScreen() {
         {loggedIn && notifications.length > 0 && (
           <Section title={t('member.notifications')} icon="notifications">
             {notifications.slice(0, 5).map((n) => (
-              <View key={n.id} style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: Colors.divider }}>
-                <Text style={{ color: Colors.text, fontWeight: '600' }}>{n.title}</Text>
-                <Text style={{ color: Colors.textSecondary, fontSize: FontSize.body }} numberOfLines={2}>{n.content}</Text>
+              <View key={n.id} style={S.notifItem}>
+                <Text style={S.notifTitle}>{n.title}</Text>
+                <Text style={S.notifContent} numberOfLines={2}>{n.content}</Text>
               </View>
             ))}
           </Section>
@@ -187,15 +200,14 @@ export function MemberScreen() {
         {/* 设置 */}
         <Section title={t('member.settings')} icon="settings">
           <Row label={t('member.reading_mode')} right={
-            <View style={{ flexDirection: 'row', borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.sm, overflow: 'hidden' }}>
+            <View style={S.toggleGroup}>
               {['scroll', 'page'].map((m) => (
-                <Pressable key={m} onPress={() => setReadingMode(m as any)} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: readingMode === m ? Colors.primary : Colors.surfaceLowest }}>
-                  <Text style={{ color: readingMode === m ? Colors.textOnPrimary : Colors.textSecondary, fontWeight: '500' }}>{t(`member.${m}`)}</Text>
+                <Pressable key={m} onPress={() => setReadingMode(m as any)} style={[S.toggleBtn, readingMode === m && S.toggleBtnActive]}>
+                  <Text style={[S.toggleText, readingMode === m && S.toggleTextActive]}>{t(`member.${m}`)}</Text>
                 </Pressable>
               ))}
             </View>
           } />
-          {/* 源选择（从 /api/setting 动态获取） */}
           {shunts.length > 0 && (
             <Row label="源/线路" right={
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, maxWidth: 200 }}>
@@ -203,32 +215,30 @@ export function MemberScreen() {
                   <Pressable
                     key={s.key}
                     onPress={() => selectShunt(s.key)}
-                    style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, backgroundColor: selectedShuntKey === s.key ? Colors.primary : Colors.surfaceLight }}
+                    style={[S.toggleBtn, selectedShuntKey === s.key && S.toggleBtnActive]}
                   >
-                    <Text style={{ fontSize: FontSize.label, color: selectedShuntKey === s.key ? Colors.textOnPrimary : Colors.textSecondary }}>
-                      {s.title}
-                    </Text>
+                    <Text style={[S.toggleText, selectedShuntKey === s.key && S.toggleTextActive]}>{s.title}</Text>
                   </Pressable>
                 ))}
               </View>
             } />
           )}
           <Row label={t('member.language')} right={
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={S.toggleGroup}>
               {(['zh', 'en'] as const).map((l) => (
-                <Pressable key={l} onPress={() => { setLanguage(l); i18n.changeLanguage(l); }} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.sm, backgroundColor: language === l ? Colors.primary : Colors.surfaceLight }}>
-                  <Text style={{ color: language === l ? Colors.textOnPrimary : Colors.textSecondary, fontWeight: '500' }}>{l === 'zh' ? '中文' : 'English'}</Text>
+                <Pressable key={l} onPress={() => { setLanguage(l); i18n.changeLanguage(l); }} style={[S.toggleBtn, language === l && S.toggleBtnActive]}>
+                  <Text style={[S.toggleText, language === l && S.toggleTextActive]}>{l === 'zh' ? '中文' : 'English'}</Text>
                 </Pressable>
               ))}
             </View>
           } />
-          <Row label={t('member.about')} right={<Text style={{ color: Colors.textSecondary }}>v1.0.0</Text>} />
+          <Row label={t('member.about')} right={<Text style={S.rowValue}>v1.0.0</Text>} />
         </Section>
 
         {/* 退出登录 */}
         {loggedIn && (
-          <Pressable onPress={handleLogout} style={{ backgroundColor: Colors.error + '20', borderRadius: Radius.button, padding: 14, alignItems: 'center', marginTop: Spacing.md }}>
-            <Text style={{ color: Colors.error, fontWeight: '700' }}>{t('member.logout')}</Text>
+          <Pressable onPress={handleLogout} style={S.logoutBtn}>
+            <Text style={S.logoutText}>{t('member.logout')}</Text>
           </Pressable>
         )}
       </ScrollView>
@@ -236,8 +246,78 @@ export function MemberScreen() {
   );
 }
 
-const s = StyleSheet.create({
-  signBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 10, borderRadius: Radius.sm, borderWidth: 1, borderColor: Colors.primary, marginTop: 12 },
-  primaryBtn: { backgroundColor: Colors.primary, padding: 12, borderRadius: Radius.button, alignItems: 'center', marginTop: 8 },
-  input: { height: 44, backgroundColor: Colors.surface, borderRadius: Radius.button, borderWidth: 1, borderColor: Colors.border, paddingHorizontal: 14, color: Colors.textPrimary, marginBottom: 8 },
+const S = StyleSheet.create({
+  cont: { flex: 1, backgroundColor: Colors.background },
+  pageTitle: { fontSize: FontSize.largeTitle, fontWeight: '800', color: Colors.textPrimary, marginBottom: Spacing.lg },
+  sectionCard: {
+    backgroundColor: Colors.surface, borderRadius: Radius.card, padding: Spacing.md,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2,
+  },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 },
+  rowLabel: { fontSize: FontSize.bodyLarge, color: Colors.textPrimary },
+  rowValue: { color: Colors.textSecondary, fontSize: FontSize.body },
+
+  userCard: {
+    backgroundColor: Colors.surface, borderRadius: Radius.card, padding: Spacing.md,
+    marginBottom: Spacing.lg,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2,
+  },
+  avatar: {
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center',
+  },
+  avatarText: { color: '#fff', fontSize: 24, fontWeight: '700' },
+  username: { fontSize: FontSize.title, fontWeight: '700', color: Colors.textPrimary },
+  statVal: { color: Colors.textSecondary, fontSize: FontSize.body },
+
+  loginCard: {
+    backgroundColor: Colors.surface, borderRadius: Radius.card, padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2,
+  },
+  input: {
+    height: 46, backgroundColor: Colors.surfaceLight, borderRadius: Radius.button,
+    borderWidth: 1, borderColor: Colors.border, paddingHorizontal: 14,
+    color: Colors.textPrimary, marginBottom: 10, fontSize: FontSize.body,
+  },
+  primaryBtn: {
+    backgroundColor: Colors.primary, padding: 14, borderRadius: Radius.button,
+    alignItems: 'center', marginTop: 4,
+  },
+  primaryBtnText: { color: Colors.textOnPrimary, fontWeight: '700', fontSize: FontSize.bodyLarge },
+
+  signBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    padding: 12, borderRadius: Radius.button,
+    borderWidth: 1, borderColor: Colors.primary, marginTop: 14,
+  },
+  signedBtn: { borderColor: Colors.success, backgroundColor: Colors.success + '15' },
+
+  notifBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: Colors.primary + '15', borderRadius: Radius.card,
+    padding: 12, marginBottom: Spacing.lg,
+  },
+
+  achieveIcon: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.primary + '20', justifyContent: 'center', alignItems: 'center',
+  },
+  achieveLabel: { fontSize: FontSize.caption, color: Colors.textSecondary, textAlign: 'center', marginTop: 4 },
+
+  notifItem: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: Colors.divider },
+  notifTitle: { color: Colors.text, fontWeight: '600', fontSize: FontSize.body },
+  notifContent: { color: Colors.textSecondary, fontSize: FontSize.body, marginTop: 2 },
+
+  toggleGroup: { flexDirection: 'row', borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.sm, overflow: 'hidden' },
+  toggleBtn: { paddingHorizontal: 14, paddingVertical: 7, backgroundColor: Colors.surface },
+  toggleBtnActive: { backgroundColor: Colors.primary },
+  toggleText: { color: Colors.textSecondary, fontWeight: '500', fontSize: FontSize.label },
+  toggleTextActive: { color: Colors.textOnPrimary },
+
+  logoutBtn: {
+    backgroundColor: Colors.error + '15', borderRadius: Radius.button,
+    padding: 14, alignItems: 'center', marginTop: Spacing.md,
+  },
+  logoutText: { color: Colors.error, fontWeight: '700', fontSize: FontSize.body },
 });
