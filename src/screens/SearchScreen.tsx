@@ -1,5 +1,5 @@
-// 搜索页 v2
-// @author nyx
+// 搜索页 v2 — 双源聚合搜索 (JMComic + Pica)
+// @author Jason
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -13,10 +13,11 @@ import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSize, Radius } from '../theme';
 import { ComicCard } from '../components/ComicCard';
 import { searchComics, fetchHotTags, fetchRandomRecommend, getCoverUrl as getCover } from '../api/endpoints';
+import { aggregateSearch } from '../sources/pica';
+import type { SourceItem } from '../sources/types';
 import type { ComicItem } from '../api/types';
 
 const { width: W } = Dimensions.get('window');
@@ -24,16 +25,18 @@ const { width: W } = Dimensions.get('window');
 const SORT_OPTS = ['tf', 'mv', 'mp', 'mr'];
 const HISTORY_KEY = '@jmcomic.search';
 
+const SOURCE_BADGE: Record<string, { label: string; color: string }> = {
+  jmcomic: { label: 'JM', color: Colors.primary },
+  pica: { label: 'Pica', color: '#9B59B6' },
+};
+
 export function SearchScreen() {
   const nav = useNavigation<any>();
   const { t } = useTranslation();
-  const queryParams = useRoute<any>().params;
 
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<ComicItem[]>([]);
-  const [total, setTotal] = useState(0);
+  const [results, setResults] = useState<SourceItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [searched, setSearched] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -52,29 +55,38 @@ export function SearchScreen() {
 
   const doSearch = useCallback(async (q: string, p = 1, refresh = false) => {
     if (!q.trim()) return;
-    setLoading(true);
+
+    // 纯数字 → 直接跳到 JMComic 详情（兼容旧行为）
     if (/^\d{4,}$/.test(q.trim())) {
-      setLoading(false);
       setSearched(true);
       nav.navigate('ComicDetail', { albumId: q.trim() });
       return;
     }
+
+    setLoading(true);
+
     try {
-      const data = await searchComics({ search_query: q, page: p, o: sort });
-      if (data.redirect_aid) {
-        nav.navigate('ComicDetail', { albumId: data.redirect_aid });
-        return;
+      // 页1 先检查 JMcomic 重定向
+      if (p === 1) {
+        const jmCheck = await searchComics({ search_query: q, page: 1, o: sort });
+        if (jmCheck.redirect_aid) {
+          nav.navigate('ComicDetail', { albumId: jmCheck.redirect_aid });
+          setLoading(false);
+          return;
+        }
       }
-      const items = (data.content || []).map((c) => ({
-        id: c.id, name: c.name, author: c.author, image: c.image,
-        category: c.category, category_sub: c.category_sub,
-        update_at: c.update_at, liked: c.liked, is_favorite: c.is_favorite,
-      }));
-      if (refresh || p === 1) setResults(items as ComicItem[]);
-      else setResults((prev) => [...prev, ...items as ComicItem[]]);
-      setTotal(parseInt(String(String(data.total))) || items.length);
-      setHasMore(items.length >= 80);
+
+      // 双源聚合搜索
+      const agg = await aggregateSearch(q, p);
+      const items = agg.items;
+
+      if (refresh || p === 1) setResults(items);
+      else setResults((prev) => [...prev, ...items]);
+
+      setHasMore(items.length >= 20);
       setSearched(true);
+
+      // 写入历史
       if (p === 1) {
         const newHistory = [q, ...history.filter((h) => h !== q)].slice(0, 20);
         setHistory(newHistory);
@@ -84,10 +96,7 @@ export function SearchScreen() {
     setLoading(false);
   }, [sort, history]);
 
-  const onSearch = () => {
-    setPage(1);
-    doSearch(query, 1, true);
-  };
+  const onSearch = () => { setPage(1); doSearch(query, 1, true); };
 
   const loadMore = () => {
     if (!hasMore || loading) return;
@@ -96,7 +105,13 @@ export function SearchScreen() {
     doSearch(query, np);
   };
 
-  const getCoverUrl = (id: string) => getCover(id);
+  const openDetail = (item: SourceItem) => {
+    if (item.source === 'pica') {
+      nav.navigate('PicaDetail', { comicId: item.id });
+    } else {
+      nav.navigate('ComicDetail', { albumId: item.id, sourceItem: item });
+    }
+  };
 
   return (
     <SafeAreaView edges={["top"]} style={S.cont}>
@@ -104,12 +119,11 @@ export function SearchScreen() {
       <FlatList
         data={results}
         numColumns={3}
-        keyExtractor={(i) => i.id}
+        keyExtractor={(i) => `${i.source}:${i.id}`}
         contentContainerStyle={{ paddingHorizontal: Spacing.marginEdge, paddingBottom: 100 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => {}} tintColor={Colors.primary} />}
+        refreshControl={<RefreshControl refreshing={false} onRefresh={() => {}} tintColor={Colors.primary} />}
         ListHeaderComponent={
           <View style={{ paddingTop: 8 }}>
-            {/* 搜索框 */}
             <View style={S.searchWrap}>
               <MaterialIcons name="search" size={20} color={Colors.textTertiary} style={{ marginLeft: 12 }} />
               <TextInput
@@ -128,7 +142,6 @@ export function SearchScreen() {
               )}
             </View>
 
-            {/* 排序 */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 10 }}>
               {SORT_OPTS.map((s) => (
                 <Pressable
@@ -143,7 +156,6 @@ export function SearchScreen() {
               ))}
             </ScrollView>
 
-            {/* 搜索按钮 */}
             <Pressable onPress={onSearch} style={({ pressed }) => [S.searchBtn, { opacity: pressed ? 0.7 : 1 }]}>
               <MaterialIcons name="search" size={18} color="#fff" />
               <Text style={S.searchBtnText}>{t('search.title')}</Text>
@@ -201,7 +213,7 @@ export function SearchScreen() {
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                       {recommend.slice(0, 6).map((item) => (
                         <Pressable key={item.id} onPress={() => nav.navigate('ComicDetail', { albumId: item.id })} style={{ marginRight: 10, width: W * 0.35 }}>
-                          <Image source={{ uri: getCoverUrl(item.id) }} style={{ width: '100%', aspectRatio: 0.7, borderRadius: Radius.card, backgroundColor: Colors.surfaceContainer }} contentFit="cover" />
+                          <Image source={{ uri: getCover(item.id) }} style={{ width: '100%', aspectRatio: 0.7, borderRadius: Radius.card, backgroundColor: Colors.surfaceContainer }} contentFit="cover" />
                           <Text style={S.recommendTitle} numberOfLines={2}>{item.name}</Text>
                         </Pressable>
                       ))}
@@ -219,9 +231,17 @@ export function SearchScreen() {
             )}
           </View>
         }
-        renderItem={({ item }) => (
-          <ComicCard id={item.id} title={item.name} coverUrl={getCoverUrl(item.id)} onPress={(id) => nav.navigate('ComicDetail', { albumId: id })} />
-        )}
+        renderItem={({ item }) => {
+          const badge = SOURCE_BADGE[item.source] || SOURCE_BADGE.jmcomic;
+          return (
+            <View style={S.cardWrap}>
+              <ComicCard id={item.id} title={item.title} coverUrl={item.coverUrl} onPress={() => openDetail(item)} />
+              <View style={[S.badge, { backgroundColor: badge.color }]}>
+                <Text style={S.badgeText}>{badge.label}</Text>
+              </View>
+            </View>
+          );
+        }}
         ListFooterComponent={loading ? <ActivityIndicator style={{ padding: 20 }} color={Colors.primary} /> : null}
         onEndReached={loadMore}
         onEndReachedThreshold={0.3}
@@ -266,4 +286,11 @@ const S = StyleSheet.create({
     fontSize: FontSize.label, color: Colors.textPrimary,
     marginTop: 6, fontWeight: '500',
   },
+  cardWrap: { position: 'relative', width: (W - 32 - 20) / 3 },
+  badge: {
+    position: 'absolute', top: 6, left: 6,
+    paddingHorizontal: 6, paddingVertical: 2,
+    borderRadius: 4,
+  },
+  badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
 });

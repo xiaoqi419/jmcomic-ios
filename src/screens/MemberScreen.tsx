@@ -1,5 +1,5 @@
-// 个人中心 v2
-// @author nyx
+// 个人中心 v3 — 双源账号管理
+// @author Jason
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert, TextInput } from 'react-native';
@@ -9,57 +9,87 @@ import { useTranslation } from 'react-i18next';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, FontSize } from '../theme';
 import { useAuthStore } from '../store/useAuth';
+import { usePicaStore } from '../store/usePica';
 import { useMemberStore } from '../store/useMember';
 import { useSettingsStore } from '../store/useSettings';
-import { login } from '../api/endpoints';
+import { login as jmLogin } from '../api/endpoints';
+import { isPicaEnabled } from '../sources/pica';
 
 export function MemberScreen() {
   const nav = useNavigation<any>();
   const { t, i18n } = useTranslation();
-  const { username, loggedIn, login: doLogin, logout: doLogout } = useAuthStore();
+  const { username: jmUser, loggedIn: jmLoggedIn, login: jmDoLogin, logout: jmDoLogout } = useAuthStore();
+  const { username: picaUser, loggedIn: picaLoggedIn, login: picaDoLogin, logout: picaDoLogout } = usePicaStore();
   const { info, signData, signed, doSignIn, loadInfo, loadSign, loadAchievements, achievements, notifications, loadNotifications, unread } = useMemberStore();
   const { language, setLanguage, readingMode, setReadingMode, shunts, selectedShuntKey, selectShunt } = useSettingsStore();
 
-  const [showLogin, setShowLogin] = useState(false);
-  const [loginUser, setLoginUser] = useState('');
-  const [loginPass, setLoginPass] = useState('');
-  const [loginLoading, setLoginLoading] = useState(false);
+  const [showJmLogin, setShowJmLogin] = useState(false);
+  const [jmUserInput, setJmUserInput] = useState('');
+  const [jmPassInput, setJmPassInput] = useState('');
+  const [jmLoginLoading, setJmLoginLoading] = useState(false);
+
+  const [showPicaLogin, setShowPicaLogin] = useState(false);
+  const [picaUserInput, setPicaUserInput] = useState('');
+  const [picaPassInput, setPicaPassInput] = useState('');
+  const [picaLoginLoading, setPicaLoginLoading] = useState(false);
+
+  const dualSearch = isPicaEnabled();
 
   useEffect(() => {
-    if (loggedIn) {
+    if (jmLoggedIn) {
       loadInfo();
       loadSign().then(() => {
-        if (!useMemberStore.getState().signed) {
-          doSignIn().catch(() => {});
-        }
+        if (!useMemberStore.getState().signed) doSignIn().catch(() => {});
       });
       loadAchievements();
       loadNotifications();
     }
-  }, [loggedIn]);
+  }, [jmLoggedIn]);
 
-  const handleLogin = async () => {
-    if (!loginUser.trim() || !loginPass.trim()) return;
-    setLoginLoading(true);
+  const handleJmLogin = async () => {
+    if (!jmUserInput.trim() || !jmPassInput.trim()) return;
+    setJmLoginLoading(true);
     try {
-      const data = await login(loginUser.trim(), loginPass.trim());
+      const data = await jmLogin(jmUserInput.trim(), jmPassInput.trim());
       if (data.s) {
-        await doLogin(data.username || loginUser, data.s, data.photo || '');
-        setShowLogin(false);
-        setLoginUser('');
-        setLoginPass('');
-        Alert.alert('', `欢迎回来, ${data.username || loginUser}`);
+        await jmDoLogin(data.username || jmUserInput, data.s, data.photo || '');
+        setShowJmLogin(false);
+        setJmUserInput('');
+        setJmPassInput('');
+        Alert.alert('', `欢迎回来, ${data.username || jmUserInput}`);
       }
     } catch (e: any) {
       Alert.alert('登录失败', e.message || '请检查用户名和密码');
     }
-    setLoginLoading(false);
+    setJmLoginLoading(false);
   };
 
-  const handleLogout = () => {
-    Alert.alert('确认退出', '', [
+  const handlePicaLogin = async () => {
+    if (!picaUserInput.trim() || !picaPassInput.trim()) return;
+    setPicaLoginLoading(true);
+    try {
+      await picaDoLogin(picaUserInput.trim(), picaPassInput.trim());
+      setShowPicaLogin(false);
+      setPicaUserInput('');
+      setPicaPassInput('');
+      Alert.alert('', 'Pica 账号已绑定');
+    } catch (e: any) {
+      Alert.alert('Pica 登录失败', e.message || '请检查用户名和密码');
+    }
+    setPicaLoginLoading(false);
+  };
+
+  const handleJmLogout = () => {
+    Alert.alert('退出 JMComic', '', [
       { text: '取消', style: 'cancel' },
-      { text: '退出', onPress: () => doLogout() },
+      { text: '退出', onPress: () => jmDoLogout() },
+    ]);
+  };
+
+  const handlePicaLogout = () => {
+    Alert.alert('解绑 Pica', '', [
+      { text: '取消', style: 'cancel' },
+      { text: '解绑', onPress: () => picaDoLogout() },
     ]);
   };
 
@@ -90,87 +120,134 @@ export function MemberScreen() {
   return (
     <SafeAreaView edges={["top"]} style={S.cont}>
       <ScrollView contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}>
-        <Text style={S.pageTitle}>
-          {loggedIn ? t('member.welcome') : t('member.login')}
-        </Text>
+        <Text style={S.pageTitle}>我的</Text>
 
-        {/* 用户卡片 / 登录 */}
-        {loggedIn ? (
-          <View style={S.userCard}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <View style={S.avatar}>
-                <Text style={S.avatarText}>{(username || 'U')[0].toUpperCase()}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={S.username}>{username}</Text>
-                <View style={{ flexDirection: 'row', gap: 14, marginTop: 6 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <MaterialIcons name="monetization-on" size={14} color={Colors.primary} />
-                    <Text style={S.statVal}>{info?.coin || '-'}</Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <MaterialIcons name="star" size={14} color={Colors.primary} />
-                    <Text style={S.statVal}>Lv.{info?.level || '-'}</Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <MaterialIcons name="trending-up" size={14} color={Colors.primary} />
-                    <Text style={S.statVal}>{info?.experience || '-'}</Text>
+        {/* ===== JMComic 账号 ===== */}
+        <Section title="JMComic 账号" icon="person">
+          {jmLoggedIn ? (
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+                <View style={S.avatar}>
+                  <Text style={S.avatarText}>{(jmUser || 'U')[0].toUpperCase()}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={S.username}>{jmUser}</Text>
+                  <View style={{ flexDirection: 'row', gap: 14, marginTop: 6 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <MaterialIcons name="monetization-on" size={14} color={Colors.primary} />
+                      <Text style={S.statVal}>{info?.coin || '-'}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <MaterialIcons name="star" size={14} color={Colors.primary} />
+                      <Text style={S.statVal}>Lv.{info?.level || '-'}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <MaterialIcons name="trending-up" size={14} color={Colors.primary} />
+                      <Text style={S.statVal}>{info?.experience || '-'}</Text>
+                    </View>
                   </View>
                 </View>
               </View>
-            </View>
-            <Pressable onPress={signed ? undefined : handleSign} style={[S.signBtn, signed && S.signedBtn]}>
-              <MaterialIcons name={signed ? 'check-circle' : 'today'} size={20} color={signed ? Colors.success : Colors.primary} />
-              <Text style={{ color: signed ? Colors.success : Colors.primary, fontWeight: '600' }}>
-                {signed ? `${t('member.signed')}${signData?.days ? ` (${signData.days}d)` : ''}` : t('member.sign_in')}
+              <Pressable onPress={signed ? undefined : handleSign} style={[S.signBtn, signed && S.signedBtn]}>
+                <MaterialIcons name={signed ? 'check-circle' : 'today'} size={20} color={signed ? Colors.success : Colors.primary} />
+                <Text style={{ color: signed ? Colors.success : Colors.primary, fontWeight: '600' }}>
+                  {signed ? `${t('member.signed')}${signData?.days ? ` (${signData.days}d)` : ''}` : t('member.sign_in')}
+                </Text>
+              </Pressable>
+              {unread && (unread.comic_follow > 0 || unread.site_notice > 0) && (
+                <Pressable onPress={() => loadNotifications()} style={S.notifBanner}>
+                  <MaterialIcons name="notifications" size={18} color={Colors.primary} />
+                  <Text style={{ color: Colors.primary, fontWeight: '600', flex: 1, fontSize: FontSize.label }}>
+                    未读: {unread.comic_follow + unread.site_notice}
+                  </Text>
+                </Pressable>
+              )}
+              <Pressable onPress={handleJmLogout} style={S.logoutSmall}>
+                <Text style={S.logoutSmallText}>退出登录</Text>
+              </Pressable>
+            </>
+          ) : showJmLogin ? (
+            <>
+              <TextInput style={S.input} placeholder="用户名" placeholderTextColor={Colors.textTertiary} value={jmUserInput} onChangeText={setJmUserInput} autoCapitalize="none" />
+              <TextInput style={S.input} placeholder="密码" placeholderTextColor={Colors.textTertiary} value={jmPassInput} onChangeText={setJmPassInput} secureTextEntry />
+              <Pressable onPress={handleJmLogin} disabled={jmLoginLoading} style={S.primaryBtn}>
+                <Text style={S.primaryBtnText}>{jmLoginLoading ? '...' : t('member.login')}</Text>
+              </Pressable>
+              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 10 }}>
+                <Pressable onPress={() => nav.navigate('Register' as never)}>
+                  <Text style={{ color: Colors.primary, fontSize: FontSize.body }}>{t('member.register')}</Text>
+                </Pressable>
+                <Pressable onPress={() => nav.navigate('ForgotPassword' as never)}>
+                  <Text style={{ color: Colors.primary, fontSize: FontSize.body }}>{t('member.forgot')}</Text>
+                </Pressable>
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={{ color: Colors.textSecondary, fontSize: FontSize.body, marginBottom: 12 }}>
+                登录后可查看收藏、签到、成就
               </Text>
-            </Pressable>
-          </View>
-        ) : showLogin ? (
-          <View style={S.loginCard}>
-            <TextInput style={S.input} placeholder="用户名" placeholderTextColor={Colors.textTertiary} value={loginUser} onChangeText={setLoginUser} autoCapitalize="none" />
-            <TextInput style={S.input} placeholder="密码" placeholderTextColor={Colors.textTertiary} value={loginPass} onChangeText={setLoginPass} secureTextEntry />
-            <Pressable onPress={handleLogin} disabled={loginLoading} style={S.primaryBtn}>
-              <Text style={S.primaryBtnText}>{loginLoading ? '...' : t('member.login')}</Text>
-            </Pressable>
-            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 10 }}>
-              <Pressable onPress={() => nav.navigate('Register' as never)}>
-                <Text style={{ color: Colors.primary, fontSize: FontSize.body }}>{t('member.register')}</Text>
+              <Pressable onPress={() => setShowJmLogin(true)} style={S.primaryBtn}>
+                <Text style={S.primaryBtnText}>{t('member.login')}</Text>
               </Pressable>
-              <Pressable onPress={() => nav.navigate('ForgotPassword' as never)}>
-                <Text style={{ color: Colors.primary, fontSize: FontSize.body }}>{t('member.forgot')}</Text>
-              </Pressable>
-            </View>
-          </View>
-        ) : (
-          <View style={S.loginCard}>
-            <Pressable onPress={() => setShowLogin(true)} style={S.primaryBtn}>
-              <Text style={S.primaryBtnText}>{t('member.login')}</Text>
-            </Pressable>
-            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 10 }}>
-              <Pressable onPress={() => nav.navigate('Register' as never)}>
-                <Text style={{ color: Colors.primary, fontSize: FontSize.body }}>{t('member.register')}</Text>
-              </Pressable>
-              <Pressable onPress={() => nav.navigate('ForgotPassword' as never)}>
-                <Text style={{ color: Colors.primary, fontSize: FontSize.body }}>{t('member.forgot')}</Text>
-              </Pressable>
-            </View>
-          </View>
-        )}
+            </>
+          )}
+        </Section>
 
-        {/* 未读通知 */}
-        {loggedIn && unread && (unread.comic_follow > 0 || unread.site_notice > 0) && (
-          <Pressable onPress={() => loadNotifications()} style={S.notifBanner}>
-            <MaterialIcons name="notifications" size={20} color={Colors.primary} />
-            <Text style={{ color: Colors.primary, fontWeight: '600', flex: 1 }}>
-              未读通知: {unread.comic_follow + unread.site_notice}
+        {/* ===== Pica 账号 ===== */}
+        <Section title="Pica 账号" icon="bookmark">
+          {picaLoggedIn ? (
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <MaterialIcons name="check-circle" size={24} color={Colors.success} />
+                <Text style={S.username}>{picaUser}</Text>
+              </View>
+              <Pressable onPress={handlePicaLogout} style={S.logoutSmall}>
+                <Text style={S.logoutSmallText}>解绑</Text>
+              </Pressable>
+            </>
+          ) : showPicaLogin ? (
+            <>
+              <Text style={{ color: Colors.textSecondary, fontSize: FontSize.body, marginBottom: 8 }}>
+                绑定 Pica 账号后可搜到 Pica 源内容
+              </Text>
+              <TextInput style={S.input} placeholder="Pica 邮箱" placeholderTextColor={Colors.textTertiary} value={picaUserInput} onChangeText={setPicaUserInput} autoCapitalize="none" keyboardType="email-address" />
+              <TextInput style={S.input} placeholder="Pica 密码" placeholderTextColor={Colors.textTertiary} value={picaPassInput} onChangeText={setPicaPassInput} secureTextEntry />
+              <Pressable onPress={handlePicaLogin} disabled={picaLoginLoading} style={S.primaryBtn}>
+                <Text style={S.primaryBtnText}>{picaLoginLoading ? '...' : '绑定'}</Text>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <Text style={{ color: Colors.textSecondary, fontSize: FontSize.body, marginBottom: 12 }}>
+                绑定后可同时搜索 JMComic + Pica 双源内容
+              </Text>
+              <Pressable onPress={() => setShowPicaLogin(true)} style={S.secondaryBtn}>
+                <Text style={S.secondaryBtnText}>绑定 Pica 账号</Text>
+              </Pressable>
+            </>
+          )}
+        </Section>
+
+        {/* ===== 搜索源状态 ===== */}
+        <Section title="搜索源" icon="search">
+          <Row label="当前状态" right={
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <MaterialIcons name={dualSearch ? 'hub' : 'person-search'} size={18} color={dualSearch ? Colors.success : Colors.textTertiary} />
+              <Text style={[S.statusText, { color: dualSearch ? Colors.success : Colors.textSecondary }]}>
+                {dualSearch ? '双源搜索 (JM + Pica)' : '仅 JMComic'}
+              </Text>
+            </View>
+          } />
+          {!dualSearch && (
+            <Text style={{ color: Colors.textTertiary, fontSize: FontSize.label, marginTop: 4 }}>
+              在上方绑定 Pica 账号后即可双源聚合搜索
             </Text>
-            <MaterialIcons name="chevron-right" size={20} color={Colors.primary} />
-          </Pressable>
-        )}
+          )}
+        </Section>
 
-        {/* 成就 */}
-        {loggedIn && achievements.length > 0 && (
+        {/* ===== 成就 ===== */}
+        {jmLoggedIn && achievements.length > 0 && (
           <Section title={t('member.achievements')} icon="emoji-events">
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {achievements.slice(0, 6).map((a) => (
@@ -185,8 +262,8 @@ export function MemberScreen() {
           </Section>
         )}
 
-        {/* 通知列表 */}
-        {loggedIn && notifications.length > 0 && (
+        {/* ===== 通知 ===== */}
+        {jmLoggedIn && notifications.length > 0 && (
           <Section title={t('member.notifications')} icon="notifications">
             {notifications.slice(0, 5).map((n) => (
               <View key={n.id} style={S.notifItem}>
@@ -197,7 +274,7 @@ export function MemberScreen() {
           </Section>
         )}
 
-        {/* 设置 */}
+        {/* ===== 设置 ===== */}
         <Section title={t('member.settings')} icon="settings">
           <Row label={t('member.reading_mode')} right={
             <View style={S.toggleGroup}>
@@ -234,13 +311,6 @@ export function MemberScreen() {
           } />
           <Row label={t('member.about')} right={<Text style={S.rowValue}>v1.0.0</Text>} />
         </Section>
-
-        {/* 退出登录 */}
-        {loggedIn && (
-          <Pressable onPress={handleLogout} style={S.logoutBtn}>
-            <Text style={S.logoutText}>{t('member.logout')}</Text>
-          </Pressable>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -257,24 +327,14 @@ const S = StyleSheet.create({
   rowLabel: { fontSize: FontSize.bodyLarge, color: Colors.textPrimary },
   rowValue: { color: Colors.textSecondary, fontSize: FontSize.body },
 
-  userCard: {
-    backgroundColor: Colors.surface, borderRadius: Radius.card, padding: Spacing.md,
-    marginBottom: Spacing.lg,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2,
-  },
   avatar: {
-    width: 56, height: 56, borderRadius: 28,
+    width: 48, height: 48, borderRadius: 24,
     backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center',
   },
-  avatarText: { color: '#fff', fontSize: 24, fontWeight: '700' },
+  avatarText: { color: '#fff', fontSize: 20, fontWeight: '700' },
   username: { fontSize: FontSize.title, fontWeight: '700', color: Colors.textPrimary },
   statVal: { color: Colors.textSecondary, fontSize: FontSize.body },
 
-  loginCard: {
-    backgroundColor: Colors.surface, borderRadius: Radius.card, padding: Spacing.lg,
-    marginBottom: Spacing.lg,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2,
-  },
   input: {
     height: 46, backgroundColor: Colors.surfaceLight, borderRadius: Radius.button,
     borderWidth: 1, borderColor: Colors.border, paddingHorizontal: 14,
@@ -285,18 +345,23 @@ const S = StyleSheet.create({
     alignItems: 'center', marginTop: 4,
   },
   primaryBtnText: { color: Colors.textOnPrimary, fontWeight: '700', fontSize: FontSize.bodyLarge },
+  secondaryBtn: {
+    borderWidth: 1, borderColor: Colors.primary, padding: 14, borderRadius: Radius.button,
+    alignItems: 'center',
+  },
+  secondaryBtnText: { color: Colors.primary, fontWeight: '700', fontSize: FontSize.bodyLarge },
 
   signBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     padding: 12, borderRadius: Radius.button,
-    borderWidth: 1, borderColor: Colors.primary, marginTop: 14,
+    borderWidth: 1, borderColor: Colors.primary, marginTop: 12,
   },
   signedBtn: { borderColor: Colors.success, backgroundColor: Colors.success + '15' },
 
   notifBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: Colors.primary + '15', borderRadius: Radius.card,
-    padding: 12, marginBottom: Spacing.lg,
+    padding: 10, marginTop: 10,
   },
 
   achieveIcon: {
@@ -315,9 +380,8 @@ const S = StyleSheet.create({
   toggleText: { color: Colors.textSecondary, fontWeight: '500', fontSize: FontSize.label },
   toggleTextActive: { color: Colors.textOnPrimary },
 
-  logoutBtn: {
-    backgroundColor: Colors.error + '15', borderRadius: Radius.button,
-    padding: 14, alignItems: 'center', marginTop: Spacing.md,
-  },
-  logoutText: { color: Colors.error, fontWeight: '700', fontSize: FontSize.body },
+  logoutSmall: { marginTop: 10, alignSelf: 'flex-end' },
+  logoutSmallText: { color: Colors.error, fontSize: FontSize.label, fontWeight: '600' },
+
+  statusText: { fontSize: FontSize.body, fontWeight: '600' },
 });

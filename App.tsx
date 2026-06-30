@@ -16,6 +16,7 @@ import './src/i18n';
 import { Colors } from './src/theme';
 import { useSettingsStore } from './src/store/useSettings';
 import { useAuthStore } from './src/store/useAuth';
+import { usePicaStore } from './src/store/usePica';
 import { fetchSetting } from './src/api/endpoints';
 import { SourceSelectModal } from './src/components/SourceSelectModal';
 import { loadSelectedShunt } from './src/utils/SourceSelector';
@@ -35,6 +36,8 @@ import { LibraryScreen } from './src/screens/LibraryScreen';
 import { MemberScreen } from './src/screens/MemberScreen';
 import { WeekRankScreen } from './src/screens/WeekRankScreen';
 import { RegisterScreen, ForgotPasswordScreen } from './src/screens/AuthScreens';
+import { PicaDetailScreen } from './src/screens/PicaDetailScreen';
+import { PicaReaderScreen } from './src/screens/PicaReaderScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -115,6 +118,7 @@ export default function App() {
     (async () => {
       await loadSettings();
       await loadAuth();
+      await usePicaStore.getState().load();
 
       // 检查已保存的源选择
       const saved = await loadSelectedShunt();
@@ -187,6 +191,10 @@ export default function App() {
           <Stack.Screen name="NovelReader" component={NovelReaderScreen}
             options={{ headerShown: false }} />
           <Stack.Screen name="MoviePlayer" component={MoviePlayerScreen}
+            options={{ headerShown: false }} />
+          <Stack.Screen name="PicaDetail" component={PicaDetailScreen}
+            options={{ headerShown: false }} />
+          <Stack.Screen name="PicaReader" component={PicaReaderScreen}
             options={{ headerShown: false }} />
           <Stack.Screen name="Blogs" component={BlogsScreen}
             options={{ headerShown: false }} />
