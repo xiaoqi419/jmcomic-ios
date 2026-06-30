@@ -5,7 +5,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
-import * as FileSystem from 'expo-file-system/legacy';
 import { buildDescrambleHtml, buildSimpleImageHtml, extractFilename } from '../utils/scramble';
 import { jmLogger } from '../utils/JmLogger';
 import { downloadQueue } from '../utils/DownloadQueue';
@@ -24,16 +23,19 @@ interface Props { imageUrl: string; epsId: string; pictureName?: string; style?:
 const SC_ID = '220980';
 
 async function urlToDataUri(url: string): Promise<string> {
-  const ext = (url.split('.').pop() || 'webp').replace(/\?.*/, '');
-  const dest = FileSystem.cacheDirectory + 'jm_' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext;
-  jmLogger.log(`下载: ${url} -> ${dest}`);
-  const dl = await FileSystem.downloadAsync(url, dest, { headers: IMG_HEADERS });
-  jmLogger.log(`HTTP ${dl.status} uri=${dl.uri}`);
-  if (dl.status !== 200) throw new Error('Download ' + dl.status);
-  const b64 = await FileSystem.readAsStringAsync(dl.uri, { encoding: FileSystem.EncodingType.Base64 });
-  FileSystem.deleteAsync(dl.uri, { idempotent: true }).catch(() => {});
-  jmLogger.ok(`dataURI len=${b64.length}`);
-  return 'data:image/' + ext.replace('jpg', 'jpeg') + ';base64,' + b64;
+  jmLogger.log(`fetch: ${url}`);
+  const response = await fetch(url, { headers: IMG_HEADERS });
+  if (!response.ok) throw new Error(`fetch HTTP ${response.status}`);
+  const blob = await response.blob();
+  jmLogger.ok(`blob size=${blob.size}`);
+  const dataUri = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('FileReader failed'));
+    reader.readAsDataURL(blob);
+  });
+  jmLogger.ok(`dataURI len=${dataUri.length}`);
+  return dataUri;
 }
 
 export function SafeImage({ imageUrl, epsId, pictureName, style, onLoad }: Props) {
