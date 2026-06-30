@@ -11,11 +11,11 @@ import { buildDescrambleHtml, buildSimpleImageHtml, extractFilename } from '../u
 
 const IMG_HEADERS: Record<string, string> = {
   Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-  Referer: 'https://localhost/',
+  Referer: 'https://www.jmapibranch2.cc/',
   'Sec-Fetch-Mode': 'no-cors',
   'Sec-Fetch-Site': 'cross-site',
-  'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K; wv) AppleWebKit/537.36 Chrome/138.0.0.0 Mobile Safari/537.36',
-  'X-Requested-With': 'com.example.app',
+  'User-Agent': 'Mozilla/5.0 (Linux; Android 13; WD5DDE5 Build/TQ1A.230205.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/114.0.5735.196 Safari/537.36',
+  'X-Requested-With': 'com.jiaohua_browser',
 };
 
 interface Props { imageUrl: string; epsId: string; pictureName?: string; style?: any; onLoad?: () => void; }
