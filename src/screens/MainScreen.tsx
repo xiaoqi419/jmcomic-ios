@@ -1,10 +1,10 @@
-// 首页 v2 — 重设计
-// @author nyx
+// 首页 v3 — 自动轮播 + 高清图
+// @author Jason
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View, Text, FlatList, Pressable, StyleSheet, RefreshControl,
-  Dimensions, ActivityIndicator, ScrollView,
+  Dimensions, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -20,6 +20,8 @@ import { fetchMainPromote, fetchLatest, getCoverUrl } from '../api/endpoints';
 import type { ComicItem } from '../api/types';
 
 const { width: W } = Dimensions.get('window');
+const CARD_W = (W - Spacing.marginEdge * 2 + 10);
+const AUTO_PLAY_MS = 3000;
 
 const QUICK_LINKS = [
   { icon: 'flash-on', labelKey: 'banner.latest', route: 'Categories', params: { slug: 'all', sort: 'tf' } },
@@ -41,8 +43,9 @@ export function MainScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [promoIndex, setPromoIndex] = useState(0);
   const promoRef = useRef<FlatList>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const load = useCallback(async (refresh = false) => {
+  const load = useCallback(async () => {
     try {
       const p = await fetchMainPromote();
       const items: ComicItem[] = [];
@@ -51,7 +54,7 @@ export function MainScreen() {
           if (!items.find((x) => x.id === c.id)) items.push(c);
         });
       });
-      setPromoData(items.slice(0, 10));
+      setPromoData(items.slice(0, 8));
       const l = await fetchLatest(1);
       setLatest(l || []);
       setPage(1);
@@ -65,7 +68,7 @@ export function MainScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await load(true);
+    await load();
     setRefreshing(false);
   }, []);
 
@@ -78,6 +81,27 @@ export function MainScreen() {
       else setHasMore(false);
     } catch {}
   }, [page, hasMore]);
+
+  // 自动轮播
+  const startAutoPlay = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setPromoIndex((prev) => {
+        const next = (prev + 1) % Math.min(promoData.length, 8);
+        promoRef.current?.scrollToIndex({ index: next, animated: true, viewPosition: 0 });
+        return next;
+      });
+    }, AUTO_PLAY_MS);
+  }, [promoData.length]);
+
+  const stopAutoPlay = useCallback(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  }, []);
+
+  useEffect(() => {
+    if (promoData.length > 1) { startAutoPlay(); }
+    return stopAutoPlay;
+  }, [promoData.length, startAutoPlay, stopAutoPlay]);
 
   const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
     if (viewableItems?.length) setPromoIndex(viewableItems[0].index || 0);
@@ -92,29 +116,33 @@ export function MainScreen() {
     );
   }
 
-  const renderPromoItem = ({ item }: { item: ComicItem }) => (
-    <Pressable
-      onPress={() => nav.navigate('ComicDetail', { albumId: item.id })}
-      style={S.promoCard}
-    >
-      <Image source={{ uri: getCoverUrl(item.id) }} style={S.promoCover} contentFit="cover" />
-      <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.85)']}
-        style={S.promoOverlay}
-        pointerEvents="none"
-      />
-      <View style={S.promoInfo}>
-        <Text style={S.promoTitle} numberOfLines={2}>{item.name}</Text>
-        {item.author ? <Text style={S.promoAuthor}>{item.author}</Text> : null}
-      </View>
-    </Pressable>
-  );
+  const renderPromoItem = ({ item }: { item: ComicItem }) => {
+    const cover = item.image || getCoverUrl(item.id);
+    return (
+      <Pressable
+        onPress={() => nav.navigate('ComicDetail', { albumId: item.id })}
+        onPressIn={stopAutoPlay}
+        onPressOut={startAutoPlay}
+        style={S.promoCard}
+      >
+        <Image source={{ uri: cover }} style={S.promoCover} contentFit="cover" />
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.85)']}
+          style={S.promoOverlay}
+          pointerEvents="none"
+        />
+        <View style={S.promoInfo}>
+          <Text style={S.promoTitle} numberOfLines={2}>{item.name}</Text>
+          {item.author ? <Text style={S.promoAuthor}>{item.author}</Text> : null}
+        </View>
+      </Pressable>
+    );
+  };
 
   return (
     <SafeAreaView style={S.cont} edges={['top']}>
       <StatusBar style="light" />
 
-      {/* Header */}
       <View style={S.header}>
         <View>
           <Text style={S.appTitle}>JMComic</Text>
@@ -135,8 +163,6 @@ export function MainScreen() {
         }
         ListHeaderComponent={
           <View style={{ paddingBottom: Spacing.md }}>
-
-            {/* Quick links */}
             <View style={S.quickGrid}>
               {QUICK_LINKS.map((link, i) => (
                 <Pressable
@@ -154,42 +180,41 @@ export function MainScreen() {
               ))}
             </View>
 
-            {/* Promote carousel */}
             {promoData.length > 0 && (
               <View style={S.promoSec}>
                 <FlatList
                   ref={promoRef}
-                  data={promoData.slice(0, 8)}
+                  data={promoData}
                   horizontal
                   pagingEnabled
                   showsHorizontalScrollIndicator={false}
-                  snapToInterval={W - Spacing.marginEdge * 2 + 10}
+                  snapToInterval={CARD_W}
                   decelerationRate="fast"
                   onViewableItemsChanged={onViewableItemsChanged}
                   viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+                  onScrollBeginDrag={stopAutoPlay}
+                  onScrollEndDrag={startAutoPlay}
                   renderItem={renderPromoItem}
                   keyExtractor={(i) => i.id}
                 />
-                {/* Dots */}
                 {promoData.length > 1 && (
                   <View style={S.dotsRow}>
-                    {promoData.slice(0, 8).map((_, i) => (
-                      <View
-                        key={i}
-                        style={[S.dot, i === promoIndex && S.dotActive]}
-                      />
+                    {promoData.map((_, i) => (
+                      <Pressable key={i} onPress={() => {
+                        promoRef.current?.scrollToIndex({ index: i, animated: true });
+                        setPromoIndex(i);
+                      }}>
+                        <View style={[S.dot, i === promoIndex && S.dotActive]} />
+                      </Pressable>
                     ))}
                   </View>
                 )}
               </View>
             )}
 
-            {/* Section header */}
             <View style={S.secHeader}>
               <Text style={S.secTitle}>最新更新</Text>
-              <Pressable
-                onPress={() => nav.navigate('Categories' as never, { slug: 'all', sort: 'tf' } as never)}
-              >
+              <Pressable onPress={() => nav.navigate('Categories' as never, { slug: 'all', sort: 'tf' } as never)}>
                 <Text style={S.secMore}>查看更多</Text>
               </Pressable>
             </View>
@@ -235,21 +260,15 @@ const S = StyleSheet.create({
     marginTop: 1,
   },
   searchBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 42, height: 42, borderRadius: 21,
     backgroundColor: Colors.surfaceLight,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
   },
 
   quickGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.card,
-    marginBottom: 16,
-    padding: 6,
+    flexDirection: 'row', flexWrap: 'wrap',
+    backgroundColor: Colors.surface, borderRadius: Radius.card,
+    marginBottom: 16, padding: 6,
   },
   quickItem: { width: '16.66%', alignItems: 'center', paddingVertical: 8 },
   quickIcon: {
@@ -261,69 +280,36 @@ const S = StyleSheet.create({
 
   promoSec: { marginBottom: 20 },
   promoCard: {
-    width: W - Spacing.marginEdge * 2,
-    marginRight: 10,
-    height: 210,
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-    backgroundColor: Colors.surfaceContainer,
+    width: CARD_W, marginRight: 10,
+    height: 210, borderRadius: Radius.lg,
+    overflow: 'hidden', backgroundColor: Colors.surfaceContainer,
   },
   promoCover: { width: '100%', height: '100%' },
   promoOverlay: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    height: '60%',
+    position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%',
   },
   promoInfo: {
-    position: 'absolute',
-    bottom: 0, left: 0, right: 0,
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    paddingTop: 30,
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    paddingHorizontal: 16, paddingBottom: 14, paddingTop: 30,
   },
   promoTitle: {
-    fontSize: FontSize.headline,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    lineHeight: 24,
+    fontSize: FontSize.headline, fontWeight: '700',
+    color: '#FFFFFF', lineHeight: 24,
   },
   promoAuthor: {
-    fontSize: FontSize.label,
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: 2,
+    fontSize: FontSize.label, color: 'rgba(255,255,255,0.7)', marginTop: 2,
   },
 
   dotsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 10,
-    gap: 6,
+    flexDirection: 'row', justifyContent: 'center', marginTop: 10, gap: 6,
   },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.textTertiary,
-  },
-  dotActive: {
-    width: 20,
-    backgroundColor: Colors.primary,
-    borderRadius: 3,
-  },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.textTertiary },
+  dotActive: { width: 20, backgroundColor: Colors.primary, borderRadius: 3 },
 
   secHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 12,
   },
-  secTitle: {
-    fontSize: FontSize.headline,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  secMore: {
-    fontSize: FontSize.body,
-    color: Colors.primary,
-    fontWeight: '600',
-  },
+  secTitle: { fontSize: FontSize.headline, fontWeight: '700', color: Colors.textPrimary },
+  secMore: { fontSize: FontSize.body, color: Colors.primary, fontWeight: '600' },
 });

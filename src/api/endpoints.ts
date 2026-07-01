@@ -57,7 +57,11 @@ export async function fetchLatest(page = 1): Promise<LatestItem[]> {
 }
 
 export async function fetchWeekData(): Promise<{ categories: { id: string; title: string; time: string }[]; type: { id: string; title: string }[] }> {
-  return encryptedGet('week'); // 原版可能不同
+  return encryptedGet('week');
+}
+
+export async function fetchWeekFilter(params: { page?: number; id?: string; type?: string } = {}): Promise<{ list: ComicItem[]; total: string }> {
+  return encryptedGet('week/filter', { page: params.page || 1, id: params.id || '', type: params.type || '' });
 }
 
 export async function fetchBanners(): Promise<{ adv: { link: string; image: string; adv_type: number }[] }> {
