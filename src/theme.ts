@@ -1,4 +1,4 @@
-// JMComic iOS — 主题导出（向后兼容 v2）
+// JOYComic — 主题导出（向后兼容 v2）
 // 新代码请使用 ThemeProvider + useAppTheme() 获取动态主题色
 // @author nyx
 

@@ -145,7 +145,7 @@ export function MainScreen() {
 
       <View style={S.header}>
         <View>
-          <Text style={S.appTitle}>JMComic</Text>
+          <Text style={S.appTitle}>JOYComic</Text>
           <Text style={S.appSub}>聚合漫画</Text>
         </View>
         <Pressable onPress={() => nav.navigate('Search', {} as any)} style={S.searchBtn}>

@@ -80,7 +80,7 @@ export function MemberScreen() {
   };
 
   const handleJmLogout = () => {
-    Alert.alert('退出 JMComic', '', [
+    Alert.alert('退出账号', '', [
       { text: '取消', style: 'cancel' },
       { text: '退出', onPress: () => jmDoLogout() },
     ]);

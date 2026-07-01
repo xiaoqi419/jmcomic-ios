@@ -1,4 +1,4 @@
-// JMComic iOS 主题系统
+// JOYComic 主题系统
 // @author nyx
 
 export * from './colors';

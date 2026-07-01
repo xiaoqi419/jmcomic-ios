@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "JMComic",
-    "slug": "jmcomic-ios",
+    "name": "JOYComic",
+    "slug": "joycomic-ios",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/start.png",
       "resizeMode": "contain",
@@ -13,7 +13,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.pekilovex.jmcomic"
+      "bundleIdentifier": "com.pekilovex.joycomic"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +23,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.pekilovex.jmcomic"
+      "package": "com.pekilovex.joycomic"
     },
     "web": {
       "favicon": "./assets/favicon.png"

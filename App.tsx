@@ -1,4 +1,4 @@
-// 主入口 — 完整导航结构
+// JOYComic 主入口 — 完整导航结构
 // Tab: 首页 | 分类 | 游戏 | 影视 | 论坛 | 我的
 // Stack: 所有子页面
 // 已集成 ThemeProvider，支持 auto/light/dark 主题切换

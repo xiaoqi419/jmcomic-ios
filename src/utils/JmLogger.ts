@@ -44,7 +44,7 @@ class JmLogger {
   /** 导出日志到文件并唤起分享 */
   async export() {
     const text = this.logs.map(e => `[${e.time}][${e.level.toUpperCase()}] ${e.msg}`).join('\n');
-    const header = `=== JM Descramble Log ===\nApp: jmcomic-ios\nDate: ${new Date().toISOString()}\nEntries: ${this.logs.length}\n${'-'.repeat(50)}\n\n`;
+    const header = `=== JOYComic Descramble Log ===\nApp: joycomic-ios\nDate: ${new Date().toISOString()}\nEntries: ${this.logs.length}\n${'-'.repeat(50)}\n\n`;
     const path = `${FileSystem.cacheDirectory}jm_log_${Date.now()}.txt`;
     await FileSystem.writeAsStringAsync(path, header + text);
     await Share.share(

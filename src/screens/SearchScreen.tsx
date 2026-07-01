@@ -1,4 +1,4 @@
-// 搜索页 v2 — 双源聚合搜索 (JMComic + Pica)
+// 搜索页 v3 — 双源聚合搜索 (JMComic + Pica)
 // @author Jason
 
 import React, { useState, useEffect, useCallback } from 'react';
