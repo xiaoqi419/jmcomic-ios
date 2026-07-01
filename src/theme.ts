@@ -41,7 +41,37 @@ export const Shadow = {
   },
 };
 
-// 向后兼容：原来的 Colors 对象（深色主题）
-// 推荐改用 useAppTheme() 获取动态色板
+// 向后兼容 Colors 对象（深色主题）
+// 同时支持新 M3 名（primary/onSurface/outline）和旧名（textPrimary/border/divider）
+// 新代码推荐用 useAppTheme() 获取动态色板
 import { darkColors } from './theme/colors';
-export const Colors = darkColors;
+import type { ColorTokens } from './theme/colors';
+
+export type LegacyColors = ColorTokens & {
+  primaryLight: string;
+  textPrimary: string;
+  textSecondary: string;
+  textTertiary: string;
+  textOnPrimary: string;
+  border: string;
+  divider: string;
+  surfaceLight: string;
+  success: string;
+  text: string;
+};
+
+const legacyAliases: LegacyColors = {
+  ...darkColors,
+  primaryLight: darkColors.primaryContainer,
+  textPrimary: darkColors.onSurface,
+  textSecondary: darkColors.onSurfaceVariant,
+  textTertiary: darkColors.outline,
+  textOnPrimary: darkColors.onPrimary,
+  border: darkColors.outlineVariant,
+  divider: darkColors.outlineVariant,
+  surfaceLight: darkColors.surfaceContainerHigh,
+  success: '#4CAF50',
+  text: darkColors.onSurface,
+};
+
+export const Colors: LegacyColors = legacyAliases;

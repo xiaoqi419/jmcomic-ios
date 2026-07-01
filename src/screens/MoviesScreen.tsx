@@ -16,7 +16,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, FontSize } from '../theme';
 import { fetchMovies, fetchVideoDetail } from '../api/endpoints';
 import { fetchImageAsDataUri } from '../utils/fetchImage';
+import { JmLogger } from '../utils/JmLogger';
 import type { MovieItem } from '../api/types';
+
+const movieLog = new JmLogger();
 
 const { width: W } = Dimensions.get('window');
 const CARD_W = (W - Spacing.marginEdge * 2 - 10) / 2;
@@ -25,7 +28,15 @@ function AuthImage({ uri }: { uri: string }) {
   const [dataUri, setDataUri] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    fetchImageAsDataUri(uri).then((d) => { if (!cancelled) setDataUri(d); }).catch(() => {});
+    if (!uri) { movieLog.warn('AuthImage: empty uri'); return; }
+    movieLog.log('AuthImage: fetching ' + uri.slice(0, 60));
+    fetchImageAsDataUri(uri).then((d) => {
+      if (cancelled) return;
+      if (d) { movieLog.log('AuthImage: success ' + d.slice(0, 40)); setDataUri(d); }
+      else { movieLog.warn('AuthImage: returned null for ' + uri.slice(0, 60)); }
+    }).catch((e: any) => {
+      movieLog.err('AuthImage: failed ' + uri.slice(0, 60) + ' ' + (e?.message || e));
+    });
     return () => { cancelled = true; };
   }, [uri]);
   if (!dataUri) return <View style={{ width: CARD_W, height: CARD_W * 0.75, borderRadius: Radius.sm, backgroundColor: Colors.surfaceContainer }} />;
@@ -41,7 +52,14 @@ export function MoviesScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchMovies().then((d) => setMovies(d.list || [])).catch(() => {}).finally(() => setLoading(false));
+    movieLog.log('fetchMovies: start');
+    fetchMovies().then((d) => {
+      const list = d.list || [];
+      movieLog.log('fetchMovies: got ' + list.length + ' items');
+      setMovies(list);
+    }).catch((e: any) => {
+      movieLog.err('fetchMovies: failed ' + (e?.message || e));
+    }).finally(() => setLoading(false));
   }, []);
 
   return (
@@ -84,11 +102,24 @@ export function MoviePlayerScreen() {
   const [nativeFailed, setNativeFailed] = useState(false);
 
   useEffect(() => {
+    movieLog.log('fetchVideoDetail: start vid=' + vid);
     fetchVideoDetail(vid).then((d) => {
-      setVideo(d.video);
-      // 如果没有 video_src，直接切 WebView
-      if (!d.video?.video_src) setUseWebView(true);
+      const v = d.video;
+      movieLog.log('fetchVideoDetail: keys=' + Object.keys(v || {}).join(','));
+      movieLog.log('fetchVideoDetail: video_src=' + (v?.video_src?.slice(0, 80) || '(none)'));
+      movieLog.log('fetchVideoDetail: full_url=' + (v?.full_url?.slice(0, 80) || '(none)'));
+      movieLog.log('fetchVideoDetail: title=' + (v?.title || '(none)'));
+      movieLog.log('fetchVideoDetail: photo=' + (v?.photo?.slice(0, 60) || '(none)'));
+      movieLog.log('fetchVideoDetail: view=' + v?.view + ' factory=' + v?.factory);
+      setVideo(v);
+      if (!v?.video_src) {
+        movieLog.warn('fetchVideoDetail: no video_src, falling back to WebView');
+        setUseWebView(true);
+      } else {
+        movieLog.log('fetchVideoDetail: will use native player with src=' + v.video_src);
+      }
     }).catch((e: any) => {
+      movieLog.err('fetchVideoDetail: failed ' + (e?.message || e));
       setErr(e.message || '加载失败');
     }).finally(() => setLoading(false));
   }, [vid]);
@@ -107,7 +138,7 @@ export function MoviePlayerScreen() {
         <Text style={S.titleText} numberOfLines={1}>{video.title}</Text>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {video.video_src && (
-            <Pressable onPress={() => setUseWebView((v) => !v)} hitSlop={8}>
+            <Pressable onPress={() => { movieLog.log('toggle mode ' + (useWebView ? '→native' : '→webview')); setUseWebView((v) => !v); }} hitSlop={8}>
               <MaterialIcons name={useWebView ? 'videocam' : 'web'} size={22} color={Colors.primary} />
             </Pressable>
           )}
@@ -124,6 +155,8 @@ export function MoviePlayerScreen() {
             key={fullUrl}
             source={{ uri: fullUrl }}
             style={{ flex: 1 }}
+            onLoad={() => movieLog.log('WebView: loaded ' + fullUrl.slice(0, 60))}
+            onError={(e: any) => movieLog.err('WebView: error ' + (e?.nativeEvent?.description || e?.message || JSON.stringify(e)))}
             javaScriptEnabled
             domStorageEnabled
             allowsInlineMediaPlayback
@@ -140,7 +173,7 @@ export function MoviePlayerScreen() {
               resizeMode={ResizeMode.CONTAIN}
               shouldPlay
               useNativeControls
-              onError={() => setNativeFailed(true)}
+              onError={(e) => { movieLog.err('Video.onError ' + JSON.stringify(e)); setNativeFailed(true); }}
             />
             {nativeFailed && (
               <View style={S.fallbackOverlay}>

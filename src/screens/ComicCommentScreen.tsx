@@ -10,7 +10,7 @@ import {
   Platform, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import RenderHtml from 'react-native-render-html';
+import { HtmlText } from '../components/HtmlText';
 import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
 import { fetchComments, postComment } from '../api/endpoints';
@@ -112,17 +112,6 @@ export function ComicCommentScreen({ route, navigation }: Props) {
   }, []);
 
   const renderComment = ({ item }: { item: CommentItem }) => {
-    const baseStyle = useMemo(() => ({
-      color: colors.onSurface,
-      fontSize: FontSize.body,
-      lineHeight: 20,
-    }), [colors.onSurface]);
-
-    const tagStyles = useMemo(() => ({
-      a: { color: colors.primary, textDecorationLine: 'underline' as const },
-      p: { marginVertical: 2 },
-    }), [colors.primary]);
-
     return (
       <View style={[css.commentItem, { borderBottomColor: colors.outlineVariant }]}>
         <View style={css.commentRow}>
@@ -142,12 +131,10 @@ export function ComicCommentScreen({ route, navigation }: Props) {
               <Text style={[css.username, { color: colors.primary }]}>{item.username}</Text>
               <Text style={[css.time, { color: colors.outline }]}>{formatTime(item.addtime)}</Text>
             </View>
-            <RenderHtml
-              source={{ html: item.content }}
-              contentWidth={htmlContentWidth}
-              baseStyle={baseStyle}
-              tagsStyles={tagStyles}
-              enableExperimentalBRCollapsing
+            <HtmlText
+              html={item.content}
+              style={{ color: colors.onSurface, fontSize: FontSize.body, lineHeight: 20 }}
+              linkColor={colors.primary}
             />
 
             {/* 回复列表 */}
@@ -159,12 +146,10 @@ export function ComicCommentScreen({ route, navigation }: Props) {
                       {reply.username}
                     </Text>
                     <View style={{ flex: 1 }}>
-                      <RenderHtml
-                        source={{ html: reply.content }}
-                        contentWidth={htmlContentWidth - 80}
-                        baseStyle={{ ...baseStyle, fontSize: FontSize.label }}
-                        tagsStyles={tagStyles}
-                        enableExperimentalBRCollapsing
+                      <HtmlText
+                        html={reply.content}
+                        style={{ color: colors.onSurface, fontSize: FontSize.label, lineHeight: 18 }}
+                        linkColor={colors.primary}
                       />
                     </View>
                   </View>

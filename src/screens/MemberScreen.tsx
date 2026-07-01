@@ -119,7 +119,7 @@ export function MemberScreen() {
 
   return (
     <SafeAreaView edges={["top"]} style={S.cont}>
-      <ScrollView contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}>
         <Text style={S.pageTitle}>我的</Text>
 
         {/* ===== JMComic 账号 ===== */}
@@ -168,8 +168,8 @@ export function MemberScreen() {
             </>
           ) : showJmLogin ? (
             <>
-              <TextInput style={S.input} placeholder="用户名" placeholderTextColor={Colors.textTertiary} value={jmUserInput} onChangeText={setJmUserInput} autoCapitalize="none" />
-              <TextInput style={S.input} placeholder="密码" placeholderTextColor={Colors.textTertiary} value={jmPassInput} onChangeText={setJmPassInput} secureTextEntry />
+              <TextInput key="jm-user" style={S.input} placeholder="用户名" placeholderTextColor={Colors.textTertiary} value={jmUserInput} onChangeText={setJmUserInput} autoCapitalize="none" />
+              <TextInput key="jm-pass" style={S.input} placeholder="密码" placeholderTextColor={Colors.textTertiary} value={jmPassInput} onChangeText={setJmPassInput} secureTextEntry />
               <Pressable onPress={handleJmLogin} disabled={jmLoginLoading} style={S.primaryBtn}>
                 <Text style={S.primaryBtnText}>{jmLoginLoading ? '...' : t('member.login')}</Text>
               </Pressable>
@@ -211,8 +211,8 @@ export function MemberScreen() {
               <Text style={{ color: Colors.textSecondary, fontSize: FontSize.body, marginBottom: 8 }}>
                 绑定 Pica 账号后可搜到 Pica 源内容
               </Text>
-              <TextInput style={S.input} placeholder="Pica 邮箱" placeholderTextColor={Colors.textTertiary} value={picaUserInput} onChangeText={setPicaUserInput} autoCapitalize="none" keyboardType="email-address" />
-              <TextInput style={S.input} placeholder="Pica 密码" placeholderTextColor={Colors.textTertiary} value={picaPassInput} onChangeText={setPicaPassInput} secureTextEntry />
+              <TextInput key="pica-user" style={S.input} placeholder="Pica 邮箱" placeholderTextColor={Colors.textTertiary} value={picaUserInput} onChangeText={setPicaUserInput} autoCapitalize="none" keyboardType="email-address" />
+              <TextInput key="pica-pass" style={S.input} placeholder="Pica 密码" placeholderTextColor={Colors.textTertiary} value={picaPassInput} onChangeText={setPicaPassInput} secureTextEntry />
               <Pressable onPress={handlePicaLogin} disabled={picaLoginLoading} style={S.primaryBtn}>
                 <Text style={S.primaryBtnText}>{picaLoginLoading ? '...' : '绑定'}</Text>
               </Pressable>

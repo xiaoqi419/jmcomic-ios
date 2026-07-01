@@ -10,7 +10,7 @@ export interface LogEntry {
   level: 'info' | 'ok' | 'warn' | 'err' | 'wv';
 }
 
-class JmLogger {
+export class JmLogger {
   private logs: LogEntry[] = [];
   private listeners: Set<() => void> = new Set();
   private enabled = true;
