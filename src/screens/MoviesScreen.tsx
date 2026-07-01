@@ -16,10 +16,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, FontSize } from '../theme';
 import { fetchMovies, fetchVideoDetail } from '../api/endpoints';
 import { fetchImageAsDataUri } from '../utils/fetchImage';
-import { JmLogger } from '../utils/JmLogger';
+import { jmLogger } from '../utils/JmLogger';
 import type { MovieItem } from '../api/types';
 
-const movieLog = new JmLogger();
+const movieLog = jmLogger;
 
 const { width: W } = Dimensions.get('window');
 const CARD_W = (W - Spacing.marginEdge * 2 - 10) / 2;

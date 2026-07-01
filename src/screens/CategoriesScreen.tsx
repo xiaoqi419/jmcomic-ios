@@ -36,8 +36,8 @@ export function CategoriesScreen() {
   const [list, setList] = useState<ComicItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [slug, setSlug] = useState('doujin');
-  const [sort, setSort] = useState('tf');
+  const [slug, setSlug] = useState(route.params?.slug || 'doujin');
+  const [sort, setSort] = useState(route.params?.sort || 'tf');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
