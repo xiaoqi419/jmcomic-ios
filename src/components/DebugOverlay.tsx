@@ -1,4 +1,4 @@
-// DebugOverlay — 浮动日志面板 + 导出按钮
+// DebugOverlay — 浮动日志面板 + 导出按钮（由设置控制显隐）
 // @author Jason
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -6,8 +6,10 @@ import {
   View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet, SafeAreaView, Platform,
 } from 'react-native';
 import { jmLogger, LogEntry } from '../utils/JmLogger';
+import { useSettingsStore } from '../store/useSettings';
 
 export function DebugOverlay() {
+  const showDebugLog = useSettingsStore((s) => s.showDebugLog);
   const [visible, setVisible] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const scrollRef = useRef<ScrollView>(null);
@@ -26,13 +28,14 @@ export function DebugOverlay() {
     }
   }, [visible]);
 
+  if (!showDebugLog) return null;
+
   const levelColors: Record<string, string> = {
     info: '#0af', ok: '#0f0', warn: '#fa0', err: '#f00', wv: '#f0f',
   };
 
   return (
     <>
-      {/* 浮动调试按钮 */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => setVisible(true)}

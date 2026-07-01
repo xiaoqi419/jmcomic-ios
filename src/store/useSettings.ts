@@ -18,6 +18,7 @@ interface SettingsState {
   darkMode: boolean;
   readingMode: 'page' | 'scroll';
   readingDirection: 'ltr' | 'rtl';
+  showDebugLog: boolean;
   loaded: boolean;
 
   // 动态域名（从 /api/setting 获取）
@@ -33,6 +34,7 @@ interface SettingsState {
   setDarkMode: (v: boolean) => void;
   setReadingMode: (m: 'scroll' | 'page') => void;
   setReadingDirection: (d: 'ltr' | 'rtl') => void;
+  setShowDebugLog: (v: boolean) => void;
 
   /** 从 /api/setting 响应更新域名 */
   updateFromSetting: (data: SettingData) => void;
@@ -50,6 +52,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   darkMode: true,
   readingMode: 'page',
   readingDirection: 'ltr',
+  showDebugLog: false,
   loaded: false,
 
   mainWebHost: '',
@@ -62,6 +65,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setDarkMode: (v) => { set({ darkMode: v }); get().save(); },
   setReadingMode: (v) => { set({ readingMode: v }); get().save(); },
   setReadingDirection: (v) => { set({ readingDirection: v }); get().save(); },
+  setShowDebugLog: (v) => { set({ showDebugLog: v }); get().save(); },
 
   updateFromSetting: (data: SettingData) => {
     const shunts: Shunt[] = (data.app_shunts || []).map((s) => ({

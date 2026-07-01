@@ -19,6 +19,7 @@ import { useAuthStore } from './src/store/useAuth';
 import { usePicaStore } from './src/store/usePica';
 import { fetchSetting } from './src/api/endpoints';
 import { SourceSelectModal } from './src/components/SourceSelectModal';
+import { DebugOverlay } from './src/components/DebugOverlay';
 import { loadSelectedShunt } from './src/utils/SourceSelector';
 
 // Screens
@@ -211,6 +212,7 @@ export default function App() {
         </Stack.Navigator>
       </NavigationContainer>
       <SourceSelectModal visible={showSourceSelect} onDone={() => setShowSourceSelect(false)} />
+      <DebugOverlay />
     </SafeAreaProvider>
   );
 }

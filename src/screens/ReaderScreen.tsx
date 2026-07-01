@@ -17,7 +17,7 @@ import { useHistoryStore } from '../store/useHistory';
 import { fetchComicRead, fetchAlbumDetail } from '../api/endpoints';
 import { extractFilename } from '../utils/scramble';
 import { Colors, FontSize, Radius, Spacing } from '../theme';
-import { DebugOverlay } from '../components/DebugOverlay';
+// DebugOverlay moved to App.tsx
 import type { Episode } from '../api/types';
 import * as Brightness from 'expo-brightness';
 import * as MediaLibrary from 'expo-media-library';
@@ -425,7 +425,6 @@ export function ReaderScreen() {
         </View>
       </Modal>
 
-      <DebugOverlay />
     </View>
   );
 }

@@ -21,7 +21,7 @@ export function MemberScreen() {
   const { username: jmUser, loggedIn: jmLoggedIn, login: jmDoLogin, logout: jmDoLogout } = useAuthStore();
   const { username: picaUser, loggedIn: picaLoggedIn, login: picaDoLogin, logout: picaDoLogout } = usePicaStore();
   const { info, signData, signed, doSignIn, loadInfo, loadSign, loadAchievements, achievements, notifications, loadNotifications, unread } = useMemberStore();
-  const { language, setLanguage, readingMode, setReadingMode, shunts, selectedShuntKey, selectShunt } = useSettingsStore();
+  const { language, setLanguage, readingMode, setReadingMode, showDebugLog, setShowDebugLog, shunts, selectedShuntKey, selectShunt } = useSettingsStore();
 
   const [showJmLogin, setShowJmLogin] = useState(false);
   const [jmUserInput, setJmUserInput] = useState('');
@@ -308,6 +308,11 @@ export function MemberScreen() {
                 </Pressable>
               ))}
             </View>
+          } />
+          <Row label="调试日志" right={
+            <Pressable onPress={() => setShowDebugLog(!showDebugLog)} style={[S.toggleBtn, showDebugLog && S.toggleBtnActive]}>
+              <Text style={[S.toggleText, showDebugLog && S.toggleTextActive]}>{showDebugLog ? '开启' : '关闭'}</Text>
+            </Pressable>
           } />
           <Row label={t('member.about')} right={<Text style={S.rowValue}>v1.0.0</Text>} />
         </Section>

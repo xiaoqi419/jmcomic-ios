@@ -22,7 +22,7 @@ import { useReaderStore } from '../store/useReader';
 import { useHistoryStore } from '../store/useHistory';
 import { useAuthStore } from '../store/useAuth';
 import { chunkArray } from '../utils/helpers';
-import { DebugOverlay } from '../components/DebugOverlay';
+// DebugOverlay moved to App.tsx
 import type { AlbumDetail, Episode, CommentItem as ApiComment } from '../api/types';
 
 export function ComicDetailScreen() {
@@ -513,7 +513,6 @@ export function ComicDetailScreen() {
         </View>
       </Modal>
 
-      <DebugOverlay />
     </SafeAreaView>
   );
 }
