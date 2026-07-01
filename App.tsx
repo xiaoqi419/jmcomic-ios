@@ -1,5 +1,5 @@
 // JOYComic 主入口 — 完整导航结构
-// Tab: 首页 | 分类 | 游戏 | 影视 | 论坛 | 我的
+// Tab: 首页 | 分类 | 影视 | 我的
 // Stack: 所有子页面
 // 已集成 ThemeProvider，支持 auto/light/dark 主题切换
 // @author nyx
@@ -33,7 +33,6 @@ import { ReaderScreen } from './src/screens/ReaderScreen';
 import { MoviesScreen, MoviePlayerScreen } from './src/screens/MoviesScreen';
 import { NovelsScreen, NovelDetailScreen, NovelReaderScreen } from './src/screens/NovelsScreen';
 import { BlogsScreen, BlogDetailScreen } from './src/screens/BlogsScreen';
-import { ForumScreen } from './src/screens/ForumScreen';
 
 import { LibraryScreen } from './src/screens/LibraryScreen';
 import { MemberScreen } from './src/screens/MemberScreen';
@@ -86,8 +85,6 @@ function HomeTabs() {
         options={{ tabBarLabel: '搜索', tabBarIcon: ({ focused }) => <TabIcon name="search" focused={focused} /> }} />
       <Tab.Screen name="Movies" component={MoviesScreen}
         options={{ tabBarLabel: t('nav.movie'), tabBarIcon: ({ focused }) => <TabIcon name="video-library" focused={focused} /> }} />
-      <Tab.Screen name="Forum" component={ForumScreen}
-        options={{ tabBarLabel: t('nav.forum'), tabBarIcon: ({ focused }) => <TabIcon name="textsms" focused={focused} /> }} />
       <Tab.Screen name="Member" component={MemberScreen}
         options={{ tabBarLabel: t('nav.member'), tabBarIcon: ({ focused }) => <TabIcon name="account-circle" focused={focused} /> }} />
     </Tab.Navigator>

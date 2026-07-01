@@ -83,38 +83,48 @@ export function SearchScreen() {
     setLoading(true);
     jmLogger.log(`搜索: q="${q}" page=${p} sort=${sort}`);
 
+    let agg: { items: SourceItem[]; total: number; redirect_aid?: string };
+
     try {
-      // 双源聚合搜索（内联，避免 pica.ts 模块加载问题）
+      jmLogger.log(`搜索: 检查 isPicaEnabled`);
       const picaAuthed = isPicaEnabled();
-      let agg: { items: SourceItem[]; total: number; redirect_aid?: string };
+      jmLogger.log(`搜索: isPicaEnabled=${picaAuthed}`);
 
-      try {
-        const jmRes = await searchComics({ search_query: q, page: p, o: sort });
-        if (jmRes.redirect_aid) {
-          agg = { items: [], total: 0, redirect_aid: jmRes.redirect_aid };
-        } else {
-          const jmItems: SourceItem[] = (jmRes.content || []).map((c: any) => ({
-            id: String(c.id || c.album_id),
-            title: c.name || c.title || '',
-            author: c.author?.name || (typeof c.author === 'string' ? c.author : ''),
-            coverUrl: getCover(String(c.id)),
-            categories: (c.tags || c.category || c.category_sub || []).map((t: any) => typeof t === 'string' ? t : t.name || t.tag || ''),
-            source: 'jmcomic' as const,
-          }));
+      jmLogger.log(`搜索: 调 searchComics q=${q} p=${p} sort=${sort}`);
+      const jmRes = await searchComics({ search_query: q, page: p, o: sort });
+      jmLogger.log(`搜索: searchComics 返回 keys=${Object.keys(jmRes).join(',')}`);
 
-          let picaItems: SourceItem[] = [];
-          if (picaAuthed) {
-            try {
-              const picaRes = await picaSource.search(q, p);
-              picaItems = picaRes.items;
-            } catch {}
+      if (jmRes.redirect_aid) {
+        agg = { items: [], total: 0, redirect_aid: jmRes.redirect_aid };
+      } else {
+        const content = jmRes.content || [];
+        jmLogger.log(`搜索: 解析 JM 结果 count=${content.length}`);
+        const jmItems: SourceItem[] = content.map((c: any) => ({
+          id: String(c.id || c.album_id),
+          title: c.name || c.title || '',
+          author: c.author?.name || (typeof c.author === 'string' ? c.author : ''),
+          coverUrl: getCover(String(c.id)),
+          categories: (c.tags || c.category || c.category_sub || []).map((t: any) => typeof t === 'string' ? t : t.name || t.tag || ''),
+          source: 'jmcomic' as const,
+        }));
+
+        let picaItems: SourceItem[] = [];
+        if (picaAuthed) {
+          try {
+            jmLogger.log(`搜索: 调 picaSource.search`);
+            const picaRes = await picaSource.search(q, p);
+            jmLogger.log(`搜索: pica 返回 items=${picaRes.items.length}`);
+            picaItems = picaRes.items;
+          } catch (pe: any) {
+            jmLogger.err(`搜索: pica 失败 ${pe?.message || pe}`);
           }
-          agg = { items: [...jmItems, ...picaItems], total: jmItems.length + picaItems.length };
         }
-      } catch (e: any) {
-        jmLogger.err(`搜索内联失败: ${e?.message || e}`);
-        agg = { items: [], total: 0 };
+        agg = { items: [...jmItems, ...picaItems], total: jmItems.length + picaItems.length };
       }
+    } catch (e: any) {
+      jmLogger.err(`搜索内联失败: ${e?.message || e} stack=${(e?.stack || '').slice(0, 300)}`);
+      agg = { items: [], total: 0 };
+    }
       jmLogger.log(`搜索: 聚合结果 items=${agg.items.length} total=${agg.total} redirect=${agg.redirect_aid}`);
 
       // 重定向到详情

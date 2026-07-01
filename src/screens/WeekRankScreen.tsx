@@ -111,7 +111,7 @@ export function WeekRankScreen() {
         const weekData: any = await fetchWeekData();
         jmLogger.log(`WeekRank weekData keys=${Object.keys(weekData).join(',')} categories=${JSON.stringify(weekData.categories).slice(0, 800)} type=${JSON.stringify(weekData.type).slice(0, 400)}`);
         const cats: WeekCategory[] = (weekData.categories || []).map((c: any) => {
-          const title = c.title || c.name || c.category_name || c.label || c.text || c.display || c.value || c.tag_name || c.key_name || '';
+          const title = c.time || c.title || c.name || c.category_name || c.label || c.text || c.display || c.value || c.tag_name || c.key_name || `第${c.id}期`;
           return { id: String(c.id || c.key || c.category_id || ''), title, time: c.time || '' };
         });
         const types: WeekType[] = (weekData.type || weekData.types || []).map((t: any) => {
