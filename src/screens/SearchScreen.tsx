@@ -17,6 +17,7 @@ import { useLegacyColors, LegacyColors, Spacing, FontSize, Radius } from '../the
 import { ComicCard } from '../components/ComicCard';
 import { searchComics, fetchHotTags, fetchRandomRecommend, getCoverUrl as getCover } from '../api/endpoints';
 import { aggregateSearch } from '../sources/pica';
+import { jmLogger } from '../utils/JmLogger';
 import type { SourceItem } from '../sources/types';
 import type { ComicItem } from '../api/types';
 
@@ -75,11 +76,13 @@ export function SearchScreen() {
     }
 
     setLoading(true);
+    jmLogger.log(`搜索: q="${q}" page=${p} sort=${sort}`);
 
     try {
       // 页1 先检查 JMcomic 重定向
       if (p === 1) {
         const jmCheck = await searchComics({ search_query: q, page: 1, o: sort });
+        jmLogger.log(`搜索: 重定向检查 redirect_aid=${jmCheck.redirect_aid} total=${jmCheck.total} contentLen=${(jmCheck as any).content?.length || 0}`);
         if (jmCheck.redirect_aid) {
           nav.navigate('ComicDetail', { albumId: jmCheck.redirect_aid });
           setLoading(false);
@@ -90,6 +93,7 @@ export function SearchScreen() {
       // 双源聚合搜索
       const agg = await aggregateSearch(q, p);
       const items = agg.items;
+      jmLogger.log(`搜索: 聚合结果 items=${items.length} total=${agg.total}`);
 
       if (refresh || p === 1) setResults(items);
       else setResults((prev) => [...prev, ...items]);
@@ -103,7 +107,9 @@ export function SearchScreen() {
         setHistory(newHistory);
         AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory));
       }
-    } catch {}
+    } catch (e: any) {
+      jmLogger.err(`搜索: 异常 ${e?.message || e}`);
+    }
     setLoading(false);
   }, [sort, history]);
 

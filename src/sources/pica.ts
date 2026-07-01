@@ -97,6 +97,8 @@ export async function aggregateSearch(
   page = 1,
 ): Promise<{ items: SourceItem[]; total: number }> {
   const picaAuthed = getPicaToken().length > 0;
+  const { jmLogger } = require('../utils/JmLogger');
+  jmLogger.log(`聚合搜索: q="${query}" page=${page} picaAuthed=${picaAuthed}`);
 
   const promises: Promise<{ items: SourceItem[]; total: number }>[] = [
     jmcomicSource.search(query, page),
@@ -110,9 +112,15 @@ export async function aggregateSearch(
   const items: SourceItem[] = [];
 
   for (const r of results) {
-    if (r.status === 'fulfilled') items.push(...r.value.items);
+    if (r.status === 'fulfilled') {
+      jmLogger.log(`聚合搜索: 源结果 items=${r.value.items.length}`);
+      items.push(...r.value.items);
+    } else {
+      jmLogger.err(`聚合搜索: 源失败 ${r.reason?.message || r.reason}`);
+    }
   }
 
+  jmLogger.log(`聚合搜索: 完成 total=${items.length}`);
   return { items, total: items.length };
 }
 
