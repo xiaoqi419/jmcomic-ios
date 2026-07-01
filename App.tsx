@@ -1,9 +1,10 @@
 // 主入口 — 完整导航结构
 // Tab: 首页 | 分类 | 游戏 | 影视 | 论坛 | 我的
 // Stack: 所有子页面
+// 已集成 ThemeProvider，支持 auto/light/dark 主题切换
 // @author nyx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, ActivityIndicator, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,7 +14,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import './src/i18n';
-import { Colors } from './src/theme';
+import { ThemeProvider, useAppTheme, Radius } from './src/theme';
 import { useSettingsStore } from './src/store/useSettings';
 import { useAuthStore } from './src/store/useAuth';
 import { usePicaStore } from './src/store/usePica';
@@ -21,6 +22,7 @@ import { fetchSetting } from './src/api/endpoints';
 import { SourceSelectModal } from './src/components/SourceSelectModal';
 import { DebugOverlay } from './src/components/DebugOverlay';
 import { loadSelectedShunt } from './src/utils/SourceSelector';
+import type { ThemeMode } from './src/theme';
 
 // Screens
 import { MainScreen } from './src/screens/MainScreen';
@@ -36,6 +38,7 @@ import { ForumScreen } from './src/screens/ForumScreen';
 import { LibraryScreen } from './src/screens/LibraryScreen';
 import { MemberScreen } from './src/screens/MemberScreen';
 import { WeekRankScreen } from './src/screens/WeekRankScreen';
+import { ComicCommentScreen } from './src/screens/ComicCommentScreen';
 import { RegisterScreen, ForgotPasswordScreen } from './src/screens/AuthScreens';
 import { PicaDetailScreen } from './src/screens/PicaDetailScreen';
 import { PicaReaderScreen } from './src/screens/PicaReaderScreen';
@@ -43,30 +46,13 @@ import { PicaReaderScreen } from './src/screens/PicaReaderScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const navTheme: Theme = {
-  dark: true,
-  colors: {
-    primary: Colors.primary,
-    background: Colors.background,
-    card: Colors.surface,
-    text: Colors.textPrimary,
-    border: Colors.border,
-    notification: Colors.primary,
-  },
-  fonts: {
-    regular: { fontFamily: 'System', fontWeight: '400' },
-    medium: { fontFamily: 'System', fontWeight: '500' },
-    bold: { fontFamily: 'System', fontWeight: '700' },
-    heavy: { fontFamily: 'System', fontWeight: '800' },
-  },
-};
-
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
+  const { colors } = useAppTheme();
   return (
     <MaterialIcons
       name={name as any}
       size={24}
-      color={focused ? Colors.tabActive : Colors.tabInactive}
+      color={focused ? colors.primary : colors.outlineVariant}
     />
   );
 }
@@ -74,20 +60,20 @@ function TabIcon({ name, focused }: { name: string; focused: boolean }) {
 function HomeTabs() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Platform.OS === 'web' ? Colors.tabBar : undefined,
-          // iOS 26 原生半透明玻璃效果（backgroundColor=undefined 时自动生效）
+          backgroundColor: Platform.OS === 'web' ? colors.surfaceContainer : undefined,
           borderTopWidth: 0.5,
-          borderTopColor: Colors.tabBarBorder,
+          borderTopColor: colors.outlineVariant,
           paddingBottom: insets.bottom || 8,
           height: 56 + (insets.bottom || 8),
         },
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.tabInactive,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.outlineVariant,
         tabBarLabelStyle: { fontSize: 10, fontWeight: '500', marginBottom: 4 },
         tabBarIconStyle: { marginTop: 4 },
       }}
@@ -108,9 +94,80 @@ function HomeTabs() {
   );
 }
 
+function AppInner() {
+  const { colors, resolvedScheme } = useAppTheme();
+
+  const navTheme = useMemo<Theme>(() => ({
+    dark: resolvedScheme === 'dark',
+    colors: {
+      primary: colors.primary,
+      background: colors.background,
+      card: colors.surface,
+      text: colors.onSurface,
+      border: colors.outline,
+      notification: colors.primary,
+    },
+    fonts: {
+      regular: { fontFamily: 'System', fontWeight: '400' },
+      medium: { fontFamily: 'System', fontWeight: '500' },
+      bold: { fontFamily: 'System', fontWeight: '700' },
+      heavy: { fontFamily: 'System', fontWeight: '800' },
+    },
+  }), [colors, resolvedScheme]);
+
+  return (
+    <NavigationContainer theme={navTheme}>
+      <StatusBar style={resolvedScheme === 'dark' ? 'light' : 'dark'} />
+      <Stack.Navigator
+        screenOptions={{
+          headerStyle: { backgroundColor: colors.surface },
+          headerTintColor: colors.onSurface,
+          headerTitleStyle: { fontWeight: '700' },
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: colors.background },
+          headerBackTitle: '返回',
+        }}
+      >
+        <Stack.Screen name="Main" component={HomeTabs} options={{ headerShown: false }} />
+        <Stack.Screen name="Search" component={SearchScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ComicDetail" component={ComicDetailScreen}
+          options={{ title: '详情', headerBackTitle: '返回' }} />
+        <Stack.Screen name="Reader" component={ReaderScreen}
+          options={{ headerShown: false, orientation: 'default' as const }} />
+        <Stack.Screen name="Novels" component={NovelsScreen}
+          options={{ headerShown: false }} />
+        <Stack.Screen name="NovelDetail" component={NovelDetailScreen}
+          options={{ headerShown: false }} />
+        <Stack.Screen name="NovelReader" component={NovelReaderScreen}
+          options={{ headerShown: false }} />
+        <Stack.Screen name="MoviePlayer" component={MoviePlayerScreen}
+          options={{ headerShown: false }} />
+        <Stack.Screen name="PicaDetail" component={PicaDetailScreen}
+          options={{ headerShown: false }} />
+        <Stack.Screen name="PicaReader" component={PicaReaderScreen}
+          options={{ headerShown: false }} />
+        <Stack.Screen name="Blogs" component={BlogsScreen}
+          options={{ headerShown: false }} />
+        <Stack.Screen name="BlogDetail" component={BlogDetailScreen}
+          options={{ headerShown: false }} />
+        <Stack.Screen name="Library" component={LibraryScreen}
+          options={{ headerShown: false }} />
+        <Stack.Screen name="WeekRank" component={WeekRankScreen}
+          options={{ headerShown: false }} />
+        <Stack.Screen name="ComicComment" component={ComicCommentScreen}
+          options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="Register" component={RegisterScreen}
+          options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen}
+          options={{ presentation: 'modal', headerShown: false }} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
 export default function App() {
   const [ready, setReady] = useState(false);
-  const { load: loadSettings, updateFromSetting, selectShunt } = useSettingsStore();
+  const { load: loadSettings, updateFromSetting, selectShunt, theme } = useSettingsStore();
   const { load: loadAuth } = useAuthStore();
   const [showSourceSelect, setShowSourceSelect] = useState(false);
   const [savedShunt, setSavedShunt] = useState<number | null>(null);
@@ -121,31 +178,23 @@ export default function App() {
       await loadAuth();
       await usePicaStore.getState().load();
 
-      // 检查已保存的源选择
       const saved = await loadSelectedShunt();
       setSavedShunt(saved);
 
-      // 清理过期图片缓存
       try { const { cleanImageCache } = await import('./src/utils/ImageCache'); cleanImageCache(); } catch {}
 
-      // 从 API 获取动态域名配置
       try {
         const setting = await fetchSetting();
         updateFromSetting(setting);
-
-        // 如果有已保存的源，直接应用
         if (saved !== null) {
           selectShunt(saved);
         }
-      } catch {
-        // 使用硬编码兜底
-      }
+      } catch {}
 
       setReady(true);
     })();
   }, []);
 
-  // 加载完成后，如果没有保存的源且有 shunts 可选，弹出选择框
   useEffect(() => {
     if (ready && savedShunt === null) {
       const { shunts } = useSettingsStore.getState();
@@ -156,10 +205,13 @@ export default function App() {
   }, [ready, savedShunt]);
 
   if (!ready) {
+    const { colors } = useSettingsStore.getState().theme === 'light'
+      ? (() => { const { lightColors } = require('./src/theme/colors'); return { colors: lightColors }; })()
+      : { colors: null };
     return (
       <SafeAreaProvider>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#121318' }}>
+          <ActivityIndicator size="large" color="#B8C7EF" />
         </View>
       </SafeAreaProvider>
     );
@@ -167,52 +219,11 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer theme={navTheme}>
-        <StatusBar style="light" />
-        <Stack.Navigator
-          screenOptions={{
-            headerStyle: { backgroundColor: Colors.surface },
-            headerTintColor: Colors.textPrimary,
-            headerTitleStyle: { fontWeight: '700' },
-            headerShadowVisible: false,
-            contentStyle: { backgroundColor: Colors.background },
-            headerBackTitle: '返回',
-          }}
-        >
-          <Stack.Screen name="Main" component={HomeTabs} options={{ headerShown: false }} />
-          <Stack.Screen name="Search" component={SearchScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="ComicDetail" component={ComicDetailScreen}
-            options={{ title: '详情', headerBackTitle: '返回' }} />
-          <Stack.Screen name="Reader" component={ReaderScreen}
-            options={{ headerShown: false, orientation: 'default' as const }} />
-          <Stack.Screen name="Novels" component={NovelsScreen}
-            options={{ headerShown: false }} />
-          <Stack.Screen name="NovelDetail" component={NovelDetailScreen}
-            options={{ headerShown: false }} />
-          <Stack.Screen name="NovelReader" component={NovelReaderScreen}
-            options={{ headerShown: false }} />
-          <Stack.Screen name="MoviePlayer" component={MoviePlayerScreen}
-            options={{ headerShown: false }} />
-          <Stack.Screen name="PicaDetail" component={PicaDetailScreen}
-            options={{ headerShown: false }} />
-          <Stack.Screen name="PicaReader" component={PicaReaderScreen}
-            options={{ headerShown: false }} />
-          <Stack.Screen name="Blogs" component={BlogsScreen}
-            options={{ headerShown: false }} />
-          <Stack.Screen name="BlogDetail" component={BlogDetailScreen}
-            options={{ headerShown: false }} />
-          <Stack.Screen name="Library" component={LibraryScreen}
-            options={{ headerShown: false }} />
-          <Stack.Screen name="WeekRank" component={WeekRankScreen}
-            options={{ headerShown: false }} />
-          <Stack.Screen name="Register" component={RegisterScreen}
-            options={{ presentation: 'modal', headerShown: false }} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen}
-            options={{ presentation: 'modal', headerShown: false }} />
-        </Stack.Navigator>
-      </NavigationContainer>
-      <SourceSelectModal visible={showSourceSelect} onDone={() => setShowSourceSelect(false)} />
-      <DebugOverlay />
+      <ThemeProvider themeMode={theme}>
+        <AppInner />
+        <SourceSelectModal visible={showSourceSelect} onDone={() => setShowSourceSelect(false)} />
+        <DebugOverlay />
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

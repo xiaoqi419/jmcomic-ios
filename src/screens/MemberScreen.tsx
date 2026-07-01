@@ -21,7 +21,7 @@ export function MemberScreen() {
   const { username: jmUser, loggedIn: jmLoggedIn, login: jmDoLogin, logout: jmDoLogout } = useAuthStore();
   const { username: picaUser, loggedIn: picaLoggedIn, login: picaDoLogin, logout: picaDoLogout } = usePicaStore();
   const { info, signData, signed, doSignIn, loadInfo, loadSign, loadAchievements, achievements, notifications, loadNotifications, unread } = useMemberStore();
-  const { language, setLanguage, readingMode, setReadingMode, showDebugLog, setShowDebugLog, shunts, selectedShuntKey, selectShunt } = useSettingsStore();
+  const { language, setLanguage, readingMode, setReadingMode, showDebugLog, setShowDebugLog, theme, setTheme, shunts, selectedShuntKey, selectShunt } = useSettingsStore();
 
   const [showJmLogin, setShowJmLogin] = useState(false);
   const [jmUserInput, setJmUserInput] = useState('');
@@ -281,6 +281,15 @@ export function MemberScreen() {
               {['scroll', 'page'].map((m) => (
                 <Pressable key={m} onPress={() => setReadingMode(m as any)} style={[S.toggleBtn, readingMode === m && S.toggleBtnActive]}>
                   <Text style={[S.toggleText, readingMode === m && S.toggleTextActive]}>{t(`member.${m}`)}</Text>
+                </Pressable>
+              ))}
+            </View>
+          } />
+          <Row label="主题" right={
+            <View style={S.toggleGroup}>
+              {(['auto', 'light', 'dark'] as const).map((t) => (
+                <Pressable key={t} onPress={() => setTheme(t)} style={[S.toggleBtn, theme === t && S.toggleBtnActive]}>
+                  <Text style={[S.toggleText, theme === t && S.toggleTextActive]}>{t === 'auto' ? '自动' : t === 'light' ? '浅色' : '深色'}</Text>
                 </Pressable>
               ))}
             </View>

@@ -1,45 +1,13 @@
-// JMComic iOS — 暖琥珀暗色主题 v2
+// JMComic iOS — 主题导出（向后兼容 v2）
+// 新代码请使用 ThemeProvider + useAppTheme() 获取动态主题色
 // @author nyx
 
-export const Colors = {
-  primary: '#F59E0B',
-  primaryLight: '#FDE68A',
-  primaryDark: '#D97706',
+export { lightColors, darkColors, lightExtended, darkExtended } from './theme/colors';
+export type { ColorTokens, ColorFamily, ExtendedColorTokens, ThemeColors } from './theme/colors';
+export { ThemeProvider, useAppTheme } from './theme/ThemeProvider';
+export type { ThemeMode, ThemeContextValue } from './theme/ThemeProvider';
 
-  accent: '#EF4444',
-
-  background: '#121214',
-  surface: '#1C1C1E',
-  surfaceLight: '#28282B',
-  surfaceContainer: '#2C2C30',
-
-  text: '#F5F5F0',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#A8A29E',
-  textTertiary: '#78716C',
-  textOnPrimary: '#1C1917',
-
-  error: '#DC2626',
-  success: '#10B981',
-  warning: '#F59E0B',
-  info: '#38BDF8',
-
-  border: '#2C2C30',
-  divider: '#222225',
-  outline: '#3A3A40',
-
-  tabActive: '#F59E0B',
-  tabInactive: '#57534E',
-  tabBar: '#0E0E10',
-  tabBarBorder: '#1E1E22',
-
-  surfaceLowest: '#1C1C1E',
-  surfaceContainerLow: '#28282B',
-  surfaceVariant: '#2C2C30',
-  shadow: '#000000',
-
-  overlay: 'rgba(0,0,0,0.6)',
-};
+// ============ 设计令牌（不变） ============
 
 export const Radius = {
   xs: 6, sm: 10, md: 14, lg: 20, xl: 30,
@@ -72,3 +40,8 @@ export const Shadow = {
     elevation: 6,
   },
 };
+
+// 向后兼容：原来的 Colors 对象（深色主题）
+// 推荐改用 useAppTheme() 获取动态色板
+import { darkColors } from './theme/colors';
+export const Colors = darkColors;

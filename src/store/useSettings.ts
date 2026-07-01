@@ -1,10 +1,11 @@
-// 设置存储 — 含动态域名
+// 设置存储 — 含动态域名 + 主题偏好
 // @author nyx
 
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../api/client';
 import type { SettingData } from '../api/types';
+import type { ThemeMode } from '../theme';
 
 interface Shunt {
   key: number;
@@ -16,6 +17,8 @@ interface Shunt {
 interface SettingsState {
   language: 'zh' | 'en';
   darkMode: boolean;
+  /** 主题模式：auto / light / dark */
+  theme: ThemeMode;
   readingMode: 'page' | 'scroll';
   readingDirection: 'ltr' | 'rtl';
   showDebugLog: boolean;
@@ -32,6 +35,8 @@ interface SettingsState {
 
   setLanguage: (lang: 'zh' | 'en') => void;
   setDarkMode: (v: boolean) => void;
+  /** 设置主题模式 */
+  setTheme: (v: ThemeMode) => void;
   setReadingMode: (m: 'scroll' | 'page') => void;
   setReadingDirection: (d: 'ltr' | 'rtl') => void;
   setShowDebugLog: (v: boolean) => void;
@@ -50,6 +55,7 @@ const KEY = '@jmcomic.settings';
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   language: 'zh',
   darkMode: true,
+  theme: 'auto',
   readingMode: 'page',
   readingDirection: 'ltr',
   showDebugLog: false,
@@ -63,6 +69,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setLanguage: (v) => { set({ language: v }); get().save(); },
   setDarkMode: (v) => { set({ darkMode: v }); get().save(); },
+  setTheme: (v) => { set({ theme: v, darkMode: v === 'dark' || (v === 'auto' && false) }); get().save(); },
   setReadingMode: (v) => { set({ readingMode: v }); get().save(); },
   setReadingDirection: (v) => { set({ readingDirection: v }); get().save(); },
   setShowDebugLog: (v) => { set({ showDebugLog: v }); get().save(); },
@@ -75,15 +82,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       img_host: data.img_host,
     }));
 
-    // 用 setting 返回的 img_host（可能是代理重写后的域名如 jmdanjonproxy.vip）
-    // 注意去掉可能的协议前缀
     const cleanHost = (data.img_host || '').replace(/^https?:\/\//, '');
     if (cleanHost) apiClient.setImgHost(cleanHost);
 
-    // 注意：API 域名保留 FALLBACK_DOMAINS（CDN 代理域名），
-    // main_web_host 是主站域名带 Cloudflare，直接请求会超时
-
-    // 如果有被选中 shunt，使用它的域名
     const { selectedShuntKey } = get();
 
     set({
@@ -99,7 +100,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   selectShunt: async (key: number) => {
     set({ selectedShuntKey: key });
     get().save();
-    // 异步设置图片 CDN
     try {
       const { getShuntImgHost } = await import('../utils/SourceSelector');
       const imgHost = await getShuntImgHost(key);
