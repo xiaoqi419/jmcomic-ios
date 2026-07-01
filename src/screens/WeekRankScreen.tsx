@@ -52,6 +52,11 @@ function toComicWrap(c: any): ComicWrap {
   };
 }
 
+function coverUrl(item: ComicWrap): string {
+  if (item.image) return item.image;
+  return getCoverUrl(item.id);
+}
+
 const PAGE_SIZE = 36;
 
 export function WeekRankScreen() {
@@ -110,12 +115,12 @@ export function WeekRankScreen() {
         const weekData: any = await fetchWeekData();
         const cats: WeekCategory[] = (weekData.categories || []).map((c: any) => ({
           id: String(c.id || c.key || ''),
-          title: c.title || c.name || '',
+          title: c.title || c.name || c.tag_name || String(c.id || c.key || ''),
           time: c.time || '',
         }));
         const types: WeekType[] = (weekData.type || weekData.types || []).map((t: any) => ({
           id: String(t.id || t.key || ''),
-          title: t.title || t.name || '',
+          title: t.title || t.name || String(t.id || t.key || ''),
         }));
         setMeta({ categories: cats, types });
 
@@ -173,7 +178,7 @@ export function WeekRankScreen() {
     >
       <View style={css.cardInner}>
         <Image
-          source={{ uri: getCoverUrl(item.id) }}
+          source={{ uri: coverUrl(item) }}
           style={css.cover}
           contentFit="cover"
         />
