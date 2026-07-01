@@ -20,6 +20,7 @@ import { jmLogger } from '../utils/JmLogger';
 import { useFavoritesStore } from '../store/useFavorites';
 import { useReaderStore } from '../store/useReader';
 import { useHistoryStore } from '../store/useHistory';
+import { HtmlText } from '../components/HtmlText';
 import { useAuthStore } from '../store/useAuth';
 import { chunkArray } from '../utils/helpers';
 // DebugOverlay moved to App.tsx
@@ -383,13 +384,14 @@ export function ComicDetailScreen() {
                     <Text style={{ fontWeight: '600', color: C.textPrimary, fontSize: FontSize.body }}>{c.username}</Text>
                     <Text style={{ fontSize: FontSize.caption, color: C.textTertiary }}>{c.addtime}</Text>
                   </View>
-                  <Text style={{ color: C.textSecondary, marginTop: 4, lineHeight: 20 }}>{c.content}</Text>
+                  <HtmlText html={c.content} style={{ color: C.textSecondary, marginTop: 4, lineHeight: 20 }} linkColor={C.primary} />
                   {c.replys?.length > 0 && (
                     <View style={{ marginTop: 6, paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: C.divider }}>
                       {c.replys.slice(0, 2).map((r, ri) => (
-                        <Text key={ri} style={{ fontSize: FontSize.body, color: C.textTertiary, marginTop: 2 }}>
-                          <Text style={{ color: C.primary }}>{r.username}</Text>: {r.content}
-                        </Text>
+                        <View key={ri} style={{ flexDirection: 'row', marginTop: 2 }}>
+                          <Text style={{ color: C.primary, fontSize: FontSize.label }}>{r.username}: </Text>
+                          <HtmlText html={r.content} style={{ color: C.textTertiary, fontSize: FontSize.label, flex: 1 }} linkColor={C.primary} />
+                        </View>
                       ))}
                     </View>
                   )}
