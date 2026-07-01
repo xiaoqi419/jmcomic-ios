@@ -77,6 +77,36 @@ export interface ThemeColors {
   extended: ExtendedColorTokens;
 }
 
+/** 向后兼容：旧版 Colors 属性名 + 新 M3 名 */
+export type LegacyColors = ColorTokens & {
+  primaryLight: string;
+  textPrimary: string;
+  textSecondary: string;
+  textTertiary: string;
+  textOnPrimary: string;
+  border: string;
+  divider: string;
+  surfaceLight: string;
+  success: string;
+  text: string;
+};
+
+export function buildLegacyColors(c: ColorTokens): LegacyColors {
+  return {
+    ...c,
+    primaryLight: c.primaryContainer,
+    textPrimary: c.onSurface,
+    textSecondary: c.onSurfaceVariant,
+    textTertiary: c.outline,
+    textOnPrimary: c.onPrimary,
+    border: c.outlineVariant,
+    divider: c.outlineVariant,
+    surfaceLight: c.surfaceContainerHigh,
+    success: '#4CAF50',
+    text: c.onSurface,
+  };
+}
+
 // ============ Light Scheme ============
 
 export const lightColors: ColorTokens = {

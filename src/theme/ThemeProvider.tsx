@@ -4,8 +4,8 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
-import { lightColors, darkColors, lightExtended, darkExtended } from './colors';
-import type { ColorTokens, ExtendedColorTokens } from './colors';
+import { lightColors, darkColors, lightExtended, darkExtended, buildLegacyColors } from './colors';
+import type { ColorTokens, ExtendedColorTokens, LegacyColors } from './colors';
 
 export type ThemeMode = 'auto' | 'light' | 'dark';
 
@@ -18,13 +18,17 @@ export interface ThemeContextValue {
   colors: ColorTokens;
   /** 扩展色族（标签系统用） */
   extended: ExtendedColorTokens;
+  /** 向后兼容旧属性名的色板（textPrimary/border 等） */
+  legacyColors: LegacyColors;
 }
 
+const darkLegacy = buildLegacyColors(darkColors);
 const ThemeContext = createContext<ThemeContextValue>({
   resolvedScheme: 'dark',
   themeMode: 'dark',
   colors: darkColors,
   extended: darkExtended,
+  legacyColors: darkLegacy,
 });
 
 interface ThemeProviderProps {
@@ -37,18 +41,27 @@ export function ThemeProvider({ themeMode, children }: ThemeProviderProps) {
   const resolvedScheme: 'light' | 'dark' =
     themeMode === 'auto' ? systemScheme : themeMode;
 
-  const value = useMemo<ThemeContextValue>(() => ({
-    resolvedScheme,
-    themeMode,
-    colors: resolvedScheme === 'light' ? lightColors : darkColors,
-    extended: resolvedScheme === 'light' ? lightExtended : darkExtended,
-  }), [resolvedScheme, themeMode]);
+  const value = useMemo<ThemeContextValue>(() => {
+    const colors = resolvedScheme === 'light' ? lightColors : darkColors;
+    return {
+      resolvedScheme,
+      themeMode,
+      colors,
+      extended: resolvedScheme === 'light' ? lightExtended : darkExtended,
+      legacyColors: buildLegacyColors(colors),
+    };
+  }, [resolvedScheme, themeMode]);
 
   return (
     <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );
+}
+
+/** 获取向后兼容的 Colors 对象（含 textPrimary/border 等旧名） */
+export function useLegacyColors(): LegacyColors {
+  return useAppTheme().legacyColors;
 }
 
 export function useAppTheme(): ThemeContextValue {

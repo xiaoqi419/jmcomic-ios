@@ -16,7 +16,7 @@ import { useReaderStore } from '../store/useReader';
 import { useHistoryStore } from '../store/useHistory';
 import { fetchComicRead, fetchAlbumDetail } from '../api/endpoints';
 import { extractFilename } from '../utils/scramble';
-import { Colors, FontSize, Radius, Spacing } from '../theme';
+import { useLegacyColors, LegacyColors, FontSize, Radius, Spacing } from '../theme';
 // DebugOverlay moved to App.tsx
 import type { Episode } from '../api/types';
 import * as Brightness from 'expo-brightness';
@@ -28,6 +28,8 @@ export function ReaderScreen() {
   const route = useRoute<any>();
   const { t } = useTranslation();
   const { albumId, chapterId, chapterTitle } = route.params || {};
+  const C = useLegacyColors();
+  const styles = useMemo(() => getStyles(C), [C]);
 
   const { imageUrls, currentPage, setPage, isVertical, setVertical, startReading } = useReaderStore();
   const [showUI, setShowUI] = useState(true);
@@ -200,17 +202,17 @@ export function ReaderScreen() {
   const listFooter = useMemo(() => {
     if (!isVertical) return null;
     return (
-      <View style={V.footer}>
+      <View style={styles.footer}>
         {hasPrevChapter && (
           <TouchableOpacity
             onPress={() => {
               const prev = episodes[currentEpIdx - 1];
               if (prev) switchChapter(prev.id, prev.name);
             }}
-            style={V.chapterBtn}
+            style={styles.chapterBtn}
           >
-            <MaterialIcons name="skip-previous" size={20} color={Colors.textPrimary} />
-            <Text style={V.chapterBtnText}>上一章</Text>
+            <MaterialIcons name="skip-previous" size={20} color={C.textPrimary} />
+            <Text style={styles.chapterBtnText}>上一章</Text>
           </TouchableOpacity>
         )}
         {hasNextChapter && (
@@ -219,10 +221,10 @@ export function ReaderScreen() {
               const next = episodes[currentEpIdx + 1];
               if (next) switchChapter(next.id, next.name);
             }}
-            style={V.chapterBtn}
+            style={styles.chapterBtn}
           >
-            <Text style={V.chapterBtnText}>下一章</Text>
-            <MaterialIcons name="skip-next" size={20} color={Colors.textPrimary} />
+            <Text style={styles.chapterBtnText}>下一章</Text>
+            <MaterialIcons name="skip-next" size={20} color={C.textPrimary} />
           </TouchableOpacity>
         )}
       </View>
@@ -234,8 +236,8 @@ export function ReaderScreen() {
       <StatusBar hidden={!showUI} />
 
       {loading && (
-        <View style={V.loadingOverlay}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={C.primary} />
         </View>
       )}
 
@@ -257,7 +259,7 @@ export function ReaderScreen() {
           ListFooterComponent={listFooter}
           ListEmptyComponent={
             <View style={{ width: W, height: H, justifyContent: 'center', alignItems: 'center' }}>
-              <ActivityIndicator size="large" color={Colors.primary} />
+              <ActivityIndicator size="large" color={C.primary} />
             </View>
           }
         />
@@ -283,7 +285,7 @@ export function ReaderScreen() {
       {/* 竖向模式去掉点击翻页覆盖层，纯自然滑动 */}
       {/* 横屏保留点击翻页 */}
       {!isVertical && (
-        <View style={V.tapZones} pointerEvents="box-none">
+        <View style={styles.tapZones} pointerEvents="box-none">
           <Pressable style={{ flex: 3 }} onPress={goPrev} />
           <View style={{ flex: 4 }} />
           <Pressable style={{ flex: 3 }} onPress={goNext} />
@@ -292,14 +294,14 @@ export function ReaderScreen() {
 
       {/* 顶部栏 */}
       {showUI && (
-        <SafeAreaView edges={['top']} style={V.topBar}>
+        <SafeAreaView edges={['top']} style={styles.topBar}>
           <TouchableOpacity onPress={() => nav.goBack()} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <MaterialIcons name="arrow-back" size={22} color="#fff" />
-            <Text style={V.topText}>{t('common.back')}</Text>
+            <Text style={styles.topText}>{t('common.back')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => setShowChapterModal(true)} style={{ flex: 1, alignItems: 'center', paddingHorizontal: 8 }}>
-            <Text style={[V.topText, { fontSize: 13 }]} numberOfLines={1}>
+            <Text style={[styles.topText, { fontSize: 13 }]} numberOfLines={1}>
               {chapterTitle || `第${currentEpIdx + 1}话`}
             </Text>
             <Text style={{ color: '#aaa', fontSize: 11 }}>
@@ -341,11 +343,11 @@ export function ReaderScreen() {
 
       {/* 底部栏 */}
       {showUI && (
-        <SafeAreaView edges={['top']} style={V.bottomBar}>
-          <View style={V.sliderContainer}>
-            <Text style={V.progressLabel}>1</Text>
+        <SafeAreaView edges={['top']} style={styles.bottomBar}>
+          <View style={styles.sliderContainer}>
+            <Text style={styles.progressLabel}>1</Text>
             <View
-              style={V.sliderTrack}
+              style={styles.sliderTrack}
               onStartShouldSetResponder={() => true}
               onResponderGrant={(e) => {
                 const x = e.nativeEvent.locationX;
@@ -360,17 +362,17 @@ export function ReaderScreen() {
                 goPage(Math.round(ratio * (totalPages - 1)));
               }}
             >
-              <View style={[V.sliderFill, { width: `${((currentPage + 1) / Math.max(1, totalPages)) * 100}%` }]} />
-              <View style={[V.sliderThumb, { left: `${((currentPage + 1) / Math.max(1, totalPages)) * 100}%` }]} />
+              <View style={[styles.sliderFill, { width: `${((currentPage + 1) / Math.max(1, totalPages)) * 100}%` }]} />
+              <View style={[styles.sliderThumb, { left: `${((currentPage + 1) / Math.max(1, totalPages)) * 100}%` }]} />
             </View>
-            <Text style={V.progressLabel}>{totalPages}</Text>
+            <Text style={styles.progressLabel}>{totalPages}</Text>
           </View>
 
           {showBrightness && (
-            <View style={V.sliderContainer}>
+            <View style={styles.sliderContainer}>
               <MaterialIcons name="brightness-low" size={16} color="#aaa" />
               <View
-                style={V.sliderTrack}
+                style={styles.sliderTrack}
                 onStartShouldSetResponder={() => true}
                 onResponderGrant={(e) => {
                   const x = e.nativeEvent.locationX;
@@ -383,8 +385,8 @@ export function ReaderScreen() {
                   handleBrightness(Math.max(0, Math.min(1, x / trackW)));
                 }}
               >
-                <View style={[V.sliderFill, { width: `${brightness * 100}%` }]} />
-                <View style={[V.sliderThumb, { left: `${brightness * 100}%` }]} />
+                <View style={[styles.sliderFill, { width: `${brightness * 100}%` }]} />
+                <View style={[styles.sliderThumb, { left: `${brightness * 100}%` }]} />
               </View>
               <MaterialIcons name="brightness-high" size={16} color="#aaa" />
             </View>
@@ -394,12 +396,12 @@ export function ReaderScreen() {
 
       {/* 章节选择弹窗 */}
       <Modal visible={showChapterModal} transparent animationType="slide">
-        <View style={V.modalOverlay}>
-          <View style={V.modalContent}>
-            <View style={V.modalHeader}>
-              <Text style={V.modalTitle}>{t('reader.chapter')}</Text>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('reader.chapter')}</Text>
               <TouchableOpacity onPress={() => setShowChapterModal(false)}>
-                <MaterialIcons name="close" size={24} color={Colors.textPrimary} />
+                <MaterialIcons name="close" size={24} color={C.textPrimary} />
               </TouchableOpacity>
             </View>
             <FlatList
@@ -411,12 +413,12 @@ export function ReaderScreen() {
                     if (item.id !== chapterId) switchChapter(item.id, item.name);
                     else setShowChapterModal(false);
                   }}
-                  style={[V.chapterItem, item.id === chapterId && V.chapterItemActive]}
+                  style={[styles.chapterItem, item.id === chapterId && styles.chapterItemActive]}
                 >
-                  <Text style={[V.chapterItemText, item.id === chapterId && V.chapterItemTextActive]}>
+                  <Text style={[styles.chapterItemText, item.id === chapterId && styles.chapterItemTextActive]}>
                     {item.name}
                   </Text>
-                  {item.id === chapterId && <MaterialIcons name="check" size={18} color={Colors.primary} />}
+                  {item.id === chapterId && <MaterialIcons name="check" size={18} color={C.primary} />}
                 </TouchableOpacity>
               )}
               style={{ flex: 1 }}
@@ -429,71 +431,73 @@ export function ReaderScreen() {
   );
 }
 
-const V = StyleSheet.create({
-  loadingOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    zIndex: 200, justifyContent: 'center', alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  tapZones: {
-    position: 'absolute', top: 0, bottom: 0, left: 0, right: 0,
-    flexDirection: 'row',
-  },
-  topBar: {
-    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 14, paddingTop: 8, paddingBottom: 4,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-  },
-  topText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  bottomBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 100,
-    paddingHorizontal: 14, paddingBottom: 24, paddingTop: 8,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-  },
-  sliderContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  progressLabel: { color: '#aaa', fontSize: 11, width: 30, textAlign: 'center' },
-  sliderTrack: { flex: 1, height: 32, justifyContent: 'center', position: 'relative' },
-  sliderFill: { height: 4, backgroundColor: Colors.primary, borderRadius: 2 },
-  sliderThumb: {
-    position: 'absolute', width: 16, height: 16, borderRadius: 8,
-    backgroundColor: Colors.primary, marginLeft: -8, top: 8,
-  },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: {
-    backgroundColor: Colors.surface, borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl, maxHeight: '70%', paddingBottom: 40,
-  },
-  modalHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.divider,
-  },
-  modalTitle: { fontSize: FontSize.headline, fontWeight: '700', color: Colors.textPrimary },
-  chapterItem: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 12, paddingHorizontal: Spacing.md,
-    borderBottomWidth: 0.5, borderBottomColor: Colors.divider,
-  },
-  chapterItemActive: { backgroundColor: Colors.primary + '15' },
-  chapterItemText: { fontSize: FontSize.body, color: Colors.textSecondary },
-  chapterItemTextActive: { color: Colors.primary, fontWeight: '600' },
-  footer: {
-    paddingVertical: 24,
-    paddingHorizontal: Spacing.marginEdge,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  chapterBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: Radius.button,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  chapterBtnText: { color: Colors.textPrimary, fontSize: FontSize.body, fontWeight: '600' },
-});
+function getStyles(C: LegacyColors) {
+  return StyleSheet.create({
+    loadingOverlay: {
+      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+      zIndex: 200, justifyContent: 'center', alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.7)',
+    },
+    tapZones: {
+      position: 'absolute', top: 0, bottom: 0, left: 0, right: 0,
+      flexDirection: 'row',
+    },
+    topBar: {
+      position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100,
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+      paddingHorizontal: 14, paddingTop: 8, paddingBottom: 4,
+      backgroundColor: 'rgba(0,0,0,0.6)',
+    },
+    topText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+    bottomBar: {
+      position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 100,
+      paddingHorizontal: 14, paddingBottom: 24, paddingTop: 8,
+      backgroundColor: 'rgba(0,0,0,0.6)',
+    },
+    sliderContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    progressLabel: { color: '#aaa', fontSize: 11, width: 30, textAlign: 'center' },
+    sliderTrack: { flex: 1, height: 32, justifyContent: 'center', position: 'relative' },
+    sliderFill: { height: 4, backgroundColor: C.primary, borderRadius: 2 },
+    sliderThumb: {
+      position: 'absolute', width: 16, height: 16, borderRadius: 8,
+      backgroundColor: C.primary, marginLeft: -8, top: 8,
+    },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+    modalContent: {
+      backgroundColor: C.surface, borderTopLeftRadius: Radius.xl,
+      borderTopRightRadius: Radius.xl, maxHeight: '70%', paddingBottom: 40,
+    },
+    modalHeader: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+      padding: Spacing.md, borderBottomWidth: 1, borderBottomColor: C.divider,
+    },
+    modalTitle: { fontSize: FontSize.headline, fontWeight: '700', color: C.textPrimary },
+    chapterItem: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingVertical: 12, paddingHorizontal: Spacing.md,
+      borderBottomWidth: 0.5, borderBottomColor: C.divider,
+    },
+    chapterItemActive: { backgroundColor: C.primary + '15' },
+    chapterItemText: { fontSize: FontSize.body, color: C.textSecondary },
+    chapterItemTextActive: { color: C.primary, fontWeight: '600' },
+    footer: {
+      paddingVertical: 24,
+      paddingHorizontal: Spacing.marginEdge,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 16,
+    },
+    chapterBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: C.surface,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+      borderRadius: Radius.button,
+      borderWidth: 1,
+      borderColor: C.border,
+    },
+    chapterBtnText: { color: C.textPrimary, fontSize: FontSize.body, fontWeight: '600' },
+  });
+}

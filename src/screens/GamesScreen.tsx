@@ -1,13 +1,13 @@
 // 游戏 v2
 // @author nyx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, FlatList, Pressable, StyleSheet, Linking, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, FontSize } from '../theme';
+import { useLegacyColors, LegacyColors, Radius, Spacing, FontSize } from '../theme';
 import { fetchGames } from '../api/endpoints';
 import type { GameItem } from '../api/types';
 
@@ -16,6 +16,8 @@ const CARD_W = (W - Spacing.marginEdge * 2 - 10) / 2;
 
 export function GamesScreen() {
   const { t } = useTranslation();
+  const C = useLegacyColors();
+  const styles = useMemo(() => getStyles(C), [C]);
   const [hot, setHot] = useState<GameItem[]>([]);
   const [games, setGames] = useState<GameItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,50 +33,53 @@ export function GamesScreen() {
     <Pressable
       key={item.gid}
       onPress={() => { if (item.link) Linking.openURL(item.link); }}
-      style={S.gameCard}
+      style={styles.gameCard}
     >
-      <Image source={{ uri: item.photo }} style={S.gameCover} contentFit="cover" />
-      <Text style={S.gameTitle} numberOfLines={2}>{item.title}</Text>
-      <Text style={S.gameTag}>{item.tags}</Text>
+      <Image source={{ uri: item.photo }} style={styles.gameCover} contentFit="cover" />
+      <Text style={styles.gameTitle} numberOfLines={2}>{item.title}</Text>
+      <Text style={styles.gameTag}>{item.tags}</Text>
     </Pressable>
   );
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: Colors.background }}>
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: C.background }}>
       <FlatList
         data={games}
         numColumns={2}
+        columnWrapperStyle={{ justifyContent: 'space-between' }}
         keyExtractor={(i) => i.gid}
         contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}
         ListHeaderComponent={
           <View>
-            <Text style={S.pageTitle}>{t('games.title')}</Text>
+            <Text style={styles.pageTitle}>{t('games.title')}</Text>
             {hot.length > 0 && (
               <View style={{ marginBottom: 20 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                  <MaterialIcons name="whatshot" size={18} color={Colors.primary} />
-                  <Text style={S.sectionTitle}>{t('games.hot')}</Text>
+                  <MaterialIcons name="whatshot" size={18} color={C.primary} />
+                  <Text style={styles.sectionTitle}>{t('games.hot')}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                   {hot.map(renderGame)}
                 </View>
               </View>
             )}
-            <Text style={S.sectionTitle}>{t('games.all')}</Text>
+            <Text style={styles.sectionTitle}>{t('games.all')}</Text>
           </View>
         }
         renderItem={({ item }) => renderGame(item)}
-        ListEmptyComponent={loading ? null : <Text style={{ color: Colors.textTertiary, textAlign: 'center', marginTop: 40 }}>{t('common.empty')}</Text>}
+        ListEmptyComponent={loading ? null : <Text style={{ color: C.textTertiary, textAlign: 'center', marginTop: 40 }}>{t('common.empty')}</Text>}
       />
     </SafeAreaView>
   );
 }
 
-const S = StyleSheet.create({
-  pageTitle: { fontSize: FontSize.largeTitle, fontWeight: '800', color: Colors.textPrimary, marginBottom: 14 },
-  sectionTitle: { fontSize: FontSize.headline, fontWeight: '700', color: Colors.textPrimary },
-  gameCard: { width: CARD_W, margin: 4, marginBottom: 14 },
-  gameCover: { width: CARD_W, height: CARD_W * 0.75, borderRadius: Radius.card, backgroundColor: Colors.surfaceContainer },
-  gameTitle: { fontSize: FontSize.body, fontWeight: '600', color: Colors.text, marginTop: 6 },
-  gameTag: { fontSize: FontSize.caption, color: Colors.textTertiary, marginTop: 2 },
-});
+function getStyles(C: LegacyColors) {
+  return StyleSheet.create({
+    pageTitle: { fontSize: FontSize.largeTitle, fontWeight: '800', color: C.textPrimary, marginBottom: 14 },
+    sectionTitle: { fontSize: FontSize.headline, fontWeight: '700', color: C.textPrimary },
+    gameCard: { width: CARD_W, margin: 4, marginBottom: 14 },
+    gameCover: { width: CARD_W, height: CARD_W * 0.75, borderRadius: Radius.card, backgroundColor: C.surfaceContainer },
+    gameTitle: { fontSize: FontSize.body, fontWeight: '600', color: C.text, marginTop: 6 },
+    gameTag: { fontSize: FontSize.caption, color: C.textTertiary, marginTop: 2 },
+  });
+}

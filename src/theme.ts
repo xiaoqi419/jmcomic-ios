@@ -3,8 +3,8 @@
 // @author nyx
 
 export { lightColors, darkColors, lightExtended, darkExtended } from './theme/colors';
-export type { ColorTokens, ColorFamily, ExtendedColorTokens, ThemeColors } from './theme/colors';
-export { ThemeProvider, useAppTheme } from './theme/ThemeProvider';
+export type { ColorTokens, ColorFamily, ExtendedColorTokens, ThemeColors, LegacyColors } from './theme/colors';
+export { ThemeProvider, useAppTheme, useLegacyColors } from './theme/ThemeProvider';
 export type { ThemeMode, ThemeContextValue } from './theme/ThemeProvider';
 
 // ============ 设计令牌（不变） ============
@@ -42,36 +42,8 @@ export const Shadow = {
 };
 
 // 向后兼容 Colors 对象（深色主题）
-// 同时支持新 M3 名（primary/onSurface/outline）和旧名（textPrimary/border/divider）
-// 新代码推荐用 useAppTheme() 获取动态色板
-import { darkColors } from './theme/colors';
-import type { ColorTokens } from './theme/colors';
+// 旧屏幕用 import { Colors } from '../theme' 仍然可用
+// 新屏幕推荐用 useLegacyColors() 获取跟随主题的色板
+import { darkColors, buildLegacyColors } from './theme/colors';
 
-export type LegacyColors = ColorTokens & {
-  primaryLight: string;
-  textPrimary: string;
-  textSecondary: string;
-  textTertiary: string;
-  textOnPrimary: string;
-  border: string;
-  divider: string;
-  surfaceLight: string;
-  success: string;
-  text: string;
-};
-
-const legacyAliases: LegacyColors = {
-  ...darkColors,
-  primaryLight: darkColors.primaryContainer,
-  textPrimary: darkColors.onSurface,
-  textSecondary: darkColors.onSurfaceVariant,
-  textTertiary: darkColors.outline,
-  textOnPrimary: darkColors.onPrimary,
-  border: darkColors.outlineVariant,
-  divider: darkColors.outlineVariant,
-  surfaceLight: darkColors.surfaceContainerHigh,
-  success: '#4CAF50',
-  text: darkColors.onSurface,
-};
-
-export const Colors: LegacyColors = legacyAliases;
+export const Colors: LegacyColors = buildLegacyColors(darkColors);
