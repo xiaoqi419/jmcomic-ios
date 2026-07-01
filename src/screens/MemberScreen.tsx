@@ -164,6 +164,10 @@ export function MemberScreen() {
                   </Text>
                 </Pressable>
               )}
+              <Pressable onPress={() => nav.navigate('Library')} style={[styles.signBtn, { marginTop: 0, marginBottom: 8 }]}>
+                <MaterialIcons name="bookmark" size={20} color={C.primary} />
+                <Text style={{ color: C.primary, fontWeight: '600' }}>我的收藏</Text>
+              </Pressable>
               <Pressable onPress={handleJmLogout} style={styles.logoutSmall}>
                 <Text style={styles.logoutSmallText}>退出登录</Text>
               </Pressable>

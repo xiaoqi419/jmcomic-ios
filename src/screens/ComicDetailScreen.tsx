@@ -44,7 +44,7 @@ export function ComicDetailScreen() {
   const [showBuy, setShowBuy] = useState(false);
   const [seriesGroups, setSeriesGroups] = useState<Episode[][]>([]);
   const [groupIdx, setGroupIdx] = useState(0);
-  const { isFav, addLocal, removeLocal, folders, createFolder, deleteFolder, renameFolder, moveToFolder, loadOnline } = useFavoritesStore();
+  const { isFav, addLocal, removeLocal, folders, createFolder, deleteFolder, renameFolder, moveToFolder, loadOnline, toggle } = useFavoritesStore();
   const fav = isFav(albumId);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
   const [showFolderManager, setShowFolderManager] = useState(false);
@@ -159,22 +159,22 @@ export function ComicDetailScreen() {
     setShowBuy(false);
   };
 
-  const handleToggleFav = () => {
+  const handleToggleFav = async () => {
     if (fav) {
+      if (loggedIn) await toggle(albumId);
       removeLocal(albumId);
     } else if (!loggedIn) {
       Alert.alert('提示', '请先登录后再收藏', [
         { text: '取消', style: 'cancel' },
         { text: '去登录', onPress: () => nav.navigate('Member') },
       ]);
-    } else if (folders.length > 0) {
-      setShowFolderPicker(true);
     } else {
       setShowFolderPicker(true);
     }
   };
 
   const handleFolderSelect = async (folderId?: string) => {
+    await toggle(albumId);
     if (folderId) {
       await moveToFolder(folderId, albumId);
     }
