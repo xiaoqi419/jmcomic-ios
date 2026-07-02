@@ -106,18 +106,34 @@ export function ComicDetailScreen() {
 
   const openChapter = async (chId: string, chName: string) => {
     try {
-      const data = await fetchComicRead(chId);
-      const host = getImgHost();
       let images: string[];
-      if (data.images?.length) {
-        images = data.images.map((item) => item.image);
+      const host = getImgHost();
+
+      // 单章本：chId === albumId，从 detail.images 拿（album API 已有）
+      if (chId === albumId && detail?.images?.length) {
+        images = detail.images.map((item: any) => item.image);
+        jmLogger.log(`openChapter: 使用 detail.images chId=${chId} count=${images.length}`);
       } else {
-        const count = data.page_count || 20;
-        images = [];
-        for (let i = 1; i <= count; i++) {
-          const fn = String(i).padStart(5, '0') + '.webp';
-          images.push(`https://${host}/media/photos/${chId}/${fn}`);
+        const data = await fetchComicRead(chId);
+        jmLogger.log(`openChapter chId=${chId} imagesLen=${data.images?.length} page_count=${data.page_count} hasImages=!!${!!data.images?.length}`);
+        if (data.images?.length) {
+          images = data.images.map((item: any) => item.image);
+          jmLogger.log(`openChapter: 使用 API images[0]=${images[0]}`);
+        } else {
+          const count = data.page_count || 20;
+          images = [];
+          for (let i = 1; i <= count; i++) {
+            const fn = String(i).padStart(5, '0') + '.webp';
+            images.push(`https://${host}/media/photos/${chId}/${fn}`);
+          }
+          jmLogger.log(`openChapter: 合成图片URL count=${count} [0]=${images[0]}`);
         }
+      }
+      if (!images || images.length === 0) {
+        jmLogger.err(`openChapter: images为空 chId=${chId} albumId=${albumId}`);
+        Alert.alert('错误', '无法加载图片，该章节可能格式异常');
+        setLoading(false);
+        return;
       }
       useReaderStore.getState().startReading(albumId, chId, chName, images, 220980);
       useHistoryStore.getState().add({
