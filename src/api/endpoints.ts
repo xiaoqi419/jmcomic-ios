@@ -85,11 +85,18 @@ export async function fetchMoreList(id: string, page = 1): Promise<MoreListData>
   return encryptedGet<MoreListData>('serialization', { id, page });
 }
 
-export async function fetchCategoriesFilter(params: { page?: number; o?: string } = {}): Promise<MoreListData> {
-  return encryptedGet<MoreListData>('categories/filter', {
+export async function fetchCategoriesFilter(params: { page?: number; o?: string; c?: string } = {}): Promise<MoreListData> {
+  const query: Record<string, any> = {
     page: params.page || 1,
     o: params.o || 'mv',
-  });
+  };
+  if (params.c) query.c = params.c;
+  return encryptedGet<MoreListData>('categories/filter', query);
+}
+
+/** 获取分类列表 */
+export async function fetchCategories(): Promise<{ categories: { name: string; slug: string; sub_categories: { CID: string; name: string; slug: string }[] }[] }> {
+  return encryptedGet('categories');
 }
 
 /**
