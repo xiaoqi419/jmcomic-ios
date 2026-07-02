@@ -130,7 +130,7 @@ function HomePage({ onDownload }) {
             <div className="phone-screen">
               <div className="mock-content">
                 <div className="mock-header" />
-                <div className="mock-card" />
+                <img src="/hero-bg.png" alt="App screenshot" style={{ width: '100%', borderRadius: 8, opacity: 0.7 }} />
                 <div className="mock-card" />
                 <div className="mock-card" />
               </div>
