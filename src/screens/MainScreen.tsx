@@ -133,9 +133,12 @@ export function MainScreen() {
         onPressOut={startAutoPlay}
         style={styles.promoCard}
       >
+        {/* 模糊背景 */}
+        <Image source={{ uri: cover }} style={styles.promoBg} contentFit="cover" blurRadius={40} />
+        {/* 封面图 */}
         <Image source={{ uri: cover }} style={styles.promoCover} contentFit="contain" />
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.85)']}
+          colors={['transparent', 'rgba(0,0,0,0.9)']}
           style={styles.promoOverlay}
           pointerEvents="none"
         />
@@ -197,7 +200,8 @@ export function MainScreen() {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   snapToInterval={CARD_W + 10}
-                  decelerationRate="fast"
+                  decelerationRate={0.85}
+                  disableIntervalMomentum={false}
                   onMomentumScrollEnd={onMomentumEnd}
                   onScrollBeginDrag={stopAutoPlay}
                   onScrollEndDrag={startAutoPlay}
@@ -315,6 +319,9 @@ function getStyles(C: LegacyColors) { return StyleSheet.create({
     width: CARD_W, marginRight: 10,
     height: PROMO_H, borderRadius: Radius.lg,
     overflow: 'hidden', backgroundColor: C.surfaceContainer,
+  },
+  promoBg: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
   },
   promoCover: { width: '100%', height: '100%' },
   promoOverlay: {
