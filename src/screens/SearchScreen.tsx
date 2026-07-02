@@ -220,7 +220,7 @@ export function SearchScreen() {
         data={searched ? results : []}
         keyExtractor={(i) => `${i.source}:${i.id}`}
         numColumns={1}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingHorizontal: Spacing.marginEdge, paddingBottom: 100 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => {
           if (!query.trim() || searchingRef.current) return;
           setRefreshing(true);
