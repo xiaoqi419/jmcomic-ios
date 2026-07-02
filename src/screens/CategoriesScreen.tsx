@@ -54,13 +54,13 @@ export function CategoriesScreen() {
         const categories = data.categories || [];
         const mainCats: CatItem[] = categories.map((c: any) => ({
           name: c.name || c.title || '',
-          slug: c.slug || '',
+          slug: (c.slug || '0'),
         }));
         // 收集所有子分类
         const subs: SubCatItem[] = [];
         categories.forEach((c: any) => {
           (c.sub_categories || []).forEach((sc: any) => {
-            subs.push({ CID: sc.CID || sc.id || '', name: sc.name || '', slug: sc.slug || '' });
+            subs.push({ CID: sc.CID || sc.id || '', name: sc.name || '', slug: sc.slug || '0' });
           });
         });
         setCats(mainCats);
@@ -121,9 +121,9 @@ export function CategoriesScreen() {
             {/* 主分类 */}
             {cats.length > 0 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
-                {cats.map((c) => (
+                {cats.map((c, ci) => (
                   <Pressable
-                    key={c.slug}
+                    key={c.slug + '-' + ci}
                     onPress={() => { setSlug(c.slug); setPage(1); }}
                     style={[styles.chip, slug === c.slug && styles.chipActive]}
                   >
@@ -136,9 +136,9 @@ export function CategoriesScreen() {
             {/* 子分类 */}
             {subCats.length > 0 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
-                {subCats.map((sc) => (
+                {subCats.map((sc, si) => (
                   <Pressable
-                    key={sc.slug || sc.CID}
+                    key={sc.slug + '-' + (sc.CID || si)}
                     onPress={() => { setSlug(sc.slug); setPage(1); }}
                     style={[styles.subChip, slug === sc.slug && styles.chipActive]}
                   >
