@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 const REPO = 'xiaoqi419/jmcomic-ios';
 
 const PROXIES = [
+  `https://api.github.com/repos/${REPO}/releases/latest`,
   `https://ghproxy.net/https://api.github.com/repos/${REPO}/releases/latest`,
   `https://ghproxy.com/https://api.github.com/repos/${REPO}/releases/latest`,
   `https://mirror.ghproxy.com/https://api.github.com/repos/${REPO}/releases/latest`,
@@ -13,7 +14,7 @@ const PROXIES = [
   `https://gh.api.99988866.xyz/https://api.github.com/repos/${REPO}/releases/latest`,
   `https://gitproxy.click/https://api.github.com/repos/${REPO}/releases/latest`,
   `https://github-proxy.linfeng.xyz/https://api.github.com/repos/${REPO}/releases/latest`,
-  `https://api.github.com/repos/${REPO}/releases/latest`,
+  `https://slink.ltd/https://api.github.com/repos/${REPO}/releases/latest`,
 ];
 
 export interface ReleaseInfo {
@@ -49,7 +50,7 @@ function compareVersions(a: string, b: string): number {
   return 0;
 }
 
-const FETCH_TIMEOUT = 15000;
+const FETCH_TIMEOUT = 8000;
 
 export async function checkForUpdate(currentVersion: string): Promise<CheckResult> {
   for (const url of PROXIES) {
@@ -57,13 +58,15 @@ export async function checkForUpdate(currentVersion: string): Promise<CheckResul
       const ctrl = new AbortController();
       const tid = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
       const res = await fetch(url, {
-        headers: { 'User-Agent': 'JOYComic-iOS/1.0' },
+        headers: { 'User-Agent': 'JOYComic-iOS/1.0', 'Accept': 'application/json' },
         signal: ctrl.signal,
       });
       clearTimeout(tid);
-      const ct = res.headers.get('content-type') || '';
-      if (!res.ok || !ct.includes('json')) continue;
-      const data: ReleaseInfo = await res.json();
+      if (!res.ok) continue;
+      // 手动读 text 再 parse（有些 proxy 返回非标准 content-type 但内容实为 json）
+      const text = await res.text();
+      let data: ReleaseInfo;
+      try { data = JSON.parse(text); } catch { continue; }
       if (!data.tag_name) continue;
 
       const latest = data.tag_name.replace(/^v/i, '');

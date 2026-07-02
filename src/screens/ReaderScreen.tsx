@@ -334,24 +334,6 @@ export function ReaderScreen() {
             <TouchableOpacity onPress={() => setVertical(!isVertical)}>
               <MaterialIcons name={isVertical ? 'view-carousel' : 'view-stream'} size={22} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                const prev = episodes[currentEpIdx - 1];
-                if (prev) switchChapter(prev.id, prev.name);
-              }}
-              disabled={currentEpIdx <= 0}
-            >
-              <MaterialIcons name="skip-previous" size={22} color={currentEpIdx > 0 ? '#fff' : '#555'} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                const next = episodes[currentEpIdx + 1];
-                if (next) switchChapter(next.id, next.name);
-              }}
-              disabled={currentEpIdx >= episodes.length - 1}
-            >
-              <MaterialIcons name="skip-next" size={22} color={currentEpIdx < episodes.length - 1 ? '#fff' : '#555'} />
-            </TouchableOpacity>
           </View>
         </SafeAreaView>
       )}
@@ -359,6 +341,39 @@ export function ReaderScreen() {
       {/* 底部栏 */}
       {showUI && (
         <SafeAreaView edges={['top']} style={styles.bottomBar}>
+          {/* 上/下一章 按钮 */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <TouchableOpacity
+              onPress={() => {
+                const prev = episodes[currentEpIdx - 1];
+                if (prev) switchChapter(prev.id, prev.name);
+              }}
+              disabled={currentEpIdx <= 0}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4 }}
+            >
+              <MaterialIcons name="skip-previous" size={20} color={currentEpIdx > 0 ? '#fff' : '#555'} />
+              <Text style={{ color: currentEpIdx > 0 ? '#fff' : '#555', fontSize: 12 }}>上一章</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setShowChapterModal(true)} style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }} numberOfLines={1}>
+                {chapterTitle || `第${currentEpIdx + 1}话`}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                const next = episodes[currentEpIdx + 1];
+                if (next) switchChapter(next.id, next.name);
+              }}
+              disabled={currentEpIdx >= episodes.length - 1}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4 }}
+            >
+              <Text style={{ color: currentEpIdx < episodes.length - 1 ? '#fff' : '#555', fontSize: 12 }}>下一章</Text>
+              <MaterialIcons name="skip-next" size={20} color={currentEpIdx < episodes.length - 1 ? '#fff' : '#555'} />
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.sliderContainer}>
             <Text style={styles.progressLabel}>1</Text>
             <View
