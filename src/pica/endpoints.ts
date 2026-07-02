@@ -10,6 +10,7 @@ import type {
   PicaEpsData,
   PicaPagesData,
   PicaUser,
+  PicaCategoriesData,
 } from './types';
 
 const PAGE_LIMIT = 20;
@@ -43,8 +44,8 @@ export function epPages(comicId: string, order: number, page = 1) {
 }
 
 // GET /categories — 分类列表
-export function categories() {
-  return c.get<{ categories: { title: string; thumb: any }[] }>('categories');
+export function picaCategories() {
+  return c.get<PicaCategoriesData>('categories');
 }
 
 // GET /comics — 分类筛选

@@ -83,6 +83,22 @@ export interface PicaPage {
   media: PicaPageMedia;
 }
 
+/** Pica 分类 */
+export interface PicaCategory {
+  _id: string;
+  title: string;
+  thumb: PicaThumb;
+  description?: string;
+  isWeb?: boolean;
+  active?: boolean;
+  link?: string;
+}
+
+/** 分类列表响应 */
+export interface PicaCategoriesData {
+  categories: PicaCategory[];
+}
+
 /** ===== API 响应数据包装 ===== */
 
 /** comics 列表响应 (来自 /comics, /comics/leaderboard 等) */
