@@ -137,13 +137,12 @@ export function CategoriesScreen() {
             {subCats.length > 0 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
                 {subCats.map((sc, si) => (
-                  <Pressable
+                  <View
                     key={sc.slug + '-' + (sc.CID || si)}
-                    onPress={() => { setSlug(sc.slug); setPage(1); }}
                     style={[styles.subChip, slug === sc.slug && styles.chipActive]}
                   >
                     <Text style={[styles.chipText, slug === sc.slug && styles.chipTextActive]}>{sc.name}</Text>
-                  </Pressable>
+                  </View>
                 ))}
               </ScrollView>
             )}
