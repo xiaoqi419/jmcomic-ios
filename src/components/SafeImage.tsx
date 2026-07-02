@@ -1,10 +1,9 @@
-// SafeImage - expo-file-system download -> base64 -> WebView Canvas
+// SafeImage - fetch -> ArrayBuffer -> base64 -> WebView Canvas
 // @author Jason
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
-import * as FileSystem from 'expo-file-system/legacy';
 import { buildDescrambleHtml, buildSimpleImageHtml, extractFilename } from '../utils/scramble';
 import { jmLogger } from '../utils/JmLogger';
 
@@ -26,13 +25,22 @@ const DL_HEADERS = {
   Accept: 'image/webp,image/apng,image/*,*/*;q=0.8',
 };
 
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunk = 8192;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
 async function urlToDataUri(url: string): Promise<string> {
   const ext = (url.split('.').pop() || 'webp').replace(/\?.*/, '');
-  const dest = FileSystem.cacheDirectory + 'jm_' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext;
-  const dl = await FileSystem.downloadAsync(url, dest, { headers: DL_HEADERS });
-  if (dl.status !== 200) throw new Error('Download ' + dl.status);
-  const b64 = await FileSystem.readAsStringAsync(dl.uri, { encoding: FileSystem.EncodingType.Base64 });
-  FileSystem.deleteAsync(dl.uri, { idempotent: true }).catch(() => {});
+  const resp = await fetch(url, { headers: DL_HEADERS });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const buf = await resp.arrayBuffer();
+  const b64 = arrayBufferToBase64(buf);
   return 'data:image/' + ext + ';base64,' + b64;
 }
 
