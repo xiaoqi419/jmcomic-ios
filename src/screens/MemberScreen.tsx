@@ -262,15 +262,18 @@ export function MemberScreen() {
           </Section>
         )}
 
-        {/* ===== 通知 ===== */}
+        {/* ===== 追更 / 通知 ===== */}
         {jmLoggedIn && notifications.length > 0 && (
-          <Section title={t('member.notifications')} icon="notifications">
-            {notifications.slice(0, 5).map((n) => (
+          <Section title={`追更 (${unread?.comic_follow || 0})`} icon="notifications">
+            {notifications.slice(0, 8).map((n) => (
               <View key={n.id} style={styles.notifItem}>
                 <Text style={styles.notifTitle}>{n.title}</Text>
                 <Text style={styles.notifContent} numberOfLines={2}>{n.content}</Text>
               </View>
             ))}
+            <Pressable onPress={() => loadNotifications()} style={{ marginTop: 6 }}>
+              <Text style={{ color: C.primary, fontSize: FontSize.label, textAlign: 'center' }}>刷新</Text>
+            </Pressable>
           </Section>
         )}
 

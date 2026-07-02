@@ -2,13 +2,15 @@
 // @author Jason
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLegacyColors, Radius, Spacing, FontSize } from '../theme';
 import { downloadManager, type DownloadItem } from '../utils/DownloadManager';
 
 export function DownloadListScreen() {
+  const nav = useNavigation<any>();
   const C = useLegacyColors();
   const styles = useMemo(() => getStyles(C), [C]);
   const [items, setItems] = useState<DownloadItem[]>([]);
@@ -38,6 +40,31 @@ export function DownloadListScreen() {
 
   const handleClearCompleted = useCallback(() => {
     downloadManager.clearCompleted();
+  }, []);
+
+  const handlePdfExport = useCallback(async (item: DownloadItem) => {
+    try {
+      const { Share } = await import('react-native');
+      // 使用 expo-print 生成 PDF（需先安装: npx expo install expo-print）
+      let Print: any;
+      try { Print = require('expo-print'); } catch {}
+      if (!Print) {
+        Alert.alert('提示', 'PDF导出需要安装 expo-print 模块\n请运行: npx expo install expo-print');
+        return;
+      }
+      const html = `
+        <html><body style="margin:0;padding:16px;font-family:sans-serif">
+          <h1 style="text-align:center">${item.title}</h1>
+          <p style="text-align:center;color:#888">漫画ID: ${item.comicId}</p>
+          <hr/>
+          <p>共 ${item.chapterCount || '?'} 章</p>
+          <p>下载完成时间: ${new Date(item.addedAt).toLocaleDateString()}</p>
+        </body></html>`;
+      const { uri } = await Print.printToFileAsync({ html });
+      await Share.share({ url: uri, title: `${item.title}.pdf` });
+    } catch (e: any) {
+      Alert.alert('导出失败', e.message || '未知错误');
+    }
   }, []);
 
   const stateIcon = (s: string) => {
@@ -75,7 +102,10 @@ export function DownloadListScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <View style={styles.item}>
+          <Pressable
+            onPress={item.status === 'completed' ? () => nav.navigate('ComicDetail', { albumId: item.comicId }) : undefined}
+            style={styles.item}
+          >
             <MaterialIcons name={stateIcon(item.status) as any} size={24} color={stateColor(item.status)} />
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.itemTitle} numberOfLines={1}>{item.title}</Text>
@@ -89,6 +119,19 @@ export function DownloadListScreen() {
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 4 }}>
+              {item.status === 'completed' && (
+                <>
+                  <Pressable onPress={() => nav.navigate('ComicDetail', { albumId: item.comicId })} hitSlop={8} style={styles.actionBtn}>
+                    <MaterialIcons name="visibility" size={20} color={C.primary} />
+                  </Pressable>
+                  <Pressable onPress={() => handlePdfExport(item)} hitSlop={8} style={styles.actionBtn}>
+                    <MaterialIcons name="picture-as-pdf" size={20} color={C.error} />
+                  </Pressable>
+                  <Pressable onPress={() => handleRemove(item.comicId)} hitSlop={8} style={styles.actionBtn}>
+                    <MaterialIcons name="delete-outline" size={20} color={C.error} />
+                  </Pressable>
+                </>
+              )}
               {item.status === 'paused' && (
                 <Pressable onPress={() => handleResume(item)} hitSlop={8} style={styles.actionBtn}>
                   <MaterialIcons name="play-arrow" size={20} color={C.primary} />
@@ -99,13 +142,13 @@ export function DownloadListScreen() {
                   <MaterialIcons name="pause" size={20} color={C.textTertiary} />
                 </Pressable>
               )}
-              {(item.status === 'completed' || item.status === 'failed') && (
+              {item.status === 'failed' && (
                 <Pressable onPress={() => handleRemove(item.comicId)} hitSlop={8} style={styles.actionBtn}>
                   <MaterialIcons name="delete-outline" size={20} color={C.error} />
                 </Pressable>
               )}
             </View>
-          </View>
+          </Pressable>
         )}
         ListEmptyComponent={
           <View style={{ alignItems: 'center', marginTop: 80 }}>
