@@ -14,7 +14,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLegacyColors, LegacyColors, Spacing, FontSize, Radius } from '../theme';
-import { ComicCard } from '../components/ComicCard';
 import { fetchHotTags, fetchRandomRecommend, searchComics, getCoverUrl as getCover } from '../api/endpoints';
 import { jmLogger } from '../utils/JmLogger';
 import type { SourceItem } from '../sources/types';
@@ -101,8 +100,9 @@ export function SearchScreen() {
         jmLogger.log(`搜索: 解析 JM 结果 count=${content.length}`);
         jmLogger.log(`搜索: content[0] keys=${content[0] ? Object.keys(content[0]).join(',') : 'NO_ITEM'}`);
         const jmItems: SourceItem[] = [];
-        for (const c of content) {
+        for (const raw of content) {
           try {
+            const c: any = raw;
             const id = String(c.id || c.album_id || '');
             const title = c.name || c.title || '';
             const author = c.author?.name || (typeof c.author === 'string' ? c.author : '');
@@ -190,17 +190,26 @@ export function SearchScreen() {
   };
 
   const renderResultItem = ({ item }: { item: SourceItem }) => (
-    <View style={styles.cardWrapper}>
-      <ComicCard
-        id={item.id}
-        title={item.title}
-        coverUrl={item.coverUrl}
-        onPress={() => openDetail(item)}
-      />
-      <View style={[styles.sourceBadge, { backgroundColor: item.source === 'pica' ? '#9B59B6' : C.primary }]}>
-        <Text style={styles.sourceBadgeText}>{item.source === 'pica' ? 'Pica' : 'JM'}</Text>
+    <Pressable
+      onPress={() => openDetail(item)}
+      style={({ pressed }) => [styles.hCard, pressed && { opacity: 0.85 }]}
+    >
+      <Image source={{ uri: item.coverUrl }} style={styles.hCover} contentFit="cover" />
+      <View style={styles.hInfo}>
+        <Text style={styles.hTitle} numberOfLines={2}>{item.title}</Text>
+        {item.author ? <Text style={styles.hAuthor} numberOfLines={1}>{item.author}</Text> : null}
+        {item.categories && item.categories.length > 0 && (
+          <View style={styles.hTagRow}>
+            {item.categories.slice(0, 4).map((tag, i) => (
+              <Text key={i} style={styles.hTag}>{tag}</Text>
+            ))}
+          </View>
+        )}
+        <View style={[styles.sourceBadge, { backgroundColor: item.source === 'pica' ? '#9B59B6' : C.primary }]}>
+          <Text style={styles.sourceBadgeText}>{item.source === 'pica' ? 'Pica' : 'JM'}</Text>
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
 
   return (
@@ -373,10 +382,20 @@ function getStyles(C: LegacyColors) {
       fontSize: FontSize.label, color: C.textPrimary,
       marginTop: 6, fontWeight: '500',
     },
-    cardWrapper: { width: '100%', marginBottom: 8 },
+    hCard: {
+      flexDirection: 'row', marginBottom: 12,
+      backgroundColor: C.surface, borderRadius: Radius.card,
+      overflow: 'hidden',
+    },
+    hCover: { width: 90, height: 130, backgroundColor: C.surfaceContainer },
+    hInfo: { flex: 1, padding: 10, justifyContent: 'space-between' },
+    hTitle: { fontSize: FontSize.body, fontWeight: '700', color: C.textPrimary, lineHeight: 20 },
+    hAuthor: { fontSize: FontSize.caption, color: C.textSecondary, marginTop: 2 },
+    hTagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
+    hTag: { fontSize: 10, color: C.textTertiary, backgroundColor: C.surfaceContainer, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden' },
     sourceBadge: {
-      position: 'absolute', top: 6, left: 6,
-      paddingHorizontal: 6, paddingVertical: 2,
+      alignSelf: 'flex-start',
+      paddingHorizontal: 8, paddingVertical: 3,
       borderRadius: 4,
     },
     sourceBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
