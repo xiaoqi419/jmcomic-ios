@@ -169,6 +169,7 @@ export function SearchScreen() {
       AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory));
     }
     setLoading(false);
+    searchingRef.current = false;
   }, [sort, history]);
 
   const onSearch = () => { setPage(1); doSearch(query, 1, true); };
@@ -188,18 +189,33 @@ export function SearchScreen() {
     }
   };
 
+  const renderResultItem = ({ item }: { item: SourceItem }) => (
+    <View style={styles.cardWrapper}>
+      <ComicCard
+        id={item.id}
+        title={item.title}
+        coverUrl={item.coverUrl}
+        onPress={() => openDetail(item)}
+      />
+      <View style={[styles.sourceBadge, { backgroundColor: item.source === 'pica' ? '#9B59B6' : C.primary }]}>
+        <Text style={styles.sourceBadgeText}>{item.source === 'pica' ? 'Pica' : 'JM'}</Text>
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView edges={["top"]} style={styles.cont}>
       <StatusBar style="light" />
       <FlatList
-        data={results}
+        data={searched ? results : []}
         keyExtractor={(i) => `${i.source}:${i.id}`}
-        numColumns={1}
+        numColumns={3}
         contentContainerStyle={{ paddingHorizontal: Spacing.marginEdge, paddingBottom: 100 }}
+        columnWrapperStyle={styles.columnWrapper}
         refreshControl={<RefreshControl refreshing={false} onRefresh={() => {}} tintColor={C.primary} />}
-        onEndReached={loadMore}
+        onEndReached={searched ? loadMore : undefined}
         onEndReachedThreshold={0.3}
-        renderItem={() => null}
+        renderItem={renderResultItem}
         ListHeaderComponent={
           <View style={{ paddingTop: 8 }}>
             <View style={styles.searchWrap}>
@@ -215,7 +231,7 @@ export function SearchScreen() {
                 returnKeyType="search"
               />
               {query.length > 0 && (
-                <Pressable onPress={() => { setQuery(''); setSearched(false); setResults([]); setJmResults([]); setPicaResults([]); }} hitSlop={8}>
+                <Pressable onPress={() => { setQuery(''); setSearched(false); setResults([]); }} hitSlop={8}>
                   <MaterialIcons name="close" size={18} color={C.textTertiary} style={{ marginRight: 10 }} />
                 </Pressable>
               )}
@@ -309,31 +325,12 @@ export function SearchScreen() {
               </View>
             )}
 
-            {searched && results.length > 0 && (
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-                {/* JM 列 */}
-                <View style={{ flex: 1 }}>
-                  <View style={[styles.columnHeader, { backgroundColor: C.primary }]}>
-                    <Text style={styles.columnHeaderText}>JM ({jmResults.length})</Text>
-                  </View>
-                  {jmResults.map((item) => (
-                    <ComicCard key={`jm:${item.id}`} id={item.id} title={item.title} coverUrl={item.coverUrl} onPress={() => openDetail(item)} />
-                  ))}
-                </View>
-                {/* Pica 列 */}
-                <View style={{ flex: 1 }}>
-                  <View style={[styles.columnHeader, { backgroundColor: '#9B59B6' }]}>
-                    <Text style={styles.columnHeaderText}>Pica ({picaResults.length})</Text>
-                  </View>
-                  {picaResults.map((item) => (
-                    <ComicCard key={`pica:${item.id}`} id={item.id} title={item.title} coverUrl={item.coverUrl} onPress={() => openDetail(item)} />
-                  ))}
-                </View>
-              </View>
+            {searched && loading && (
+              <ActivityIndicator style={{ padding: 20 }} color={C.primary} />
             )}
           </View>
         }
-        ListFooterComponent={loading ? <ActivityIndicator style={{ padding: 20 }} color={C.primary} /> : null}
+        ListEmptyComponent={!loading && searched ? null : <View style={{ height: 1 }} />}
         keyboardShouldPersistTaps="handled"
       />
     </SafeAreaView>
@@ -377,18 +374,13 @@ function getStyles(C: LegacyColors) {
       fontSize: FontSize.label, color: C.textPrimary,
       marginTop: 6, fontWeight: '500',
     },
-    columnHeader: {
-      paddingVertical: 6, paddingHorizontal: 10,
-      borderRadius: Radius.chip, marginBottom: 8,
-      alignItems: 'center',
-    },
-    columnHeaderText: { color: '#fff', fontWeight: '700', fontSize: FontSize.label },
-    cardWrap: { position: 'relative', width: (W - 32 - 20) / 3 },
-    badge: {
+    columnWrapper: { gap: 8, justifyContent: 'flex-start' },
+    cardWrapper: { width: (W - Spacing.marginEdge * 2 - 16) / 3, marginBottom: 12 },
+    sourceBadge: {
       position: 'absolute', top: 6, left: 6,
       paddingHorizontal: 6, paddingVertical: 2,
       borderRadius: 4,
     },
-    badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+    sourceBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
   });
 }
