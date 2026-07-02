@@ -314,7 +314,7 @@ export function SearchScreen() {
                       {hotTags.slice(0, 15).map((tag) => (
                         <Pressable
                           key={tag}
-                          onPress={() => { setQuery(tag); setTimeout(onSearch, 100); }}
+                          onPress={() => doSearch(tag, 1, true)}
                           style={styles.tag}
                         >
                           <Text style={styles.tagText}>{tag}</Text>
@@ -335,7 +335,7 @@ export function SearchScreen() {
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {history.map((h) => (
                         <View key={h} style={styles.historyChip}>
-                          <Pressable onPress={() => { setQuery(h); setTimeout(onSearch, 100); }}>
+                          <Pressable onPress={() => doSearch(h, 1, true)}>
                             <Text style={styles.tagText}>{h}</Text>
                           </Pressable>
                           <Pressable onPress={() => {

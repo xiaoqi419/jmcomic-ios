@@ -8,7 +8,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useLegacyColors, LegacyColors, Spacing, FontSize, Radius } from '../theme';
 import { ComicCard } from '../components/ComicCard';
-import { fetchCategoriesFilter, fetchCategories, fetchHotTags, getCoverUrl as getCover } from '../api/endpoints';
+import { fetchCategoriesFilter, fetchCategories, fetchHotTags, getCoverUrl as getCover, fetchMoreList } from '../api/endpoints';
 import type { ComicItem } from '../api/types';
 
 const SORTS = [
@@ -45,6 +45,7 @@ export function CategoriesScreen() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [hotTags, setHotTags] = useState<string[]>([]);
+  const [filterType, setFilterType] = useState<'cat' | 'more'>('cat');
 
   // 加载分类列表
   useEffect(() => {
@@ -77,20 +78,29 @@ export function CategoriesScreen() {
 
   const load = useCallback(async (p: number, refresh = false) => {
     try {
-      const params: any = { page: p, o: sort };
-      if (slug) params.c = slug;
-      const data = await fetchCategoriesFilter(params);
-      const items = data.content || data.list || [];
+      let items: ComicItem[] = [];
+      let total = 0;
+      if (filterType === 'more') {
+        const data = await fetchMoreList(slug, p);
+        items = data.list || [];
+        total = parseInt(String(data.total)) || 0;
+      } else {
+        const params: any = { page: p, o: sort };
+        if (slug) params.c = slug;
+        const data = await fetchCategoriesFilter(params);
+        items = data.content || data.list || [];
+        total = parseInt(String(data.total)) || 0;
+      }
       if (refresh || p === 1) setList(items);
       else setList((prev) => [...prev, ...items]);
       setHasMore(items.length >= 30);
     } catch {}
-  }, [slug, sort]);
+  }, [slug, sort, filterType]);
 
   useEffect(() => {
     setLoading(true);
     load(1, true).finally(() => setLoading(false));
-  }, [slug, sort]);
+  }, [slug, sort, filterType]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -124,7 +134,7 @@ export function CategoriesScreen() {
                 {cats.map((c, ci) => (
                   <Pressable
                     key={c.slug + '-' + ci}
-                    onPress={() => { setSlug(c.slug); setPage(1); }}
+                    onPress={() => { setSlug(c.slug); setFilterType('cat'); setPage(1); }}
                     style={[styles.chip, slug === c.slug && styles.chipActive]}
                   >
                     <Text style={[styles.chipText, slug === c.slug && styles.chipTextActive]}>{c.name}</Text>
@@ -137,12 +147,13 @@ export function CategoriesScreen() {
             {subCats.length > 0 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
                 {subCats.map((sc, si) => (
-                  <View
+                  <Pressable
                     key={sc.slug + '-' + (sc.CID || si)}
+                    onPress={() => { setSlug(sc.slug); setFilterType('more'); setPage(1); }}
                     style={[styles.subChip, slug === sc.slug && styles.chipActive]}
                   >
                     <Text style={[styles.chipText, slug === sc.slug && styles.chipTextActive]}>{sc.name}</Text>
-                  </View>
+                  </Pressable>
                 ))}
               </ScrollView>
             )}
