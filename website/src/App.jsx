@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 
 const APP_VERSION = '1.0.0';
@@ -14,15 +14,21 @@ const FEATURES = [
   { icon: 'moon', title: '深色主题', desc: 'Material 3 设计，护眼暗色模式' },
 ];
 
-const CHANGELOG = [
-  { version: '1.1.0', date: '2025-07', items: ['收藏夹系统：新建/管理文件夹', '评论无限滚动加载', '详情页封面比例优化', '继续阅读跳转详情页', '阅读进度实时记录', '预加载页数可配置'] },
-  { version: '1.0.0', date: '2025-06', items: ['🎉 JOYComic 首个正式版发布', 'JMComic + Pica 双源聚合', '漫画阅读器（竖滑+分页）', '搜索、分类、周榜', '登录/注册/签到/成就', '下载管理器'] },
-];
-
 function App() {
+  const [page, setPage] = useState('home');
+
+  return (
+    <div className="app">
+      <Nav onNavigate={setPage} currentPage={page} />
+      {page === 'home' && <HomePage onDownload={() => setPage('download')} />}
+      {page === 'history' && <HistoryPage />}
+    </div>
+  );
+}
+
+/* ===== Nav ===== */
+function Nav({ onNavigate, currentPage }) {
   const [scrolled, setScrolled] = useState(false);
-  const featuresRef = useRef(null);
-  const downloadRef = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -30,22 +36,31 @@ function App() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  return (
+    <nav className={`nav ${scrolled ? 'nav-scrolled' : ''}`}>
+      <div className="nav-inner">
+        <button onClick={() => onNavigate('home')} className="nav-logo" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+          JOYComic
+        </button>
+        <div className="nav-links">
+          <button onClick={() => onNavigate('home')} className={currentPage === 'home' ? 'nav-active' : ''}>首页</button>
+          <button onClick={() => onNavigate('history')} className={currentPage === 'history' ? 'nav-active' : ''}>Git 历史</button>
+          <a href="https://github.com/xiaoqi419/jmcomic-ios" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+/* ===== Home Page ===== */
+function HomePage({ onDownload }) {
+  const featuresRef = useRef(null);
+  const downloadRef = useRef(null);
+
   const scrollTo = (ref) => ref.current?.scrollIntoView({ behavior: 'smooth' });
 
   return (
-    <div className="app">
-      {/* Nav */}
-      <nav className={`nav ${scrolled ? 'nav-scrolled' : ''}`}>
-        <div className="nav-inner">
-          <span className="nav-logo">JOYComic</span>
-          <div className="nav-links">
-            <button onClick={() => scrollTo(featuresRef)}>功能</button>
-            <button onClick={() => scrollTo(downloadRef)}>下载</button>
-            <a href="https://github.com/xiaoqi419/jmcomic-ios" target="_blank" rel="noreferrer">GitHub</a>
-          </div>
-        </div>
-      </nav>
-
+    <>
       {/* Hero */}
       <section className="hero">
         <div className="hero-bg" />
@@ -54,9 +69,7 @@ function App() {
           <h1 className="hero-title">
             <span className="hero-gradient">JOYComic</span>
           </h1>
-          <p className="hero-subtitle">
-            聚合双源 · 畅享漫画 · 全功能 iOS 客户端
-          </p>
+          <p className="hero-subtitle">聚合双源 · 畅享漫画 · 全功能 iOS 客户端</p>
           <p className="hero-desc">
             基于 Expo/React Native 构建，Material 3 设计，支持 JMComic + Pica 双数据源聚合搜索，
             竖滑/分页双模式阅读器，智能图片去混淆，离线下载，文件夹管理……
@@ -145,7 +158,7 @@ function App() {
           <p>选择你的平台，开始畅快阅读</p>
         </div>
         <div className="download-cards">
-          <div className="download-card featured">
+          <div className="download-card featured" style={{ maxWidth: 320 }}>
             <div className="download-badge">推荐</div>
             <div className="download-icon">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
@@ -160,7 +173,7 @@ function App() {
               下载 IPA
             </a>
           </div>
-          <div className="download-card">
+          <div className="download-card" style={{ maxWidth: 320 }}>
             <div className="download-icon">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
             </div>
@@ -180,33 +193,6 @@ function App() {
         </p>
       </section>
 
-      {/* Changelog */}
-      <section className="changelog">
-        <div className="section-header">
-          <span className="section-tag">更新</span>
-          <h2>版本历史</h2>
-          <p>持续迭代，不断进步</p>
-        </div>
-        <div className="changelog-timeline">
-          {CHANGELOG.map((log, i) => (
-            <div key={i} className="changelog-item">
-              <div className="changelog-dot" />
-              <div className="changelog-content">
-                <div className="changelog-header">
-                  <span className="changelog-version">v{log.version}</span>
-                  <span className="changelog-date">{log.date}</span>
-                </div>
-                <ul>
-                  {log.items.map((item, j) => (
-                    <li key={j}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="footer">
         <div className="footer-inner">
@@ -221,7 +207,97 @@ function App() {
           <p className="footer-copy">© 2025 JOYComic. 仅供学习研究使用。</p>
         </div>
       </footer>
-    </div>
+    </>
+  );
+}
+
+/* ===== Git History Page ===== */
+function HistoryPage() {
+  const [commits, setCommits] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchCommits = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const PROXIES = [
+      `https://api.github.com/repos/xiaoqi419/jmcomic-ios/commits?per_page=50`,
+      `https://ghproxy.net/https://api.github.com/repos/xiaoqi419/jmcomic-ios/commits?per_page=50`,
+      `https://mirror.ghproxy.com/https://api.github.com/repos/xiaoqi419/jmcomic-ios/commits?per_page=50`,
+    ];
+    for (const url of PROXIES) {
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 8000);
+        const res = await fetch(url, {
+          headers: { 'User-Agent': 'JOYComic-Site/1.0', 'Accept': 'application/vnd.github.v3+json' },
+          signal: ctrl.signal,
+        });
+        clearTimeout(tid);
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setCommits(data);
+          setLoading(false);
+          return;
+        }
+      } catch {}
+    }
+    setError('无法连接到 GitHub，请稍后重试');
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchCommits(); }, [fetchCommits]);
+
+  const formatDate = (iso) => {
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  return (
+    <section className="history-page">
+      <div className="section-header">
+        <span className="section-tag">Git 历史</span>
+        <h2>提交记录</h2>
+        <p>从 GitHub API 实时获取</p>
+      </div>
+
+      {loading && (
+        <div className="history-loading">
+          <div className="spinner" />
+          <p>正在获取提交记录…</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="history-error">
+          <p>{error}</p>
+          <button onClick={fetchCommits} className="btn-primary" style={{ marginTop: 16 }}>重试</button>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="history-timeline">
+          {/* <div className="history-total">共 {commits.length} 条提交</div> */}
+          {commits.map((c, i) => (
+            <div key={c.sha} className="history-item" style={{ '--i': i }}>
+              <div className="history-dot" />
+              <div className="history-content">
+                <div className="history-header">
+                  <a href={c.html_url} target="_blank" rel="noreferrer" className="history-sha">#{c.sha.slice(0, 7)}</a>
+                  <span className="history-date">{formatDate(c.commit.committer.date)}</span>
+                </div>
+                <p className="history-msg">{c.commit.message.split('\n')[0]}</p>
+                <div className="history-author">
+                  <img src={c.author?.avatar_url || ''} alt="" className="history-avatar" />
+                  <span>{c.commit.author.name}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
