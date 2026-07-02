@@ -99,14 +99,27 @@ export function SearchScreen() {
       } else {
         const content = jmRes.content || [];
         jmLogger.log(`搜索: 解析 JM 结果 count=${content.length}`);
-        const jmItems: SourceItem[] = content.map((c: any) => ({
-          id: String(c.id || c.album_id),
-          title: c.name || c.title || '',
-          author: c.author?.name || (typeof c.author === 'string' ? c.author : ''),
-          coverUrl: getCover(String(c.id)),
-          categories: (c.tags || c.category || c.category_sub || []).map((t: any) => typeof t === 'string' ? t : t.name || t.tag || ''),
-          source: 'jmcomic' as const,
-        }));
+        jmLogger.log(`搜索: content[0] keys=${content[0] ? Object.keys(content[0]).join(',') : 'NO_ITEM'}`);
+        const jmItems: SourceItem[] = [];
+        for (const c of content) {
+          try {
+            const id = String(c.id || c.album_id || '');
+            const title = c.name || c.title || '';
+            const author = c.author?.name || (typeof c.author === 'string' ? c.author : '');
+            const coverUrl = getCover(id);
+            const catRaw = c.tags || c.category || c.category_sub || [];
+            jmLogger.log(`搜索: item id=${id} title=${title} tagsType=${typeof catRaw} isArray=${Array.isArray(catRaw)}`);
+            let categories: string[] = [];
+            if (Array.isArray(catRaw)) {
+              categories = catRaw.map((t: any) => typeof t === 'string' ? t : (t.name || t.tag || String(t)));
+            } else if (typeof catRaw === 'object' && catRaw !== null) {
+              categories = Object.values(catRaw).filter(Boolean).map(String);
+            }
+            jmItems.push({ id, title, author, coverUrl, categories, source: 'jmcomic' as const });
+          } catch (itemErr: any) {
+            jmLogger.err(`搜索: 处理 item 失败: ${itemErr?.message || itemErr}`);
+          }
+        }
 
         let picaItems: SourceItem[] = [];
         if (picaAuthed) {

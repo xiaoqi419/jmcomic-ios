@@ -290,6 +290,7 @@ export function WeekRankScreen() {
         <Pressable style={css.modalOverlay} onPress={() => setShowCategoryModal(false)}>
           <View style={[css.modalContent, { backgroundColor: colors.surface }]}>
             <Text style={[css.modalTitle, { color: colors.onSurface }]}>选择分类</Text>
+            <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator>
             {meta?.categories.map((cat) => {
               const active = cat.id === categoryId;
               return (
@@ -309,10 +310,11 @@ export function WeekRankScreen() {
                   >
                     {cat.title}
                   </Text>
-                  {active && <Text style={{ color: colors.primary }}>✓</Text>}
+              {active && <Text style={{ color: colors.primary }}>✓</Text>}
                 </Pressable>
               );
             })}
+            </ScrollView>
           </View>
         </Pressable>
       </Modal>
