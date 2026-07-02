@@ -85,11 +85,11 @@ export function SearchScreen() {
 
     let agg: { items: SourceItem[]; total: number; redirect_aid?: string };
 
-    try {
-      jmLogger.log(`搜索: 检查 isPicaEnabled`);
-      const picaAuthed = isPicaEnabled();
-      jmLogger.log(`搜索: isPicaEnabled=${picaAuthed}`);
+    jmLogger.log(`搜索: 检查 isPicaEnabled`);
+    const picaAuthed = isPicaEnabled();
+    jmLogger.log(`搜索: isPicaEnabled=${picaAuthed}`);
 
+    try {
       jmLogger.log(`搜索: 调 searchComics q=${q} p=${p} sort=${sort}`);
       const jmRes = await searchComics({ search_query: q, page: p, o: sort });
       jmLogger.log(`搜索: searchComics 返回 keys=${Object.keys(jmRes).join(',')}`);
@@ -116,45 +116,44 @@ export function SearchScreen() {
             jmLogger.log(`搜索: pica 返回 items=${picaRes.items.length}`);
             picaItems = picaRes.items;
           } catch (pe) {
-            jmLogger.err(`搜索: pica 失败 ${pe?.message || pe}`);
+            jmLogger.err(`搜索: pica 失败 ${(pe as any)?.message || pe}`);
           }
         }
         agg = { items: [...jmItems, ...picaItems], total: jmItems.length + picaItems.length };
       }
     } catch (e) {
-      jmLogger.err(`搜索内联失败: ${e?.message || e} stack=${(e?.stack || '').slice(0, 300)}`);
+      const err = e as any;
+      jmLogger.err(`搜索内联失败: ${err?.message || e} stack=${(err?.stack || '').slice(0, 300)}`);
       agg = { items: [], total: 0 };
     }
+
     jmLogger.log(`搜索: 聚合结果 items=${agg.items.length} total=${agg.total} redirect=${agg.redirect_aid}`);
 
-      // 重定向到详情
-      if (agg.redirect_aid) {
-        nav.navigate('ComicDetail', { albumId: agg.redirect_aid });
-        setLoading(false);
-        return;
-      }
+    // 重定向到详情
+    if (agg.redirect_aid) {
+      nav.navigate('ComicDetail', { albumId: agg.redirect_aid });
+      setLoading(false);
+      return;
+    }
 
-      if (refresh || p === 1) {
-        setResults(agg.items);
-        setJmResults(agg.items.filter((i) => i.source === 'jmcomic'));
-        setPicaResults(agg.items.filter((i) => i.source === 'pica'));
-      } else {
-        setResults((prev) => [...prev, ...agg.items]);
-        setJmResults((prev) => [...prev, ...agg.items.filter((i) => i.source === 'jmcomic')]);
-        setPicaResults((prev) => [...prev, ...agg.items.filter((i) => i.source === 'pica')]);
-      }
+    if (refresh || p === 1) {
+      setResults(agg.items);
+      setJmResults(agg.items.filter((i) => i.source === 'jmcomic'));
+      setPicaResults(agg.items.filter((i) => i.source === 'pica'));
+    } else {
+      setResults((prev) => [...prev, ...agg.items]);
+      setJmResults((prev) => [...prev, ...agg.items.filter((i) => i.source === 'jmcomic')]);
+      setPicaResults((prev) => [...prev, ...agg.items.filter((i) => i.source === 'pica')]);
+    }
 
-      setHasMore(agg.items.length >= 20);
-      setSearched(true);
+    setHasMore(agg.items.length >= 20);
+    setSearched(true);
 
-      // 写入历史
-      if (p === 1) {
-        const newHistory = [q, ...history.filter((h) => h !== q)].slice(0, 20);
-        setHistory(newHistory);
-        AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory));
-      }
-    } catch (e) {
-      jmLogger.err(`搜索: 异常 ${e?.message || e}`);
+    // 写入历史
+    if (p === 1) {
+      const newHistory = [q, ...history.filter((h) => h !== q)].slice(0, 20);
+      setHistory(newHistory);
+      AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory));
     }
     setLoading(false);
   }, [sort, history]);
