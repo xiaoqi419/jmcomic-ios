@@ -41,6 +41,7 @@ import { ComicCommentScreen } from './src/screens/ComicCommentScreen';
 import { RegisterScreen, ForgotPasswordScreen } from './src/screens/AuthScreens';
 import { PicaDetailScreen } from './src/screens/PicaDetailScreen';
 import { PicaReaderScreen } from './src/screens/PicaReaderScreen';
+import { AboutScreen } from './src/screens/AboutScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -157,6 +158,8 @@ function AppInner() {
           options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen}
           options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="About" component={AboutScreen}
+          options={{ title: '关于', headerBackTitle: '返回' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

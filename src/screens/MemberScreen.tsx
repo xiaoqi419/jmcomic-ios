@@ -322,7 +322,14 @@ export function MemberScreen() {
               <Text style={[styles.toggleText, showDebugLog && styles.toggleTextActive]}>{showDebugLog ? '开启' : '关闭'}</Text>
             </Pressable>
           } />
-          <Row label={t('member.about')} right={<Text style={styles.rowValue}>v1.0.0</Text>} />
+          <Pressable onPress={() => nav.navigate('About')}>
+            <Row label={t('member.about')} right={
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={styles.rowValue}>v1.0.0</Text>
+                <MaterialIcons name="chevron-right" size={20} color={C.textTertiary} />
+              </View>
+            } />
+          </Pressable>
         </Section>
       </ScrollView>
     </SafeAreaView>
