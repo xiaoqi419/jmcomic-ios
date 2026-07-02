@@ -1,10 +1,10 @@
-// 收藏库 v2
-// @author nyx
+// 收藏库 v2 — 支持 JM + Pica 双源，收藏/喜欢双类型
+// @author Jason
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { View, Text, FlatList, Pressable, StyleSheet, ScrollView, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -12,23 +12,37 @@ import { useLegacyColors, LegacyColors, Radius, Spacing, FontSize, Shadow } from
 import { useAuthStore } from '../store/useAuth';
 import { useFavoritesStore } from '../store/useFavorites';
 import { fetchFavorites, getCoverUrl as getCover } from '../api/endpoints';
+import { myFavourites, myLikes } from '../pica/endpoints';
 import type { FavoriteItem, FavoriteFolder } from '../api/types';
+import type { PicaComic } from '../pica/types';
+
+type LibraryParams = {
+  source?: 'jm' | 'pica';
+  type?: 'favorite' | 'like';
+};
 
 export function LibraryScreen() {
   const nav = useNavigation<any>();
+  const route = useRoute<RouteProp<{ Library: LibraryParams }, 'Library'>>();
+  const source = route.params?.source || 'jm';
+  const type = route.params?.type || 'favorite';
   const { t } = useTranslation();
   const C = useLegacyColors();
   const styles = useMemo(() => getStyles(C), [C]);
   const { loggedIn } = useAuthStore();
   const { local, loadLocal } = useFavoritesStore();
-  const [online, setOnline] = useState<FavoriteItem[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [folders, setFolders] = useState<FavoriteFolder[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const title = source === 'pica'
+    ? (type === 'like' ? 'Pica 喜欢' : 'Pica 收藏')
+    : (type === 'like' ? '我的喜欢' : '我的收藏');
+
   const loadData = useCallback(async (silent = false) => {
-    if (!loggedIn) {
+    if (!loggedIn && source === 'jm') {
       if (!silent) {
         Alert.alert('提示', '请先登录后再查看收藏', [
           { text: '取消', onPress: () => nav.goBack() },
@@ -38,20 +52,29 @@ export function LibraryScreen() {
       if (!silent) setLoading(false);
       return;
     }
-    loadLocal();
+
+    if (source === 'jm') loadLocal();
+
     try {
-      const d = await fetchFavorites();
-      setOnline(d.list || []);
-      setFolders(d.folder_list || []);
-      setTotal(parseInt(d.total) || 0);
+      if (source === 'pica') {
+        const d = type === 'like' ? await myLikes() : await myFavourites();
+        setItems(d.docs || []);
+        setTotal(d.total || d.docs?.length || 0);
+      } else {
+        const o = type === 'like' ? 'ml' : 'mr';
+        const d = await fetchFavorites({ o });
+        setItems(d.list || []);
+        setFolders(d.folder_list || []);
+        setTotal(parseInt(d.total) || 0);
+      }
     } catch {}
     if (!silent) setLoading(false);
-  }, [loggedIn, loadLocal, nav]);
+  }, [loggedIn, source, type, loadLocal, nav]);
 
   useEffect(() => {
     setLoading(true);
     loadData();
-  }, [loggedIn]);
+  }, [loggedIn, source, type]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -59,22 +82,22 @@ export function LibraryScreen() {
     setRefreshing(false);
   }, [loadData]);
 
-  const items: any[] = loggedIn && online.length > 0 ? online : local;
+  const displayItems: any[] = source === 'jm' && items.length === 0 ? local : items;
 
   return (
     <SafeAreaView edges={["top"]} style={styles.cont}>
       <FlatList
-        data={items}
-        keyExtractor={(i) => i.id}
+        data={displayItems}
+        keyExtractor={(i) => i.id || i._id}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} colors={[C.primary]} />}
         contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}
         ListHeaderComponent={
           <View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <Text style={styles.title}>{t('library.title')}</Text>
-              <Text style={styles.total}>{t('library.total', { n: total || items.length })}</Text>
+              <Text style={styles.title}>{title}</Text>
+              <Text style={styles.total}>{t('library.total', { n: total || displayItems.length })}</Text>
             </View>
-            {folders.length > 0 && (
+            {source === 'jm' && type === 'favorite' && folders.length > 0 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
                 {folders.map((f) => (
                   <Pressable key={f.FID} style={styles.folderChip}>
@@ -86,23 +109,37 @@ export function LibraryScreen() {
             )}
           </View>
         }
-        renderItem={({ item }) => (
-          <Pressable onPress={() => nav.navigate('ComicDetail', { albumId: item.id })} style={styles.item}>
-            <Image
-              source={{ uri: (item as any).image || (item as any).coverUrl || getCover(item.id) }}
-              style={styles.itemCover}
-              contentFit="cover"
-            />
-            <View style={{ flex: 1, marginLeft: 12, justifyContent: 'center' }}>
-              <Text style={styles.itemTitle} numberOfLines={2}>{(item as any).name || (item as any).title}</Text>
-              {(item as any).author && <Text style={styles.itemAuthor}>{(item as any).author}</Text>}
-            </View>
-          </Pressable>
-        )}
+        renderItem={({ item }) => {
+          const isPica = source === 'pica';
+          const comicId = isPica ? (item as PicaComic)._id : (item as FavoriteItem).id;
+          const coverUrl = isPica
+            ? (item as PicaComic).thumb?.fileServer?.replace('picacomic', 'go2778') + '/static/' + (item as PicaComic).thumb?.path
+            : (item as any).image || getCover(comicId);
+          return (
+            <Pressable
+              onPress={() => nav.navigate(isPica ? 'PicaDetail' : 'ComicDetail', { albumId: comicId })}
+              style={styles.item}
+            >
+              <Image
+                source={{ uri: coverUrl }}
+                style={styles.itemCover}
+                contentFit="cover"
+              />
+              <View style={{ flex: 1, marginLeft: 12, justifyContent: 'center' }}>
+                <Text style={styles.itemTitle} numberOfLines={2}>
+                  {isPica ? (item as PicaComic).title : (item as any).name || (item as any).title}
+                </Text>
+                {(item as any).author && <Text style={styles.itemAuthor}>{(item as any).author}</Text>}
+              </View>
+            </Pressable>
+          );
+        }}
         ListEmptyComponent={
           <View style={{ alignItems: 'center', marginTop: 80 }}>
             <MaterialIcons name="bookmark-border" size={48} color={C.textTertiary} />
-            <Text style={{ color: C.textSecondary, marginTop: 12, fontSize: FontSize.body }}>{t('library.empty')}</Text>
+            <Text style={{ color: C.textSecondary, marginTop: 12, fontSize: FontSize.body }}>
+              {source === 'pica' ? '暂无内容' : t('library.empty')}
+            </Text>
           </View>
         }
       />

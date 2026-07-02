@@ -165,12 +165,12 @@ export function MemberScreen() {
                   </Text>
                 </Pressable>
               )}
-              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 8 }}>
-                <Pressable onPress={() => nav.navigate('Library')} style={[styles.signBtn, { marginTop: 0, flex: 1 }]}>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+                <Pressable onPress={() => nav.navigate('Library', { source: 'jm', type: 'favorite' })} style={[styles.signBtn, { marginTop: 0, flex: 1 }]}>
                   <MaterialIcons name="bookmark" size={20} color={C.primary} />
                   <Text style={{ color: C.primary, fontWeight: '600' }}>我的收藏</Text>
                 </Pressable>
-                <Pressable onPress={() => nav.navigate('Library')} style={[styles.signBtn, { marginTop: 0, flex: 1 }]}>
+                <Pressable onPress={() => nav.navigate('Library', { source: 'jm', type: 'like' })} style={[styles.signBtn, { marginTop: 0, flex: 1 }]}>
                   <MaterialIcons name="favorite" size={20} color={C.error} />
                   <Text style={{ color: C.error, fontWeight: '600' }}>我的喜欢</Text>
                 </Pressable>
@@ -201,12 +201,12 @@ export function MemberScreen() {
                 <MaterialIcons name="check-circle" size={24} color={C.success} />
                 <Text style={styles.username}>{picaUser}</Text>
               </View>
-              <View style={{ flexDirection: 'row', gap: 10, marginVertical: 10 }}>
-                <Pressable onPress={() => nav.navigate('Library')} style={[styles.signBtn, { marginTop: 0, flex: 1 }]}>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+                <Pressable onPress={() => nav.navigate('Library', { source: 'pica', type: 'favorite' })} style={[styles.signBtn, { marginTop: 0, flex: 1 }]}>
                   <MaterialIcons name="bookmark" size={20} color="#9B59B6" />
                   <Text style={{ color: '#9B59B6', fontWeight: '600' }}>我的收藏</Text>
                 </Pressable>
-                <Pressable onPress={() => nav.navigate('Library')} style={[styles.signBtn, { marginTop: 0, flex: 1 }]}>
+                <Pressable onPress={() => nav.navigate('Library', { source: 'pica', type: 'like' })} style={[styles.signBtn, { marginTop: 0, flex: 1 }]}>
                   <MaterialIcons name="favorite" size={20} color="#9B59B6" />
                   <Text style={{ color: '#9B59B6', fontWeight: '600' }}>我的喜欢</Text>
                 </Pressable>

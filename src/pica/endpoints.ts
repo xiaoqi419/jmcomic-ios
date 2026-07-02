@@ -71,6 +71,11 @@ export function myFavourites(page = 1) {
   return c.get<PicaComics>('users/favourite', { page });
 }
 
+// 喜欢列表
+export function myLikes(page = 1) {
+  return c.get<PicaComics>('users/likes', { page });
+}
+
 // 排行榜
 export function leaderboard(tt: 'H24' | 'D7' | 'D30' = 'H24', page = 1) {
   return c.get<PicaComics>('comics/leaderboard', { tt, page });

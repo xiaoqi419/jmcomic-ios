@@ -64,6 +64,10 @@ async function descrambleImage(imageBuffer, epsId, filename, scrambleId) {
 }
 
 const presets = [
+  // 实际App日志截取
+  { label: '📱 单章本 1450313 → 00001 (固定10段)', url: '/cdn-msp.jmdanjonproxy.xyz/media/photos/1450313/00001.webp', eps: '1450313', fn: '00001', sc: '220980' },
+  { label: '📱 多章首话 1020473 → 00001 (固定10段)', url: '/cdn-msp.jmdanjonproxy.xyz/media/photos/1020473/00001.webp', eps: '1020473', fn: '00001', sc: '220980' },
+  // 原预设保留
   { label: '同一章节 408257 → 00001 (分段18)', url: '/cdn-msp.18comic.vip/media/photos/408257/00001.webp', eps: '408257', fn: '00001', sc: '220980' },
   { label: '同一章节 408257 → 00002 (分段4)', url: '/cdn-msp.18comic.vip/media/photos/408257/00002.webp', eps: '408257', fn: '00002', sc: '220980' },
   { label: '同一章节 408257 → 00003 (分段20)', url: '/cdn-msp.18comic.vip/media/photos/408257/00003.webp', eps: '408257', fn: '00003', sc: '220980' },

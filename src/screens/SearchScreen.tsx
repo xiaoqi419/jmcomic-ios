@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, FlatList, TextInput, Pressable, StyleSheet, RefreshControl,
-  ActivityIndicator, ScrollView, Dimensions,
+  ActivityIndicator, ScrollView, Dimensions, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -51,7 +51,16 @@ export function SearchScreen() {
   const [history, setHistory] = useState<string[]>([]);
   const [hotTags, setHotTags] = useState<string[]>([]);
   const [recommend, setRecommend] = useState<ComicItem[]>([]);
+  const [filterMode, setFilterMode] = useState<'all' | 'jmcomic' | 'pica'>('all');
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const listRef = useRef<FlatList>(null);
   const searchingRef = useRef(false);
+
+  const displayedResults = useMemo(() => {
+    if (filterMode === 'jmcomic') return jmResults;
+    if (filterMode === 'pica') return picaResults;
+    return results;
+  }, [filterMode, jmResults, picaResults, results]);
 
   useEffect(() => {
     AsyncStorage.getItem(HISTORY_KEY).then((json) => {
@@ -217,7 +226,8 @@ export function SearchScreen() {
     <SafeAreaView edges={["top"]} style={styles.cont}>
       <StatusBar style="light" />
       <FlatList
-        data={searched ? results : []}
+        ref={listRef}
+        data={searched ? displayedResults : []}
         keyExtractor={(i) => `${i.source}:${i.id}`}
         numColumns={1}
         contentContainerStyle={{ paddingHorizontal: Spacing.marginEdge, paddingBottom: 100 }}
@@ -229,6 +239,8 @@ export function SearchScreen() {
         }} tintColor={C.primary} />}
         onEndReached={searched ? loadMore : undefined}
         onEndReachedThreshold={0.3}
+        onScroll={(e) => setShowScrollTop(e.nativeEvent.contentOffset.y > 400)}
+        scrollEventThrottle={100}
         renderItem={renderResultItem}
         ListHeaderComponent={
           <View style={{ paddingTop: 8 }}>
@@ -270,12 +282,37 @@ export function SearchScreen() {
               <Text style={styles.searchBtnText}>{t('search.title')}</Text>
             </Pressable>
 
+            {searched && (
+              <View style={{ flexDirection: 'row', gap: 8, marginVertical: 10 }}>
+                {(['all', 'jmcomic', 'pica'] as const).map((m) => (
+                  <Pressable
+                    key={m}
+                    onPress={() => {
+                      if (m === 'pica' && !isPicaEnabled()) {
+                        Alert.alert('提示', '请先登录 Pica 账号', [
+                          { text: '取消', style: 'cancel' },
+                          { text: '去登录', onPress: () => nav.navigate('Member') },
+                        ]);
+                        return;
+                      }
+                      setFilterMode(m);
+                    }}
+                    style={[styles.filterBtn, filterMode === m && styles.filterBtnActive]}
+                  >
+                    <Text style={[styles.filterBtnText, filterMode === m && styles.filterBtnTextActive]}>
+                      {m === 'all' ? '聚合' : m === 'jmcomic' ? 'JM' : 'Pica'}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
             {!searched && (
               <>
                 {hotTags.length > 0 && (
                   <View style={{ marginTop: 16 }}>
                     <Text style={styles.sectionTitle}>{t('search.hot_tags')}</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
                       {hotTags.slice(0, 15).map((tag) => (
                         <Pressable
                           key={tag}
@@ -347,6 +384,11 @@ export function SearchScreen() {
         ListEmptyComponent={!loading && searched ? null : <View style={{ height: 1 }} />}
         keyboardShouldPersistTaps="handled"
       />
+      {showScrollTop && (
+        <Pressable onPress={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })} style={styles.scrollTopBtn}>
+          <MaterialIcons name="keyboard-arrow-up" size={28} color="#fff" />
+        </Pressable>
+      )}
     </SafeAreaView>
   );
 }
@@ -405,5 +447,20 @@ function getStyles(C: LegacyColors) {
       borderRadius: 4,
     },
     sourceBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+    filterBtn: {
+      flex: 1, alignItems: 'center', paddingVertical: 8,
+      borderRadius: Radius.xl, backgroundColor: C.surface,
+      borderWidth: 1, borderColor: C.border,
+    },
+    filterBtnActive: { backgroundColor: C.primary, borderColor: C.primary },
+    filterBtnText: { fontSize: FontSize.label, color: C.textSecondary, fontWeight: '600' },
+    filterBtnTextActive: { color: C.textOnPrimary },
+    scrollTopBtn: {
+      position: 'absolute', bottom: 30, right: 20,
+      width: 48, height: 48, borderRadius: 24,
+      backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center',
+      shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3, shadowRadius: 6, elevation: 6,
+    },
   });
 }
