@@ -209,9 +209,8 @@ export function SearchScreen() {
       <FlatList
         data={searched ? results : []}
         keyExtractor={(i) => `${i.source}:${i.id}`}
-        numColumns={3}
-        contentContainerStyle={{ paddingHorizontal: Spacing.marginEdge, paddingBottom: 100 }}
-        columnWrapperStyle={styles.columnWrapper}
+        numColumns={1}
+        contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={<RefreshControl refreshing={false} onRefresh={() => {}} tintColor={C.primary} />}
         onEndReached={searched ? loadMore : undefined}
         onEndReachedThreshold={0.3}
@@ -374,8 +373,7 @@ function getStyles(C: LegacyColors) {
       fontSize: FontSize.label, color: C.textPrimary,
       marginTop: 6, fontWeight: '500',
     },
-    columnWrapper: { gap: 8, justifyContent: 'flex-start' },
-    cardWrapper: { width: (W - Spacing.marginEdge * 2 - 16) / 3, marginBottom: 12 },
+    cardWrapper: { width: '100%', marginBottom: 8 },
     sourceBadge: {
       position: 'absolute', top: 6, left: 6,
       paddingHorizontal: 6, paddingVertical: 2,
