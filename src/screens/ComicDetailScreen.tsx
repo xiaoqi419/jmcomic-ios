@@ -111,8 +111,8 @@ export function ComicDetailScreen() {
 
       // 单章本：chId === albumId，从 detail.images 拿（album API 已有）
       if (chId === albumId && detail?.images?.length) {
-        images = detail.images.map((item: any) => item.image);
-        jmLogger.log(`openChapter: 使用 detail.images chId=${chId} count=${images.length}`);
+        images = detail.images.map((url: any) => typeof url === 'string' ? url : url.image || String(url));
+        jmLogger.log(`openChapter: 使用 detail.images chId=${chId} count=${images.length} [0]=${images[0]}`);
       } else {
         const data = await fetchComicRead(chId);
         jmLogger.log(`openChapter chId=${chId} imagesLen=${data.images?.length} page_count=${data.page_count} hasImages=!!${!!data.images?.length}`);
