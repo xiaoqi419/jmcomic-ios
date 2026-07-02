@@ -396,7 +396,7 @@ export function SearchScreen() {
 function getStyles(C: LegacyColors) {
   return StyleSheet.create({
     cont: { flex: 1, backgroundColor: C.background },
-    sectionTitle: { fontSize: FontSize.headline, fontWeight: '700', color: C.textPrimary },
+    sectionTitle: { fontSize: FontSize.headline, fontWeight: '700', color: C.textPrimary, marginBottom: 10 },
     searchWrap: {
       flexDirection: 'row', alignItems: 'center',
       backgroundColor: C.surface, borderRadius: Radius.card,

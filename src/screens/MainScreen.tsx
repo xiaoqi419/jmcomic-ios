@@ -23,6 +23,7 @@ import type { ComicItem } from '../api/types';
 
 const { width: W } = Dimensions.get('window');
 const CARD_W = (W - Spacing.marginEdge * 2 + 10);
+const PROMO_H = W * 0.5;
 const AUTO_PLAY_MS = 3000;
 
 const QUICK_LINKS = [
@@ -109,9 +110,10 @@ export function MainScreen() {
     return stopAutoPlay;
   }, [promoData.length, startAutoPlay, stopAutoPlay]);
 
-  const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
-    if (viewableItems?.length) setPromoIndex(viewableItems[0].index || 0);
-  }, []);
+  const onMomentumEnd = useCallback((e: any) => {
+    const idx = Math.round(e.nativeEvent.contentOffset.x / (CARD_W + 10));
+    setPromoIndex(Math.min(idx, promoData.length - 1));
+  }, [promoData.length]);
 
   if (loading) {
     return (
@@ -131,7 +133,7 @@ export function MainScreen() {
         onPressOut={startAutoPlay}
         style={styles.promoCard}
       >
-        <Image source={{ uri: cover }} style={styles.promoCover} contentFit="cover" />
+        <Image source={{ uri: cover }} style={styles.promoCover} contentFit="contain" />
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.85)']}
           style={styles.promoOverlay}
@@ -193,12 +195,10 @@ export function MainScreen() {
                   ref={promoRef}
                   data={promoData}
                   horizontal
-                  pagingEnabled
                   showsHorizontalScrollIndicator={false}
-                  snapToInterval={CARD_W}
+                  snapToInterval={CARD_W + 10}
                   decelerationRate="fast"
-                  onViewableItemsChanged={onViewableItemsChanged}
-                  viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+                  onMomentumScrollEnd={onMomentumEnd}
                   onScrollBeginDrag={stopAutoPlay}
                   onScrollEndDrag={startAutoPlay}
                   renderItem={renderPromoItem}
@@ -313,7 +313,7 @@ function getStyles(C: LegacyColors) { return StyleSheet.create({
   promoSec: { marginBottom: 20 },
   promoCard: {
     width: CARD_W, marginRight: 10,
-    height: 210, borderRadius: Radius.lg,
+    height: PROMO_H, borderRadius: Radius.lg,
     overflow: 'hidden', backgroundColor: C.surfaceContainer,
   },
   promoCover: { width: '100%', height: '100%' },
