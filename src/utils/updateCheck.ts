@@ -9,6 +9,8 @@ const PROXIES = [
   `https://ghproxy.net/https://api.github.com/repos/${REPO}/releases/latest`,
   `https://mirror.ghproxy.com/https://api.github.com/repos/${REPO}/releases/latest`,
   `https://github.moeyy.xyz/https://api.github.com/repos/${REPO}/releases/latest`,
+  `https://gh.api.99988866.xyz/https://api.github.com/repos/${REPO}/releases/latest`,
+  `https://github-proxy.linfeng.xyz/https://api.github.com/repos/${REPO}/releases/latest`,
   `https://api.github.com/repos/${REPO}/releases/latest`,
 ];
 
@@ -45,12 +47,18 @@ function compareVersions(a: string, b: string): number {
   return 0;
 }
 
+const FETCH_TIMEOUT = 8000;
+
 export async function checkForUpdate(currentVersion: string): Promise<CheckResult> {
   for (const url of PROXIES) {
     try {
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
       const res = await fetch(url, {
         headers: { 'User-Agent': 'JOYComic-iOS' },
+        signal: ctrl.signal,
       });
+      clearTimeout(tid);
       if (!res.ok) continue;
       const data: ReleaseInfo = await res.json();
       if (!data.tag_name) continue;
