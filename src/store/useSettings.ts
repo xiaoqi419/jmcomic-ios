@@ -22,6 +22,7 @@ interface SettingsState {
   readingMode: 'page' | 'scroll';
   readingDirection: 'ltr' | 'rtl';
   showDebugLog: boolean;
+  prefetchCount: number;
   loaded: boolean;
 
   // 动态域名（从 /api/setting 获取）
@@ -40,6 +41,7 @@ interface SettingsState {
   setReadingMode: (m: 'scroll' | 'page') => void;
   setReadingDirection: (d: 'ltr' | 'rtl') => void;
   setShowDebugLog: (v: boolean) => void;
+  setPrefetchCount: (n: number) => void;
 
   /** 从 /api/setting 响应更新域名 */
   updateFromSetting: (data: SettingData) => void;
@@ -59,6 +61,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   readingMode: 'page',
   readingDirection: 'ltr',
   showDebugLog: false,
+  prefetchCount: 3,
   loaded: false,
 
   mainWebHost: '',
@@ -73,6 +76,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setReadingMode: (v) => { set({ readingMode: v }); get().save(); },
   setReadingDirection: (v) => { set({ readingDirection: v }); get().save(); },
   setShowDebugLog: (v) => { set({ showDebugLog: v }); get().save(); },
+  setPrefetchCount: (n) => { set({ prefetchCount: n }); get().save(); },
 
   updateFromSetting: (data: SettingData) => {
     const shunts: Shunt[] = (data.app_shunts || []).map((s) => ({

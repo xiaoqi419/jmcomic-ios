@@ -14,6 +14,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useReaderStore } from '../store/useReader';
 import { useHistoryStore } from '../store/useHistory';
+import { useSettingsStore } from '../store/useSettings';
 import { fetchComicRead, fetchAlbumDetail } from '../api/endpoints';
 import { extractFilenameWithoutExt } from '../utils/scramble';
 import { useLegacyColors, LegacyColors, FontSize, Radius, Spacing } from '../theme';
@@ -32,6 +33,7 @@ export function ReaderScreen() {
   const styles = useMemo(() => getStyles(C), [C]);
 
   const { imageUrls, currentPage, setPage, isVertical, setVertical, startReading } = useReaderStore();
+  const prefetchCount = useSettingsStore((s) => s.prefetchCount);
   const [showUI, setShowUI] = useState(true);
   const [loading, setLoading] = useState(false);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -154,15 +156,26 @@ export function ReaderScreen() {
   const hasPrevChapter = currentEpIdx > 0;
   const hasNextChapter = currentEpIdx < episodes.length - 1;
 
-  // 竖向 FlatList 可见项变化追踪当前页
+  // 竖向 FlatList 可见项变化追踪当前页 + 保存阅读进度
   const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
     if (viewableItems?.length) {
       const first = viewableItems[0];
       if (first && typeof first.index === 'number') {
         setPage(first.index);
+        // 保存阅读进度
+        const s = useReaderStore.getState();
+        useHistoryStore.getState().add({
+          id: albumId || s.albumId || '',
+          title: chapterTitle || '',
+          coverUrl: '',
+          chapterId: s.chapterId || chapterId,
+          chapterTitle: s.chapterTitle || chapterTitle,
+          page: first.index,
+          readAt: Date.now(),
+        });
       }
     }
-  }, [setPage]);
+  }, [setPage, albumId, chapterId, chapterTitle]);
 
   const viewabilityConfig = useMemo(() => ({ itemVisiblePercentThreshold: 30 }), []);
 
@@ -251,9 +264,9 @@ export function ReaderScreen() {
           data={imageUrls}
           keyExtractor={(_, i) => String(i)}
           renderItem={renderVerticalItem}
-          windowSize={3}
-          maxToRenderPerBatch={3}
-          initialNumToRender={3}
+          windowSize={prefetchCount}
+          maxToRenderPerBatch={prefetchCount}
+          initialNumToRender={prefetchCount}
           removeClippedSubviews={Platform.OS === 'android'}
           showsVerticalScrollIndicator={false}
           onViewableItemsChanged={onViewableItemsChanged}

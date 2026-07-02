@@ -24,7 +24,7 @@ export function MemberScreen() {
   const { username: jmUser, loggedIn: jmLoggedIn, login: jmDoLogin, logout: jmDoLogout } = useAuthStore();
   const { username: picaUser, loggedIn: picaLoggedIn, login: picaDoLogin, logout: picaDoLogout } = usePicaStore();
   const { info, signData, signed, doSignIn, loadInfo, loadSign, loadAchievements, achievements, notifications, loadNotifications, unread } = useMemberStore();
-  const { language, setLanguage, readingMode, setReadingMode, showDebugLog, setShowDebugLog, theme, setTheme, shunts, selectedShuntKey, selectShunt } = useSettingsStore();
+  const { language, setLanguage, readingMode, setReadingMode, showDebugLog, setShowDebugLog, theme, setTheme, shunts, selectedShuntKey, selectShunt, prefetchCount, setPrefetchCount } = useSettingsStore();
 
   const [showJmLogin, setShowJmLogin] = useState(false);
   const [jmUserInput, setJmUserInput] = useState('');
@@ -292,6 +292,17 @@ export function MemberScreen() {
                   <Text style={[styles.toggleText, theme === t && styles.toggleTextActive]}>{t === 'auto' ? '自动' : t === 'light' ? '浅色' : '深色'}</Text>
                 </Pressable>
               ))}
+            </View>
+          } />
+          <Row label="预加载页数" right={
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Pressable onPress={() => setPrefetchCount(Math.max(1, prefetchCount - 1))} style={styles.toggleBtn}>
+                <Text style={styles.toggleText}>−</Text>
+              </Pressable>
+              <Text style={{ color: C.textPrimary, fontWeight: '600', minWidth: 20, textAlign: 'center' }}>{prefetchCount}</Text>
+              <Pressable onPress={() => setPrefetchCount(Math.min(10, prefetchCount + 1))} style={styles.toggleBtn}>
+                <Text style={styles.toggleText}>+</Text>
+              </Pressable>
             </View>
           } />
           {shunts.length > 0 && (
