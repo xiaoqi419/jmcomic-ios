@@ -1,117 +1,53 @@
-// SafeImage — 原生下载 + base64 DataURL + Canvas 解扰
-// 自适应高宽比，无缝衔接
+// SafeImage - expo-file-system download -> base64 -> WebView Canvas
 // @author Jason
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { View } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
+import * as FileSystem from 'expo-file-system';
 import { buildDescrambleHtml, buildSimpleImageHtml, extractFilename } from '../utils/scramble';
-import { jmLogger } from '../utils/JmLogger';
-import { downloadQueue } from '../utils/DownloadQueue';
-import { generateToken, nowTs } from '../api/crypto';
 
-const IMG_HEADERS_BASE: Record<string, string> = {
-  Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-  Referer: 'https://18comic.vip/',
-  'Sec-Fetch-Mode': 'no-cors',
-  'Sec-Fetch-Site': 'cross-site',
-  'User-Agent': 'Mozilla/5.0 (Linux; Android 13; WD5DDE5 Build/TQ1A.230205.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/114.0.5735.196 Safari/537.36',
-  'X-Requested-With': 'com.jiaohua_browser',
-};
-
-function buildImgHeaders(): Record<string, string> {
-  const ts = nowTs();
-  const { token, tokenparam } = generateToken(ts);
-  return {
-    ...IMG_HEADERS_BASE,
-    Token: token,
-    token: token,
-    Tokenparam: tokenparam,
-    tokenparam: tokenparam,
-  };
-}
-
-interface Props { imageUrl: string; epsId: string; pictureName?: string; containerWidth: number; height?: number; onLoad?: () => void; onDimension?: (w: number, h: number) => void; }
+interface Props { imageUrl: string; epsId: string; pictureName?: string; style?: any; onLoad?: () => void; }
 
 const SC_ID = '220980';
 
 async function urlToDataUri(url: string): Promise<string> {
-  // 检查磁盘缓存
-  const { getCachedImageDataUri, saveCachedImageDataUri } = await import('../utils/ImageCache');
-  const cached = await getCachedImageDataUri(url);
-  if (cached) { jmLogger.log(`cache hit: ${url.slice(0, 60)}`); return cached; }
-  jmLogger.log(`fetch: ${url}`);
-  const response = await fetch(url, { headers: buildImgHeaders() });
-  if (!response.ok) throw new Error(`fetch HTTP ${response.status}`);
-  const blob = await response.blob();
-  jmLogger.ok(`blob size=${blob.size}`);
-  const dataUri = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('FileReader failed'));
-    reader.readAsDataURL(blob);
-  });
-  jmLogger.ok(`dataURI len=${dataUri.length}`);
-  // 异步写入磁盘缓存（不阻塞）
-  saveCachedImageDataUri(url, dataUri).catch(() => {});
-  return dataUri;
+  const ext = (url.split('.').pop() || 'webp').replace(/\?.*/, '');
+  const dest = FileSystem.cacheDirectory + 'jm_' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext;
+  const dl = await FileSystem.downloadAsync(url, dest);
+  if (dl.status !== 200) throw new Error('Download ' + dl.status);
+  const b64 = await FileSystem.readAsStringAsync(dl.uri, { encoding: FileSystem.EncodingType.Base64 });
+  FileSystem.deleteAsync(dl.uri, { idempotent: true }).catch(() => {});
+  return 'data:image/' + ext + ';base64,' + b64;
 }
 
-export function SafeImage({ imageUrl, epsId, pictureName, containerWidth, height: overrideHeight, onLoad, onDimension }: Props) {
+export function SafeImage({ imageUrl, epsId, pictureName, style, onLoad }: Props) {
   const [dataUri, setDataUri] = useState<string | null>(null);
   const [fallback, setFallback] = useState(false);
-  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
-  const picName = (pictureName || extractFilename(imageUrl)).replace(/\.\w+$/, '');
+  const picName = pictureName || extractFilename(imageUrl);
 
   useEffect(() => {
     let cancel = false;
-    downloadQueue.enqueue(() => urlToDataUri(imageUrl))
-      .then(uri => { if (!cancel) { setDataUri(uri); } })
-      .catch(e => { if (!cancel) { setDataUri(imageUrl); setFallback(true); } });
+    urlToDataUri(imageUrl).then(uri => { if (!cancel) setDataUri(uri); }).catch(() => { if (!cancel) { setDataUri(imageUrl); setFallback(true); } });
     return () => { cancel = true; };
   }, [imageUrl]);
 
-  const height = overrideHeight || (natural ? (containerWidth * natural.h / natural.w) : containerWidth * 1.45);
-
-  useEffect(() => {
-    if (natural && onDimension) onDimension(natural.w, natural.h);
-  }, [natural]);
-
   const html = useMemo(() => {
     if (!dataUri) return '';
-    if (fallback) {
-      return buildSimpleImageHtml(dataUri);
-    }
-    try {
-      return buildDescrambleHtml(dataUri, epsId, SC_ID, picName);
-    } catch (e: any) {
-      jmLogger.err(`HTML 生成失败: ${e.message}`);
-      return buildSimpleImageHtml(dataUri);
-    }
+    if (fallback) return buildSimpleImageHtml(dataUri);
+    try { return buildDescrambleHtml(dataUri, epsId, SC_ID, picName); }
+    catch { return buildSimpleImageHtml(dataUri); }
   }, [dataUri, epsId, picName, fallback]);
 
-  const handleMessage = (e: any) => {
-    const msg = e.nativeEvent?.data || '';
-    if (msg.startsWith('DIM:')) {
-      const parts = msg.slice(4).split(',');
-      const w = parseInt(parts[0], 10);
-      const h = parseInt(parts[1], 10);
-      if (w > 0 && h > 0) setNatural({ w, h });
-    } else {
-      jmLogger.wv(msg);
-    }
-  };
+  if (!dataUri) return <View style={[{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }, style]}><ActivityIndicator size="small" color="#ff6b35" /></View>;
 
   return (
-    <View style={{ width: containerWidth, height, backgroundColor: '#000' }}>
-      {html ? (
-        <WebView style={{ flex: 1, backgroundColor: 'transparent' }} source={{ html }}
-          scrollEnabled={false} bounces={false} overScrollMode="never"
-          javaScriptEnabled domStorageEnabled originWhitelist={['*']} mixedContentMode="always"
-          onLoad={onLoad}
-          onMessage={handleMessage}
-        />
-      ) : null}
+    <View style={[{ flex: 1, backgroundColor: '#000' }, style]}>
+      <WebView style={{ flex: 1, backgroundColor: 'transparent' }} source={{ html }}
+        scrollEnabled={false} bounces={false} overScrollMode="never"
+        javaScriptEnabled domStorageEnabled originWhitelist={['*']} mixedContentMode="always"
+        onLoad={onLoad}
+      />
     </View>
   );
 }
