@@ -1,8 +1,8 @@
 // 博客 — 复刻 APK Blogs.tsx + BlogsDetail.tsx
 // @author nyx
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, FlatList, Pressable, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -20,16 +20,29 @@ export function BlogsScreen() {
   const C = useLegacyColors();
   const [list, setList] = useState<BlogItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = useCallback(async () => {
+    const d = await fetchBlogs();
+    setList(d.list || []);
+  }, []);
 
   useEffect(() => {
-    fetchBlogs().then((d) => setList(d.list || [])).finally(() => setLoading(false));
+    loadData().finally(() => setLoading(false));
   }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: C.background }}>
       <FlatList
         data={list}
         keyExtractor={(i) => i.id}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} colors={[C.primary]} />}
         contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}
         ListHeaderComponent={<Text style={{ fontSize: FontSize.largeTitle, fontWeight: '800', color: C.textPrimary, marginBottom: 12 }}>{t('blogs.title')}</Text>}
         renderItem={({ item }) => (

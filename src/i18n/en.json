@@ -19,6 +19,7 @@
   },
   "home": {
     "new_update": "Latest Updates",
+    "continue_reading": "Continue Reading",
     "pull_to_load": "Pull to load more",
     "no_more": "No more content",
     "loading": "Loading..."
@@ -54,6 +55,24 @@
     "purchased": "Purchased",
     "share": "Share",
     "read_rules": ["Vertical Scroll", "Horizontal Flip"]
+  },
+  "downloads": {
+    "title": "Downloads",
+    "clear_completed": "Clear Completed",
+    "empty": "No downloads",
+    "status_waiting": "Waiting",
+    "status_downloading": "Downloading",
+    "status_completed": "Completed",
+    "status_failed": "Failed",
+    "status_paused": "Paused"
+  },
+  "update": {
+    "checking": "Checking for updates...",
+    "latest": "Up to date",
+    "available": "Update available",
+    "download": "Download",
+    "ignore": "Later",
+    "error": "Update check failed"
   },
   "reader": {
     "page_progress": "{{current}}/{{total}}",

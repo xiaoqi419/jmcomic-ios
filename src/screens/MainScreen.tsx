@@ -18,6 +18,7 @@ import type { LegacyColors } from '../theme';
 import { ComicCard } from '../components/ComicCard';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { fetchMainPromote, fetchLatest, getCoverUrl } from '../api/endpoints';
+import { useHistoryStore } from '../store/useHistory';
 import type { ComicItem } from '../api/types';
 
 const { width: W } = Dimensions.get('window');
@@ -47,6 +48,8 @@ export function MainScreen() {
   const [promoIndex, setPromoIndex] = useState(0);
   const promoRef = useRef<FlatList>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const historyItems = useHistoryStore((s) => s.items);
+  const loadHistory = useHistoryStore((s) => s.load);
 
   const load = useCallback(async () => {
     try {
@@ -67,7 +70,7 @@ export function MainScreen() {
     }
   }, []);
 
-  useEffect(() => { load().finally(() => setLoading(false)); }, []);
+  useEffect(() => { load().finally(() => setLoading(false)); loadHistory(); }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -216,10 +219,39 @@ export function MainScreen() {
               </View>
             )}
 
+            {historyItems.length > 0 && (
+              <View style={{ marginBottom: 20 }}>
+                <Text style={[styles.secTitle, { marginBottom: 10 }]}>{t('home.continue_reading')}</Text>
+                <FlatList
+                  data={historyItems.slice(0, 5)}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(h) => h.id}
+                  renderItem={({ item: h }) => (
+                    <Pressable
+                      onPress={() => nav.navigate('Reader', {
+                        chapterId: h.chapterId,
+                        albumId: h.id,
+                        chapterTitle: h.chapterTitle,
+                      })}
+                      style={{ marginRight: 10, width: 120 }}
+                    >
+                      <Image
+                        source={{ uri: h.coverUrl || getCoverUrl(h.id) }}
+                        style={{ width: 120, height: 160, borderRadius: Radius.sm, backgroundColor: C.surfaceContainer }}
+                        contentFit="cover"
+                      />
+                      <Text style={{ fontSize: FontSize.label, fontWeight: '600', color: C.textPrimary, marginTop: 6 }} numberOfLines={1}>{h.title}</Text>
+                      <Text style={{ fontSize: FontSize.caption, color: C.textSecondary }} numberOfLines={1}>{h.chapterTitle}</Text>
+                    </Pressable>
+                  )}
+                />
+              </View>
+            )}
             <View style={styles.secHeader}>
-              <Text style={styles.secTitle}>最新更新</Text>
+              <Text style={styles.secTitle}>{t('home.new_update')}</Text>
               <Pressable onPress={() => nav.navigate('Search', {} as any)}>
-                <Text style={styles.secMore}>查看更多</Text>
+                <Text style={styles.secMore}>{t('home.continue_reading') ? '查看更多' : '查看更多'}</Text>
               </Pressable>
             </View>
           </View>

@@ -1,8 +1,8 @@
 // 收藏库 v2
 // @author nyx
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, ScrollView, Alert } from 'react-native';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { View, Text, FlatList, Pressable, StyleSheet, ScrollView, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -25,23 +25,39 @@ export function LibraryScreen() {
   const [folders, setFolders] = useState<FavoriteFolder[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
+  const loadData = useCallback(async (silent = false) => {
     if (!loggedIn) {
-      Alert.alert('提示', '请先登录后再查看收藏', [
-        { text: '取消', onPress: () => nav.goBack() },
-        { text: '去登录', onPress: () => nav.navigate('Member') },
-      ]);
-      setLoading(false);
+      if (!silent) {
+        Alert.alert('提示', '请先登录后再查看收藏', [
+          { text: '取消', onPress: () => nav.goBack() },
+          { text: '去登录', onPress: () => nav.navigate('Member') },
+        ]);
+      }
+      if (!silent) setLoading(false);
       return;
     }
     loadLocal();
-    fetchFavorites().then((d) => {
+    try {
+      const d = await fetchFavorites();
       setOnline(d.list || []);
       setFolders(d.folder_list || []);
       setTotal(parseInt(d.total) || 0);
-    }).finally(() => setLoading(false));
+    } catch {}
+    if (!silent) setLoading(false);
+  }, [loggedIn, loadLocal, nav]);
+
+  useEffect(() => {
+    setLoading(true);
+    loadData();
   }, [loggedIn]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData(true);
+    setRefreshing(false);
+  }, [loadData]);
 
   const items: any[] = loggedIn && online.length > 0 ? online : local;
 
@@ -50,6 +66,7 @@ export function LibraryScreen() {
       <FlatList
         data={items}
         keyExtractor={(i) => i.id}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} colors={[C.primary]} />}
         contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}
         ListHeaderComponent={
           <View>

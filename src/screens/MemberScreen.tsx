@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { MaterialIcons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { useLegacyColors, LegacyColors, Radius, Spacing, FontSize } from '../theme';
 import { useAuthStore } from '../store/useAuth';
 import { usePicaStore } from '../store/usePica';
@@ -322,10 +323,15 @@ export function MemberScreen() {
               <Text style={[styles.toggleText, showDebugLog && styles.toggleTextActive]}>{showDebugLog ? '开启' : '关闭'}</Text>
             </Pressable>
           } />
+          <Pressable onPress={() => nav.navigate('DownloadList')}>
+            <Row label="下载管理" right={
+              <MaterialIcons name="chevron-right" size={20} color={C.textTertiary} />
+            } />
+          </Pressable>
           <Pressable onPress={() => nav.navigate('About')}>
             <Row label={t('member.about')} right={
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={styles.rowValue}>v1.0.0</Text>
+                <Text style={styles.rowValue}>v{Constants.expoConfig?.version || '1.0.0'}</Text>
                 <MaterialIcons name="chevron-right" size={20} color={C.textTertiary} />
               </View>
             } />

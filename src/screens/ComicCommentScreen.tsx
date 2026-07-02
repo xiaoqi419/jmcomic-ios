@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   View, Text, FlatList, Pressable, TextInput,
   ActivityIndicator, StyleSheet, Keyboard, KeyboardAvoidingView,
-  Platform, useWindowDimensions,
+  Platform, useWindowDimensions, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HtmlText } from '../components/HtmlText';
@@ -37,6 +37,7 @@ export function ComicCommentScreen({ route, navigation }: Props) {
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [inputText, setInputText] = useState('');
@@ -78,6 +79,14 @@ export function ComicCommentScreen({ route, navigation }: Props) {
     await loadPage(page + 1, true);
     setLoadingMore(false);
   }, [page, loadingMore, hasMore, loadPage]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setPage(1);
+    setHasMore(true);
+    await loadPage(1, false);
+    setRefreshing(false);
+  }, [loadPage]);
 
   /** 发布评论 */
   const handlePost = useCallback(async () => {
@@ -188,6 +197,7 @@ export function ComicCommentScreen({ route, navigation }: Props) {
           data={comments}
           keyExtractor={(i) => i.CID}
           renderItem={renderComment}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
           contentContainerStyle={css.listContent}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.3}

@@ -22,6 +22,8 @@ import { fetchSetting } from './src/api/endpoints';
 import { SourceSelectModal } from './src/components/SourceSelectModal';
 import { DebugOverlay } from './src/components/DebugOverlay';
 import { loadSelectedShunt } from './src/utils/SourceSelector';
+import { downloadManager } from './src/utils/DownloadManager';
+import { useHistoryStore } from './src/store/useHistory';
 import type { ThemeMode } from './src/theme';
 
 // Screens
@@ -42,6 +44,7 @@ import { RegisterScreen, ForgotPasswordScreen } from './src/screens/AuthScreens'
 import { PicaDetailScreen } from './src/screens/PicaDetailScreen';
 import { PicaReaderScreen } from './src/screens/PicaReaderScreen';
 import { AboutScreen } from './src/screens/AboutScreen';
+import { DownloadListScreen } from './src/screens/DownloadListScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -160,6 +163,8 @@ function AppInner() {
           options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="About" component={AboutScreen}
           options={{ title: '关于', headerBackTitle: '返回' }} />
+        <Stack.Screen name="DownloadList" component={DownloadListScreen}
+          options={{ title: '下载管理', headerBackTitle: '返回' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -190,6 +195,9 @@ export default function App() {
           selectShunt(saved);
         }
       } catch {}
+
+      try { downloadManager.init(); } catch {}
+      try { await useHistoryStore.getState().load(); } catch {}
 
       setReady(true);
     })();

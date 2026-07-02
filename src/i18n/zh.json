@@ -19,6 +19,7 @@
   },
   "home": {
     "new_update": "最新更新",
+    "continue_reading": "繼續閱讀",
     "pull_to_load": "上拉加载更多",
     "no_more": "沒有更多了",
     "loading": "加载中..."
@@ -54,6 +55,24 @@
     "purchased": "已購買",
     "share": "分享",
     "read_rules": ["竖屏滚动", "横屏翻页"]
+  },
+  "downloads": {
+    "title": "下載管理",
+    "clear_completed": "清除已完成",
+    "empty": "暫無下載任務",
+    "status_waiting": "等待中",
+    "status_downloading": "下載中",
+    "status_completed": "已完成",
+    "status_failed": "失敗",
+    "status_paused": "已暫停"
+  },
+  "update": {
+    "checking": "檢查更新...",
+    "latest": "已是最新版本",
+    "available": "發現新版本",
+    "download": "前往下載",
+    "ignore": "稍後再說",
+    "error": "檢查更新失敗"
   },
   "reader": {
     "page_progress": "{{current}}/{{total}}",

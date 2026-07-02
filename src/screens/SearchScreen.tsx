@@ -39,6 +39,7 @@ export function SearchScreen() {
   };
 
   const [query, setQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
   const [results, setResults] = useState<SourceItem[]>([]);
   const [jmResults, setJmResults] = useState<SourceItem[]>([]);
   const [picaResults, setPicaResults] = useState<SourceItem[]>([]);
@@ -220,7 +221,12 @@ export function SearchScreen() {
         keyExtractor={(i) => `${i.source}:${i.id}`}
         numColumns={1}
         contentContainerStyle={{ paddingBottom: 100 }}
-        refreshControl={<RefreshControl refreshing={false} onRefresh={() => {}} tintColor={C.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => {
+          if (!query.trim() || searchingRef.current) return;
+          setRefreshing(true);
+          await doSearch(query, 1, true);
+          setRefreshing(false);
+        }} tintColor={C.primary} />}
         onEndReached={searched ? loadMore : undefined}
         onEndReachedThreshold={0.3}
         renderItem={renderResultItem}

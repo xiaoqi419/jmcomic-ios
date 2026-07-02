@@ -1,8 +1,8 @@
 // 小说 v2
 // @author nyx
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { View, Text, FlatList, Pressable, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -19,16 +19,29 @@ export function NovelsScreen() {
   const styles = useMemo(() => getStyles(C), [C]);
   const [list, setList] = useState<NovelItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = useCallback(async () => {
+    const d = await fetchNovels();
+    setList(d.list || []);
+  }, []);
 
   useEffect(() => {
-    fetchNovels().then((d) => setList(d.list || [])).finally(() => setLoading(false));
+    loadData().finally(() => setLoading(false));
   }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   return (
     <SafeAreaView edges={["top"]} style={styles.cont}>
       <FlatList
         data={list}
         keyExtractor={(i) => i.id}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} colors={[C.primary]} />}
         contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}
         ListHeaderComponent={<Text style={styles.pageTitle}>{t('novels.title')}</Text>}
         renderItem={({ item }) => (

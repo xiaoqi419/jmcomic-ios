@@ -1,18 +1,35 @@
-// 关于页面 — 软件介绍、作者、GitHub、免责声明
+// 关于页面 — 软件介绍、作者、GitHub、免责声明、更新日志
 // @author Jason
 
-import React, { useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Linking } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet, Linking, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { useLegacyColors, Radius, Spacing, FontSize } from '../theme';
+import { checkForUpdate } from '../utils/updateCheck';
 
 const GITHUB_REPO = 'https://github.com/xiaoqi419/jmcomic-ios';
 const GITHUB_HOME = 'https://github.com/xiaoqi419';
 
+const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
+
 export function AboutScreen() {
   const C = useLegacyColors();
   const styles = useMemo(() => getStyles(C), [C]);
+  const [updateInfo, setUpdateInfo] = useState<{ checking: boolean; hasUpdate: boolean; latest: string; changelog: string; error?: string }>({ checking: true, hasUpdate: false, latest: '', changelog: '' });
+
+  useEffect(() => {
+    checkForUpdate(APP_VERSION).then((r) => {
+      setUpdateInfo({
+        checking: false,
+        hasUpdate: r.hasUpdate,
+        latest: r.latestVersion,
+        changelog: r.release?.body || '',
+        error: r.error,
+      });
+    });
+  }, []);
 
   return (
     <SafeAreaView edges={["top"]} style={styles.cont}>
@@ -23,7 +40,25 @@ export function AboutScreen() {
             <MaterialIcons name="auto-stories" size={40} color={C.textOnPrimary} />
           </View>
           <Text style={styles.appName}>JOYComic</Text>
-          <Text style={styles.version}>v1.0.0</Text>
+          <Text style={styles.version}>v{APP_VERSION}</Text>
+          {updateInfo.checking && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+              <ActivityIndicator size="small" color={C.textTertiary} />
+              <Text style={{ fontSize: FontSize.label, color: C.textTertiary }}>检查更新...</Text>
+            </View>
+          )}
+          {!updateInfo.checking && updateInfo.hasUpdate && (
+            <Pressable onPress={() => Linking.openURL(GITHUB_REPO + '/releases/latest')} style={[styles.linkRow, { borderBottomWidth: 0, marginTop: 8, justifyContent: 'center' }]}>
+              <MaterialIcons name="system-update" size={18} color={C.primary} />
+              <Text style={{ color: C.primary, fontWeight: '700', fontSize: FontSize.body }}>发现新版本 v{updateInfo.latest}</Text>
+            </Pressable>
+          )}
+          {!updateInfo.checking && !updateInfo.hasUpdate && !updateInfo.error && (
+            <Text style={{ fontSize: FontSize.label, color: C.success, marginTop: 8 }}>已是最新版本</Text>
+          )}
+          {!updateInfo.checking && updateInfo.error && (
+            <Text style={{ fontSize: FontSize.label, color: C.textTertiary, marginTop: 8 }}>{updateInfo.error}</Text>
+          )}
         </View>
 
         {/* 软件介绍 */}
@@ -38,9 +73,7 @@ export function AboutScreen() {
         {/* 作者 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>作者</Text>
-          <Text style={styles.body}>
-            JASON
-          </Text>
+          <Text style={styles.body}>JASON</Text>
         </View>
 
         {/* GitHub 链接 */}
@@ -57,6 +90,16 @@ export function AboutScreen() {
             <Text style={styles.linkHint}>{GITHUB_HOME}</Text>
           </Pressable>
         </View>
+
+        {/* 更新日志 */}
+        {updateInfo.changelog && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>更新日志</Text>
+            <View style={styles.changelogBox}>
+              <Text style={styles.changelogText}>{updateInfo.changelog}</Text>
+            </View>
+          </View>
+        )}
 
         {/* 免责声明 */}
         <View style={styles.section}>
@@ -96,5 +139,10 @@ function getStyles(C: ReturnType<typeof useLegacyColors>) {
     linkText: { fontSize: FontSize.body, color: C.primary, fontWeight: '600' },
     linkHint: { fontSize: FontSize.caption, color: C.textTertiary, flex: 1, textAlign: 'right' },
     disclaimer: { fontSize: FontSize.body, color: C.textSecondary, lineHeight: 22 },
+    changelogBox: {
+      backgroundColor: C.surface, borderRadius: Radius.card, padding: Spacing.md,
+      borderWidth: 1, borderColor: C.border,
+    },
+    changelogText: { fontSize: FontSize.body, color: C.textPrimary, lineHeight: 22 },
   });
 }

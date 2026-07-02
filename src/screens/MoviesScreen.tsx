@@ -1,10 +1,10 @@
 // 视频 v4 — expo-av Video 原生播放 (HLS/mp4) + WebView 兜底
 // @author Jason
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View, Text, FlatList, Pressable, ActivityIndicator, Dimensions,
-  Linking, StyleSheet,
+  Linking, StyleSheet, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -52,6 +52,7 @@ export function MoviesScreen() {
   const [movies, setMovies] = useState<MovieItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
@@ -77,6 +78,13 @@ export function MoviesScreen() {
     loadMovies(1).finally(() => setLoading(false));
   }, []);
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setPage(1);
+    await loadMovies(1);
+    setRefreshing(false);
+  }, []);
+
   const handleEndReached = async () => {
     if (!hasMore || loadingMore) return;
     setLoadingMore(true);
@@ -92,6 +100,7 @@ export function MoviesScreen() {
         data={movies}
         numColumns={2}
         keyExtractor={(i) => i.id}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} colors={[Colors.primary]} />}
         contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
