@@ -4,7 +4,7 @@
 import type { ComicSource, SourceItem, SourceDetail, SourceChapter, SourceImage } from './types';
 import { jmLogger } from '../utils/JmLogger';
 import { picaClient } from '../pica/client';
-import { searchComics, comicDetail, comicEps, epPages } from '../pica/endpoints';
+import { searchComics, comicDetail, comicEps, epPages, comicsByCategory } from '../pica/endpoints';
 import { thumbUrl } from '../pica/types';
 import { usePicaStore } from '../store/usePica';
 import { searchComics as jmSearch, getCoverUrl } from '../api/endpoints';
@@ -52,12 +52,18 @@ export const picaSource: ComicSource = {
   id: 'pica',
   label: 'Pica',
 
-  async search(query: string, page = 1): Promise<{ items: SourceItem[]; total: number }> {
+  async search(query: string, page = 1, filters?: Record<string, string>): Promise<{ items: SourceItem[]; total: number }> {
     const authed = await ensureAuth();
     if (!authed) return { items: [], total: 0 };
     try {
+      // 如果有分类筛选参数，用 GET /comics?c=xxx 否则用 POST /comics/advanced-search
+      if (filters?.c) {
+        const res = await comicsByCategory(filters.c, page);
+        const data = (res as any).comics || res;
+        const docs = Array.isArray(data) ? data : (data.docs || []);
+        return { items: docs.map(toSourceItem), total: docs.length };
+      }
       const res = await searchComics(query, page);
-      // 响应结构: { comics: { docs: [...], total, pages } }
       const data = (res as any).comics || res;
       const docs = Array.isArray(data) ? data : (data.docs || []);
       const total = typeof data.total === 'number' ? data.total : docs.length;

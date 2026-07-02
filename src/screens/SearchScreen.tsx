@@ -15,6 +15,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLegacyColors, LegacyColors, Spacing, FontSize, Radius } from '../theme';
 import { fetchHotTags, fetchRandomRecommend, searchComics, getCoverUrl as getCover } from '../api/endpoints';
+import { picaCategories } from '../pica/endpoints';
 import { jmLogger } from '../utils/JmLogger';
 import type { SourceItem } from '../sources/types';
 import type { ComicItem } from '../api/types';
@@ -53,6 +54,8 @@ export function SearchScreen() {
   const [hotTags, setHotTags] = useState<string[]>([]);
   const [recommend, setRecommend] = useState<ComicItem[]>([]);
   const [filterMode, setFilterMode] = useState<'all' | 'jmcomic' | 'pica'>('all');
+  const [picaCatList, setPicaCatList] = useState<{title: string}[]>([]);
+  const [picaCatFilter, setPicaCatFilter] = useState('');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const listRef = useRef<FlatList>(null);
   const searchingRef = useRef(false);
@@ -69,6 +72,10 @@ export function SearchScreen() {
     });
     fetchHotTags().then(setHotTags).catch(() => {});
     fetchRandomRecommend().then(setRecommend).catch(() => {});
+    picaCategories().then((d) => {
+      const all = ((d as any).categories || []).filter((c: any) => c.isWeb !== true);
+      setPicaCatList(all);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -136,7 +143,7 @@ export function SearchScreen() {
         if (picaAuthed) {
           try {
             jmLogger.log(`搜索: 调 picaSource.search`);
-            const picaRes = await picaSource.search(q, p);
+            const picaRes = await picaSource.search(q, p, picaCatFilter ? { c: picaCatFilter } : undefined);
             jmLogger.log(`搜索: pica 返回 items=${picaRes.items.length}`);
             picaItems = picaRes.items;
           } catch (pe) {
@@ -300,6 +307,27 @@ export function SearchScreen() {
                     <Text style={[styles.filterBtnText, filterMode === m && styles.filterBtnTextActive]}>
                       {m === 'all' ? '聚合' : m === 'jmcomic' ? 'JM' : 'Pica'}
                     </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
+            {/* Pica 分类筛选项 */}
+            {searched && filterMode === 'pica' && picaCatList.length > 0 && (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                <Pressable
+                  onPress={() => setPicaCatFilter('')}
+                  style={[styles.tag, !picaCatFilter && { backgroundColor: C.primary, borderColor: C.primary }]}
+                >
+                  <Text style={[styles.tagText, !picaCatFilter && { color: '#fff' }]}>全部</Text>
+                </Pressable>
+                {picaCatList.slice(0, 10).map((cat) => (
+                  <Pressable
+                    key={cat.title}
+                    onPress={() => { setPicaCatFilter(cat.title); setPage(1); doSearch(query, 1, true); }}
+                    style={[styles.tag, picaCatFilter === cat.title && { backgroundColor: C.primary, borderColor: C.primary }]}
+                  >
+                    <Text style={[styles.tagText, picaCatFilter === cat.title && { color: '#fff' }]}>{cat.title}</Text>
                   </Pressable>
                 ))}
               </View>

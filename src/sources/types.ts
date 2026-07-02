@@ -42,7 +42,7 @@ export interface ComicSource {
   readonly id: SourceId;
   readonly label: string;
 
-  search(query: string, page?: number): Promise<{ items: SourceItem[]; total: number }>;
+  search(query: string, page?: number, filters?: Record<string, string>): Promise<{ items: SourceItem[]; total: number }>;
   fetchDetail(comicId: string): Promise<SourceDetail>;
   fetchChapters(comicId: string): Promise<SourceChapter[]>;
   fetchImages(comicId: string, chapterOrder: number): Promise<SourceImage[]>;
