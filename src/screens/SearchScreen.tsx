@@ -22,6 +22,7 @@ import { isPicaEnabled } from '../sources/pica';
 import { picaSource } from '../sources/pica';
 
 const { width: W } = Dimensions.get('window');
+const CARD_W = (W - Spacing.marginEdge * 2 - 10 * 2) / 3;
 
 const SORT_OPTS = ['tf', 'mv', 'mp', 'mr'];
 const HISTORY_KEY = '@jmcomic.search';
@@ -199,28 +200,24 @@ export function SearchScreen() {
     }
   };
 
-  const renderResultItem = ({ item }: { item: SourceItem }) => (
-    <Pressable
-      onPress={() => openDetail(item)}
-      style={({ pressed }) => [styles.hCard, pressed && { opacity: 0.85 }]}
-    >
-      <Image source={{ uri: item.coverUrl }} style={styles.hCover} contentFit="cover" />
-      <View style={styles.hInfo}>
-        <Text style={styles.hTitle} numberOfLines={2}>{item.title}</Text>
-        {item.author ? <Text style={styles.hAuthor} numberOfLines={1}>{item.author}</Text> : null}
-        {item.categories && item.categories.length > 0 && (
-          <View style={styles.hTagRow}>
-            {item.categories.slice(0, 4).map((tag, i) => (
-              <Text key={i} style={styles.hTag}>{tag}</Text>
-            ))}
+  const renderResultItem = ({ item }: { item: SourceItem }) => {
+    const badge = SOURCE_BADGE[item.source] || SOURCE_BADGE.jmcomic;
+    return (
+      <Pressable
+        onPress={() => openDetail(item)}
+        style={({ pressed }) => [styles.resultCard, pressed && { opacity: 0.85 }]}
+      >
+        <View style={styles.cardCoverWrap}>
+          <Image source={{ uri: item.coverUrl }} style={styles.cardCover} contentFit="cover" />
+          <View style={[styles.cardBadge, { backgroundColor: badge.color }]}>
+            <Text style={styles.cardBadgeText}>{badge.label}</Text>
           </View>
-        )}
-        <View style={[styles.sourceBadge, { backgroundColor: item.source === 'pica' ? '#9B59B6' : C.primary }]}>
-          <Text style={styles.sourceBadgeText}>{item.source === 'pica' ? 'Pica' : 'JM'}</Text>
         </View>
-      </View>
-    </Pressable>
-  );
+        <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+        {item.author ? <Text style={styles.cardAuthor} numberOfLines={1}>{item.author}</Text> : null}
+      </Pressable>
+    );
+  };
 
   return (
     <SafeAreaView edges={["top"]} style={styles.cont}>
@@ -229,7 +226,8 @@ export function SearchScreen() {
         ref={listRef}
         data={searched ? displayedResults : []}
         keyExtractor={(i) => `${i.source}:${i.id}`}
-        numColumns={1}
+        numColumns={3}
+        columnWrapperStyle={searched && displayedResults.length > 0 ? { justifyContent: 'space-between' } : undefined}
         contentContainerStyle={{ paddingHorizontal: Spacing.marginEdge, paddingBottom: 100 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => {
           if (!query.trim() || searchingRef.current) return;
@@ -430,16 +428,17 @@ function getStyles(C: LegacyColors) {
       fontSize: FontSize.label, color: C.textPrimary,
       marginTop: 6, fontWeight: '500',
     },
-    hCard: {
-      flexDirection: 'row', marginBottom: 12,
-      backgroundColor: C.surface, borderRadius: Radius.card,
-      overflow: 'hidden',
+    resultCard: { width: CARD_W, marginBottom: 14 },
+    cardCoverWrap: { position: 'relative', width: '100%', aspectRatio: 0.7, borderRadius: Radius.card, overflow: 'hidden', backgroundColor: C.surfaceContainer },
+    cardCover: { width: '100%', height: '100%' },
+    cardBadge: {
+      position: 'absolute', top: 4, right: 4,
+      paddingHorizontal: 6, paddingVertical: 2,
+      borderRadius: 4,
     },
-    hCover: { width: 90, height: 130, backgroundColor: C.surfaceContainer },
-    hInfo: { flex: 1, padding: 10, justifyContent: 'space-between' },
-    hTitle: { fontSize: FontSize.body, fontWeight: '700', color: C.textPrimary, lineHeight: 20 },
-    hAuthor: { fontSize: FontSize.caption, color: C.textSecondary, marginTop: 2 },
-    hTagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
+    cardBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+    cardTitle: { fontSize: FontSize.label, fontWeight: '600', color: C.textPrimary, marginTop: 6, lineHeight: 18 },
+    cardAuthor: { fontSize: FontSize.caption, color: C.textSecondary, marginTop: 2 },
     hTag: { fontSize: 10, color: C.textTertiary, backgroundColor: C.surfaceContainer, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden' },
     sourceBadge: {
       alignSelf: 'flex-start',
