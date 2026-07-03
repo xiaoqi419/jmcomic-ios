@@ -21,9 +21,8 @@ class PicaHttpClient {
     pathWithQuery: string,
     body?: Record<string, any> | null,
   ): Promise<T> {
-    // 签名规则：GET 含 query string，POST/PUT/DELETE 仅纯路径（对齐 haka_comic）
-    const signPath = method === 'GET' ? pathWithQuery : pathWithQuery.split('?')[0];
-    const headers = buildHeaders(signPath, method, this.token);
+    // haka_comic 签名规则：所有方法都用 pathWithQuery（含 query string）
+    const headers = buildHeaders(pathWithQuery, method, this.token);
 
     const opts: RequestInit = {
       method,
