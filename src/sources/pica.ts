@@ -85,6 +85,13 @@ export const picaSource: ComicSource = {
       description: info.description || '',
       tags: Array.isArray(info.tags) ? info.tags : [],
       chapters,
+      likesCount: info.likesCount,
+      totalLikes: info.totalLikes,
+      viewsCount: info.viewsCount,
+      totalViews: info.totalViews,
+      commentsCount: info.commentsCount,
+      pagesCount: info.pagesCount,
+      epsCount: info.epsCount,
     };
   },
 

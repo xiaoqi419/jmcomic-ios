@@ -166,9 +166,9 @@ export function PicaDetailScreen() {
 
         {/* ===== 统计行 ===== */}
         <View style={styles.statRow}>
-          <View style={styles.statItem}><MaterialIcons name="favorite-border" size={15} color="#6B6873" /><Text style={styles.statLabel}>0</Text></View>
+          <View style={styles.statItem}><MaterialIcons name="favorite-border" size={15} color="#6B6873" /><Text style={styles.statLabel}>{detail.likesCount ?? detail.totalLikes ?? 0}</Text></View>
           <View style={styles.statDot} />
-          <View style={styles.statItem}><MaterialIcons name="visibility" size={15} color="#6B6873" /><Text style={styles.statLabel}>0</Text></View>
+          <View style={styles.statItem}><MaterialIcons name="visibility" size={15} color="#6B6873" /><Text style={styles.statLabel}>{detail.viewsCount ?? detail.totalViews ?? 0}</Text></View>
           <View style={styles.statDot} />
           <View style={styles.statItem}><MaterialIcons name="collections" size={15} color="#6B6873" /><Text style={styles.statLabel}>{chs.length || 0}</Text></View>
           <View style={styles.statDot} />

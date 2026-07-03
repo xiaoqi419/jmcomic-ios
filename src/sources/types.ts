@@ -31,6 +31,13 @@ export interface SourceDetail {
   tags: string[];
   chapters: SourceChapter[];
   source: SourceId;
+  likesCount?: number;
+  totalLikes?: number;
+  viewsCount?: number;
+  totalViews?: number;
+  commentsCount?: number;
+  pagesCount?: number;
+  epsCount?: number;
 }
 
 export interface SourceImage {

@@ -320,11 +320,11 @@ export async function fetchNovels(page = 1, searchQuery?: string): Promise<{ lis
 }
 
 export async function fetchNovelDetail(novelId: string): Promise<{ novel: NovelItem; chapters: NovelChapter[] }> {
-  return encryptedGet('novel', { id: novelId });
+  return encryptedGet('novel', { nid: novelId });
 }
 
 export async function fetchNovelContent(chapterId: string): Promise<NovelContent> {
-  return encryptedGet<NovelContent>('novelchapters', { id: chapterId });
+  return encryptedGet<NovelContent>('novelchapters', { ncid: chapterId });
 }
 
 export async function fetchBlogs(page = 1): Promise<{ list: BlogItem[]; total: string }> {
