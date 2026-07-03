@@ -48,6 +48,7 @@ export function ComicDetailScreen() {
   const [seriesGroups, setSeriesGroups] = useState<Episode[][]>([]);
   const [groupIdx, setGroupIdx] = useState(0);
   const { isFav, addLocal, removeLocal, folders, createFolder, deleteFolder, renameFolder, moveToFolder, loadFolders, toggle } = useFavoritesStore();
+  const historyItem = useHistoryStore((s) => s.items.find((h) => h.id === albumId));
   const fav = isFav(albumId);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
   const [showFolderManager, setShowFolderManager] = useState(false);
@@ -282,9 +283,6 @@ export function ComicDetailScreen() {
 
   const relatedList = Array.isArray(detail.related_list) ? detail.related_list : [];
   const purchased = detail.purchased !== undefined || detail.bought === true;
-
-  // 从阅读历史中查找该漫画的进度
-  const historyItem = useHistoryStore((s) => s.items.find((h) => h.id === albumId));
 
   return (
     <SafeAreaView style={styles.cont} edges={['top']}>
