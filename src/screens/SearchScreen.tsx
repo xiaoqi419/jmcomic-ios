@@ -17,6 +17,10 @@ import { useLegacyColors, LegacyColors, Spacing, FontSize, Radius } from '../the
 import { fetchHotTags, fetchRandomRecommend, searchComics, getCoverUrl as getCover } from '../api/endpoints';
 import { picaCategories } from '../pica/endpoints';
 import { jmLogger } from '../utils/JmLogger';
+import { setCache, getCache } from '../utils/cache';
+import { SortAndFilterToolbar } from '../components/SortAndFilterToolbar';
+import { CategoryFilterSheet } from '../components/CategoryFilterSheet';
+import { EmptyState } from '../components/EmptyState';
 import type { SourceItem } from '../sources/types';
 import type { ComicItem } from '../api/types';
 import { isPicaEnabled } from '../sources/pica';
@@ -56,6 +60,8 @@ export function SearchScreen() {
   const [filterMode, setFilterMode] = useState<'all' | 'jmcomic' | 'pica'>('all');
   const [picaCatList, setPicaCatList] = useState<{title: string}[]>([]);
   const [picaCatFilter, setPicaCatFilter] = useState('');
+  const [showFilter, setShowFilter] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<{ jm?: string[]; pica?: string[] }>({});
   const [showScrollTop, setShowScrollTop] = useState(false);
   const listRef = useRef<FlatList>(null);
   const searchingRef = useRef(false);
@@ -88,6 +94,21 @@ export function SearchScreen() {
 
   const doSearch = useCallback(async (q: string, p = 1, refresh = false) => {
     if (!q.trim() || searchingRef.current) return;
+
+    // 尝试从缓存读取
+    if (!refresh && p === 1) {
+      const cached = getCache<{ items: SourceItem[]; total: number }>(`search:${q}:${sort}`);
+      if (cached) {
+        setResults(cached.items);
+        setJmResults(cached.items.filter((i) => i.source === 'jmcomic'));
+        setPicaResults(cached.items.filter((i) => i.source === 'pica'));
+        setHasMore(cached.items.length >= 20);
+        setSearched(true);
+        setLoading(false);
+        searchingRef.current = false;
+        return;
+      }
+    }
 
     // 纯数字 → 直接跳到 JMComic 详情（兼容旧行为）
     if (/^\d{4,}$/.test(q.trim())) {
@@ -180,6 +201,11 @@ export function SearchScreen() {
     setHasMore(agg.items.length >= 20);
     setSearched(true);
 
+    // 写入缓存（仅第一页）
+    if (p === 1 && agg.items.length > 0) {
+      setCache(`search:${q}:${sort}`, { items: agg.items, total: agg.total }, 60_000);
+    }
+
     // 写入历史
     if (p === 1) {
       const newHistory = [q, ...history.filter((h) => h !== q)].slice(0, 20);
@@ -268,19 +294,16 @@ export function SearchScreen() {
               )}
             </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 10 }}>
-              {SORT_OPTS.map((s) => (
-                <Pressable
-                  key={s}
-                  onPress={() => { setSort(s); if (searched) doSearch(query, 1, true); }}
-                  style={[styles.sortBtn, sort === s && styles.sortBtnActive]}
-                >
-                  <Text style={[styles.sortText, sort === s && styles.sortTextActive]}>
-                    {t(`search.sort_${s}`)}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+            {/* 排序+筛选工具栏 */}
+            {searched && (
+              <SortAndFilterToolbar
+                sort={sort as any}
+                onSortChange={(s) => { setSort(s); if (searched) doSearch(query, 1, true); }}
+                onFilterPress={() => setShowFilter(true)}
+                hasFilter={(categoryFilter.jm?.length || categoryFilter.pica?.length || 0) > 0}
+                source={filterMode === 'pica' ? 'pica' : 'jm'}
+              />
+            )}
 
             <Pressable onPress={onSearch} style={({ pressed }) => [styles.searchBtn, { opacity: pressed ? 0.7 : 1 }]}>
               <MaterialIcons name="search" size={18} color="#fff" />
@@ -396,10 +419,13 @@ export function SearchScreen() {
             )}
 
             {searched && results.length === 0 && !loading && (
-              <View style={{ alignItems: 'center', marginTop: 50 }}>
-                <MaterialIcons name="search-off" size={48} color={C.textTertiary} />
-                <Text style={{ color: C.textSecondary, marginTop: 10, fontSize: FontSize.body }}>{t('search.no_result')}</Text>
-              </View>
+              <EmptyState
+                icon="search-off"
+                title={t('search.no_result')}
+                message="试试修改关键词或筛选条件"
+                onRefresh={() => doSearch(query, 1, true)}
+                refreshLabel="重新搜索"
+              />
             )}
 
             {searched && loading && (
@@ -415,6 +441,17 @@ export function SearchScreen() {
           <MaterialIcons name="keyboard-arrow-up" size={28} color="#fff" />
         </Pressable>
       )}
+      <CategoryFilterSheet
+        visible={showFilter}
+        onClose={() => setShowFilter(false)}
+        onConfirm={(cats) => {
+          setCategoryFilter(cats);
+          setPage(1);
+          if (searched) doSearch(query, 1, true);
+        }}
+        initialSelected={categoryFilter}
+        source={filterMode === 'pica' ? 'pica' : filterMode === 'jmcomic' ? 'jm' : 'all'}
+      />
     </SafeAreaView>
   );
 }
