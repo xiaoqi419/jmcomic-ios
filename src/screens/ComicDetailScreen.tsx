@@ -286,12 +286,8 @@ export function ComicDetailScreen() {
   const purchased = detail.purchased !== undefined || detail.bought === true;
 
   return (
-    <SafeAreaView style={styles.cont} edges={['top']}>
+    <SafeAreaView style={styles.cont}>
       <StatusBar style="light" />
-      {/* 返回按钮 */}
-      <Pressable onPress={() => nav.goBack()} style={{ position: 'absolute', top: 8, left: 8, zIndex: 10, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' }}>
-        <MaterialIcons name="arrow-back" size={24} color="#fff" />
-      </Pressable>
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={{ paddingBottom: 80 }}
@@ -304,7 +300,7 @@ export function ComicDetailScreen() {
         }}>
         {/* 封面 + 渐变 */}
         <View style={{ position: 'relative' }}>
-          <Image source={{ uri: getCoverUrl(albumId) }} style={{ width: '100%', height: winW * 0.55 }} contentFit="cover" />
+          <Image source={{ uri: getCoverUrl(albumId) }} style={{ width: '100%', height: winW * 0.65 }} contentFit="cover" />
           <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={styles.coverGrad} pointerEvents="none" />
           <View style={styles.coverInfo}>
             <Text style={styles.title}>{detail.name}</Text>
