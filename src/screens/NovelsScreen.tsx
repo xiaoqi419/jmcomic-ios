@@ -9,7 +9,7 @@ import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLegacyColors, LegacyColors, Radius, Spacing, FontSize } from '../theme';
-import { fetchNovels, fetchNovelDetail, fetchNovelContent, getCoverUrl, getImgHost } from '../api/endpoints';
+import { fetchNovels, fetchNovelDetail, fetchNovelContent, getImgHost } from '../api/endpoints';
 import type { NovelItem, NovelChapter, NovelContent } from '../api/types';
 
 export function NovelsScreen() {
@@ -89,7 +89,7 @@ export function NovelsScreen() {
         }
         renderItem={({ item }) => (
           <Pressable onPress={() => nav.navigate('NovelDetail' as never, { novelId: item.id } as never)} style={styles.card}>
-            <Image source={{ uri: item.photo?.startsWith('http') ? item.photo : `https://${getImgHost()}/${item.photo}` }} style={styles.cardCover} contentFit="cover" />
+            <Image source={{ uri: item.photo?.startsWith('http') ? item.photo : `https://${getImgHost()}/${String(item.photo || '').replace(/^\//, '')}` }} style={styles.cardCover} contentFit="cover" />
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.cardTitle}>{item.title}</Text>
               <Text style={styles.cardAuthor}>{item.author}</Text>
@@ -129,7 +129,7 @@ export function NovelDetailScreen() {
     <SafeAreaView edges={["top"]} style={styles.cont}>
       <ScrollView contentContainerStyle={{ padding: Spacing.marginEdge }}>
         <View style={{ flexDirection: 'row', gap: 14 }}>
-          <Image source={{ uri: novel.photo?.startsWith('http') ? novel.photo : `https://${getImgHost()}/${novel.photo}` }} style={styles.novelCover} contentFit="cover" />
+          <Image source={{ uri: novel.photo?.startsWith('http') ? novel.photo : `https://${getImgHost()}/${String(novel.photo || '').replace(/^\//, '')}` }} style={styles.novelCover} contentFit="cover" />
           <View style={{ flex: 1 }}>
             <Text style={styles.novelTitle}>{novel.title}</Text>
             <Text style={styles.novelAuthor}>{novel.author}</Text>
