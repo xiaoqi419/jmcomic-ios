@@ -103,7 +103,12 @@ export function DownloadListScreen() {
         }
         renderItem={({ item }) => (
           <Pressable
-            onPress={item.status === 'completed' ? () => nav.navigate('ComicDetail', { albumId: item.comicId }) : undefined}
+            onPress={item.status === 'completed' ? () => nav.navigate('Reader', {
+              chapterId: item.comicId,
+              albumId: item.comicId,
+              chapterTitle: item.title,
+              localPath: item.localPath,
+            }) : undefined}
             style={styles.item}
           >
             <MaterialIcons name={stateIcon(item.status) as any} size={24} color={stateColor(item.status)} />

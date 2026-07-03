@@ -96,3 +96,69 @@ export function favouriteComic(id: string) {
 export function punchIn() {
   return c.post('users/punch-in', null);
 }
+
+// ===== Pica 评论系统 =====
+
+// GET /comics/:id/comments?page= — 获取评论
+export function comicComments(comicId: string, page = 1) {
+  return c.get(`comics/${comicId}/comments`, { page });
+}
+
+// POST /comics/:id/comments — 发表评论
+export function sendComment(comicId: string, content: string) {
+  return c.post(`comics/${comicId}/comments`, { content });
+}
+
+// POST /comments/:id/like — 点赞评论
+export function likeComment(commentId: string) {
+  return c.post(`comments/${commentId}/like`, {});
+}
+
+// GET /comments/:id/childrens?page= — 获取子评论（回复）
+export function commentChildrens(commentId: string, page = 1) {
+  return c.get(`comments/${commentId}/childrens`, { page });
+}
+
+// POST /comments/:id — 回复评论
+export function replyComment(commentId: string, content: string) {
+  return c.post(`comments/${commentId}`, { content });
+}
+
+// ===== 个人资料 =====
+
+// PUT /users/profile — 修改签名
+export function updateProfile(slogan: string) {
+  return c.put('users/profile', { slogan });
+}
+
+// PUT /users/avatar — 上传头像
+export function updateAvatar(base64: string) {
+  return c.put('users/avatar', { avatar: `data:image/jpeg;base64,${base64}` });
+}
+
+// PUT /users/password — 修改密码
+export function changePassword(oldPwd: string, newPwd: string) {
+  return c.put('users/password', { old_password: oldPwd, new_password: newPwd });
+}
+
+// ===== 其他 =====
+
+// GET /comics/random — 随机漫画
+export function randomComics() {
+  return c.get<PicaComicsData>('comics/random');
+}
+
+// GET /comics/knight-leaderboard — 骑士榜
+export function knightLeaderboard() {
+  return c.get<PicaComicsData>('comics/knight-leaderboard');
+}
+
+// GET /users/my-comments?page= — 我的评论历史
+export function myComments(page = 1) {
+  return c.get('users/my-comments', { page });
+}
+
+// GET /keywords — 热搜词
+export function picaHotSearchWords() {
+  return c.get('keywords');
+}

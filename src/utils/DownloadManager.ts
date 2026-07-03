@@ -21,6 +21,7 @@ export interface DownloadItem {
   addedAt: number;        // 添加时间戳
   chapterCount: number;   // 总章节数
   completedChapters: number; // 已完成章节数
+  localPath?: string;     // 本地缓存路径（用于离线阅读）
   error?: string;         // 错误信息
 }
 
