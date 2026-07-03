@@ -20,7 +20,6 @@ import { jmLogger } from '../utils/JmLogger';
 import { setCache, getCache } from '../utils/cache';
 import { parseBooleanQuery, applyBooleanFilter } from '../utils/booleanSearch';
 import { SortAndFilterToolbar } from '../components/SortAndFilterToolbar';
-import { CategoryFilterSheet } from '../components/CategoryFilterSheet';
 import { EmptyState } from '../components/EmptyState';
 import type { SourceItem } from '../sources/types';
 import type { ComicItem } from '../api/types';
@@ -61,8 +60,6 @@ export function SearchScreen() {
   const [filterMode, setFilterMode] = useState<'all' | 'jmcomic' | 'pica'>('all');
   const [picaCatList, setPicaCatList] = useState<{title: string}[]>([]);
   const [picaCatFilter, setPicaCatFilter] = useState('');
-  const [showFilter, setShowFilter] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState<{ jm?: string[]; pica?: string[] }>({});
   const [showScrollTop, setShowScrollTop] = useState(false);
   const listRef = useRef<FlatList>(null);
   const searchingRef = useRef(false);
@@ -322,8 +319,8 @@ export function SearchScreen() {
               <SortAndFilterToolbar
                 sort={sort as any}
                 onSortChange={(s) => { setSort(s); if (searched) doSearch(query, 1, true); }}
-                onFilterPress={() => setShowFilter(true)}
-                hasFilter={(categoryFilter.jm?.length || categoryFilter.pica?.length || 0) > 0}
+                onFilterPress={() => {}}
+                hasFilter={false}
                 source={filterMode === 'pica' ? 'pica' : 'jm'}
               />
             )}
@@ -358,8 +355,8 @@ export function SearchScreen() {
               </View>
             )}
 
-            {/* Pica 分类筛选项 */}
-            {searched && filterMode === 'pica' && picaCatList.length > 0 && (
+            {/* Pica 分类筛选项 已移除 */}
+            {false && searched && filterMode === 'pica' && picaCatList.length > 0 && (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                 <Pressable
                   onPress={() => setPicaCatFilter('')}
@@ -464,17 +461,6 @@ export function SearchScreen() {
           <MaterialIcons name="keyboard-arrow-up" size={28} color="#fff" />
         </Pressable>
       )}
-      <CategoryFilterSheet
-        visible={showFilter}
-        onClose={() => setShowFilter(false)}
-        onConfirm={(cats) => {
-          setCategoryFilter(cats);
-          setPage(1);
-          if (searched) doSearch(query, 1, true);
-        }}
-        initialSelected={categoryFilter}
-        source={filterMode === 'pica' ? 'pica' : filterMode === 'jmcomic' ? 'jm' : 'all'}
-      />
     </SafeAreaView>
   );
 }
