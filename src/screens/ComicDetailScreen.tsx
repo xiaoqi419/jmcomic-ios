@@ -29,7 +29,8 @@ import type { AlbumDetail, Episode, CommentItem as ApiComment } from '../api/typ
 export function ComicDetailScreen() {
   const nav = useNavigation<any>();
   const route = useRoute<any>();
-  const { albumId } = route.params;
+  const { albumId } = route.params || {};
+  if (!albumId) { jmLogger.err('ComicDetailScreen: albumId is undefined'); }
   const { t } = useTranslation();
   const { loggedIn } = useAuthStore();
   const C = useLegacyColors();
