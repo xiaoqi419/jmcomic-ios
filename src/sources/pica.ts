@@ -90,9 +90,22 @@ export const picaSource: ComicSource = {
 
   async fetchChapters(id: string): Promise<SourceChapter[]> {
     await ensureAuth();
-    const eps = await comicEps(id);
-    // 响应结构: { eps: { docs: [...] } }
-    const docs = (eps as any).eps?.docs || (eps as any).docs || [];
+    const first = await comicEps(id);
+    const eps = (first as any).eps || first;
+    let docs: any[] = eps.docs || eps || [];
+    const pages = eps.pages || 1;
+    // 多页并行加载
+    if (pages > 1) {
+      const pageReqs = [];
+      for (let p = 2; p <= pages; p++) pageReqs.push(comicEps(id, p));
+      const rest = await Promise.allSettled(pageReqs);
+      for (const result of rest) {
+        if (result.status === 'fulfilled') {
+          const rd = (result.value as any).eps?.docs || (result.value as any).docs || [];
+          docs = [...docs, ...rd];
+        }
+      }
+    }
     return docs.map(toSourceChapter);
   },
 
