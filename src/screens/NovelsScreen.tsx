@@ -1,8 +1,8 @@
-// 小说 v2
+// 小说 v3 — 搜索 + 分页
 // @author nyx
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -20,21 +20,38 @@ export function NovelsScreen() {
   const [list, setList] = useState<NovelItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [query, setQuery] = useState('');
 
-  const loadData = useCallback(async () => {
-    const d = await fetchNovels();
-    setList(d.list || []);
-  }, []);
+  const loadData = useCallback(async (p: number, refresh = false) => {
+    try {
+      const d = await fetchNovels(p, query || undefined);
+      const items = d.list || [];
+      if (refresh || p === 1) setList(items);
+      else setList((prev) => [...prev, ...items]);
+      setHasMore(items.length >= 20);
+    } catch {}
+  }, [query]);
 
   useEffect(() => {
-    loadData().finally(() => setLoading(false));
-  }, []);
+    setLoading(true);
+    setPage(1);
+    loadData(1, true).finally(() => setLoading(false));
+  }, [query]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadData();
+    await loadData(1, true);
     setRefreshing(false);
   }, [loadData]);
+
+  const handleEndReached = useCallback(() => {
+    if (!hasMore || loading) return;
+    const np = page + 1;
+    setPage(np);
+    loadData(np);
+  }, [page, hasMore, loading, loadData]);
 
   return (
     <SafeAreaView edges={["top"]} style={styles.cont}>
@@ -43,7 +60,33 @@ export function NovelsScreen() {
         keyExtractor={(i) => i.id}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} colors={[C.primary]} />}
         contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}
-        ListHeaderComponent={<Text style={styles.pageTitle}>{t('novels.title')}</Text>}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        ListHeaderComponent={
+          <View>
+            <Text style={styles.pageTitle}>{t('novels.title')}</Text>
+            {/* 搜索框 */}
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+              <TextInput
+                style={{
+                  flex: 1, height: 40, backgroundColor: C.surface, borderRadius: Radius.sm,
+                  paddingHorizontal: 12, color: C.textPrimary, fontSize: FontSize.body,
+                  borderWidth: 1, borderColor: C.border,
+                }}
+                placeholder="搜索小说..."
+                placeholderTextColor={C.textTertiary}
+                value={query}
+                onChangeText={setQuery}
+                returnKeyType="search"
+              />
+              {query.length > 0 && (
+                <Pressable onPress={() => setQuery('')} style={{ justifyContent: 'center', paddingHorizontal: 4 }}>
+                  <MaterialIcons name="close" size={20} color={C.textTertiary} />
+                </Pressable>
+              )}
+            </View>
+          </View>
+        }
         renderItem={({ item }) => (
           <Pressable onPress={() => nav.navigate('NovelDetail' as never, { novelId: item.id } as never)} style={styles.card}>
             <Image source={{ uri: item.photo }} style={styles.cardCover} contentFit="cover" />
@@ -54,7 +97,8 @@ export function NovelsScreen() {
             </View>
           </Pressable>
         )}
-        ListEmptyComponent={loading ? <ActivityIndicator color={C.primary} /> : <Text style={styles.empty}>{t('common.empty')}</Text>}
+        ListFooterComponent={loading ? <ActivityIndicator color={C.primary} /> : null}
+        ListEmptyComponent={!loading ? <Text style={styles.empty}>{t('common.empty')}</Text> : null}
       />
     </SafeAreaView>
   );

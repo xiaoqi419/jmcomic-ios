@@ -313,8 +313,10 @@ export async function fetchVideoDetail(vid: string): Promise<VideoDetailData> {
   return { video: null as any, related_videos: [], videoSeries: [] };
 }
 
-export async function fetchNovels(page = 1): Promise<{ list: NovelItem[]; total: string }> {
-  return encryptedGet('novels', { page });
+export async function fetchNovels(page = 1, searchQuery?: string): Promise<{ list: NovelItem[]; total: string }> {
+  const params: Record<string, any> = { page };
+  if (searchQuery) params.filter = searchQuery;
+  return encryptedGet('novels', params);
 }
 
 export async function fetchNovelDetail(novelId: string): Promise<{ novel: NovelItem; chapters: NovelChapter[] }> {
