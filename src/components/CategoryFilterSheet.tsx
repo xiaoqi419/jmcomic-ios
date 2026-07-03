@@ -100,29 +100,29 @@ export function CategoryFilterSheet({ visible, onClose, onConfirm, initialSelect
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <Pressable style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]} onPress={onClose}>
-        <Pressable style={[styles.sheet, { backgroundColor: C.surface }]} onPress={() => {}}>
-          <SafeAreaView style={{ flex: 1 }}>
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Pressable style={styles.sheet} onPress={() => {}}>
+          <View style={styles.sheetInner}>
             {/* 头部 */}
-            <View style={[styles.header, { borderBottomColor: 'rgba(255,255,255,0.06)' }]}>
+            <View style={styles.header}>
               <Pressable onPress={onClose} hitSlop={8}>
-                <Text style={{ color: C.textSecondary, fontSize: FontSize.body }}>取消</Text>
+                <Text style={{ color: '#9895A0', fontSize: 14 }}>取消</Text>
               </Pressable>
-              <Text style={{ fontSize: FontSize.headline, fontWeight: '700', color: C.textPrimary }}>分类筛选</Text>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: '#F0EDE8' }}>分类筛选</Text>
               <Pressable onPress={handleClear} hitSlop={8}>
-                <Text style={{ color: hasSelection ? C.primary : C.textTertiary, fontSize: FontSize.body }}>清除</Text>
+                <Text style={{ color: hasSelection ? '#E85D3A' : '#5C5970', fontSize: 14 }}>清除</Text>
               </Pressable>
             </View>
 
             {loading ? (
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 }}>
-                <ActivityIndicator size="large" color={C.primary} />
-                <Text style={{ color: C.textSecondary, marginTop: 12, fontSize: FontSize.body }}>加载分类中…</Text>
+                <ActivityIndicator size="large" color="#E85D3A" />
+                <Text style={{ color: '#9895A0', marginTop: 12, fontSize: 14 }}>加载分类中…</Text>
               </View>
             ) : !hasAnyCats ? (
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 }}>
-                <MaterialIcons name="info-outline" size={48} color={C.textTertiary} />
-                <Text style={{ color: C.textSecondary, marginTop: 12, fontSize: FontSize.body }}>暂无分类数据</Text>
+                <MaterialIcons name="info-outline" size={48} color="#5C5970" />
+                <Text style={{ color: '#9895A0', marginTop: 12, fontSize: 14 }}>暂无分类数据</Text>
               </View>
             ) : (
               <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 80 }}>
@@ -172,7 +172,7 @@ export function CategoryFilterSheet({ visible, onClose, onConfirm, initialSelect
                 <Text style={styles.confirmText}>确定 ({selectedJm.size + selectedPica.size})</Text>
               </Pressable>
             )}
-          </SafeAreaView>
+          </View>
         </Pressable>
       </Pressable>
     </Modal>
@@ -180,12 +180,13 @@ export function CategoryFilterSheet({ visible, onClose, onConfirm, initialSelect
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'flex-end' },
-  sheet: { maxHeight: '85%', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 20 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1 },
+  overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.55)' },
+  sheet: { maxHeight: '85%', borderTopLeftRadius: 20, borderTopRightRadius: 20, backgroundColor: '#1A1A24', overflow: 'hidden' },
+  sheetInner: { paddingBottom: 24 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)' },
   section: { paddingHorizontal: 16, paddingTop: 16 },
-  sectionTitle: { fontSize: FontSize.headline, fontWeight: '700', marginBottom: 10 },
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#F0EDE8', marginBottom: 10 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
-  confirmBtn: { marginHorizontal: 16, marginTop: 8, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
-  confirmText: { color: '#fff', fontSize: FontSize.body, fontWeight: '700' },
+  confirmBtn: { marginHorizontal: 16, marginTop: 8, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#E85D3A' },
+  confirmText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });
