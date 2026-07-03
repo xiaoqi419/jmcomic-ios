@@ -175,10 +175,6 @@ export function MemberScreen() {
                   <MaterialIcons name="favorite" size={20} color={C.error} />
                   <Text style={{ color: C.error, fontWeight: '600' }}>我的喜欢</Text>
                 </Pressable>
-                <Pressable onPress={() => nav.navigate('Novels' as never)} style={[styles.signBtn, { marginTop: 0, flex: 1 }]}>
-                  <MaterialIcons name="auto-stories" size={20} color={C.primary} />
-                  <Text style={{ color: C.primary, fontWeight: '600' }}>小说</Text>
-                </Pressable>
               </View>
               <Pressable onPress={handleJmLogout} style={styles.logoutSmall}>
                 <Text style={styles.logoutSmallText}>退出登录</Text>
