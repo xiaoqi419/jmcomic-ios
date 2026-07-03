@@ -19,7 +19,7 @@ const { width: W } = Dimensions.get('window');
 
 export function PicaReaderScreen() {
   const nav = useNavigation<any>();
-  const { comicId, chapterId, title } = useRoute<any>().params;
+  const { comicId, chapterOrder, chapterId, title } = useRoute<any>().params;
 
   const [images, setImages] = useState<SourceImage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,11 +29,11 @@ export function PicaReaderScreen() {
   const flatRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    picaSource.fetchImages(comicId, chapterId)
+    picaSource.fetchImages(comicId, chapterOrder ?? 1)
       .then(setImages)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [comicId, chapterId]);
+  }, [comicId, chapterOrder]);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
     if (viewableItems?.length > 0) {
