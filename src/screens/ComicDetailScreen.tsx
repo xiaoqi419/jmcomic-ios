@@ -132,7 +132,7 @@ export function ComicDetailScreen() {
       const host = getImgHost();
 
       // 单章本：chId === albumId，从 detail.images 拿（album API 已有）
-      if (chId === albumId && detail?.images?.length) {
+      if (chId === albumId && Array.isArray(detail?.images) && detail.images.length) {
         images = detail.images.map((url: any) => {
           let u = typeof url === 'string' ? url : url.image || String(url);
           if (u && !u.includes('://')) u = `https://${host}/media/photos/${chId}/${u}`;
@@ -142,7 +142,7 @@ export function ComicDetailScreen() {
       } else {
         const data = await fetchComicRead(chId);
         jmLogger.log(`openChapter chId=${chId} imagesLen=${data.images?.length} page_count=${data.page_count} hasImages=!!${!!data.images?.length}`);
-        if (data.images?.length) {
+        if (Array.isArray(data.images) && data.images.length) {
           images = data.images.map((item: any) => item.image);
           jmLogger.log(`openChapter: 使用 API images[0]=${images[0]}`);
         } else {
@@ -223,7 +223,7 @@ export function ComicDetailScreen() {
     }
     addLocal({
       id: albumId, title: detail?.name || '', coverUrl: getCoverUrl(albumId),
-      author: detail?.author?.join(', ') || '', addedAt: Date.now(),
+      author: Array.isArray(detail?.author) ? detail.author.join(', ') : String(detail?.author || ''), addedAt: Date.now(),
     });
     setShowFolderPicker(false);
   };
@@ -345,7 +345,7 @@ export function ComicDetailScreen() {
         {/* Tab 1: 简介 */}
         {tab === 1 && (
           <View style={{ paddingHorizontal: Spacing.marginEdge, paddingTop: Spacing.md }}>
-            {detail.tags?.length > 0 && (
+            {Array.isArray(detail.tags) && detail.tags.length > 0 && (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                 {detail.tags.map((tag, i) => (
                   <Pressable key={i} onPress={() => nav.navigate('Main', { screen: 'Search', params: { query: tag } })}>
@@ -465,7 +465,7 @@ export function ComicDetailScreen() {
                     <Text style={{ fontSize: FontSize.caption, color: C.textTertiary }}>{c.addtime}</Text>
                   </View>
                   <HtmlText html={c.content} style={{ color: C.textSecondary, marginTop: 4, lineHeight: 20 }} linkColor={C.primary} />
-                  {c.replys?.length > 0 && (
+                  {Array.isArray(c.replys) && c.replys.length > 0 && (
                     <View style={{ marginTop: 6, paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: C.divider }}>
                       {c.replys.slice(0, 2).map((r, ri) => (
                         <View key={ri} style={{ flexDirection: 'row', marginTop: 2 }}>
