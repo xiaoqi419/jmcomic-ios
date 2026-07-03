@@ -329,6 +329,20 @@ export function ComicDetailScreen() {
           <View style={styles.statItem}><MaterialIcons name="chat-bubble-outline" size={16} color={C.textSecondary} /><Text style={styles.statLabel}>{fmt(detail.comment_total)}</Text></View>
         </View>
 
+        {/* 车号 */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 10, marginBottom: 4 }}>
+          <Text style={{ fontSize: FontSize.body, color: C.textTertiary }}>车号</Text>
+          <Text style={{ fontSize: FontSize.body, fontWeight: '700', color: C.primary, letterSpacing: 1 }}>{albumId}</Text>
+          <Pressable onPress={() => {
+            try {
+              const { Clipboard } = require('react-native');
+              if (Clipboard?.setString) { Clipboard.setString(albumId); Alert.alert('', '车号已复制'); }
+            } catch {}
+          }} hitSlop={8}>
+            <MaterialIcons name="content-copy" size={14} color={C.textTertiary} />
+          </Pressable>
+        </View>
+
         {/* 3-Tab 导航 */}
         <View style={styles.tabBar}>
           {(() => {
