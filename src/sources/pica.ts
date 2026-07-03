@@ -29,8 +29,8 @@ function toSourceItem(comic: any): SourceItem {
     author: comic.author || '',
     coverUrl: thumbUrl(comic.thumb),
     description: comic.description || '',
-    categories: comic.categories || [],
-    tags: comic.tags || [],
+    categories: Array.isArray(comic.categories) ? comic.categories : [],
+    tags: Array.isArray(comic.tags) ? comic.tags : [],
     source: 'pica',
   };
 }
@@ -83,7 +83,7 @@ export const picaSource: ComicSource = {
     return {
       ...item,
       description: info.description || '',
-      tags: info.tags || [],
+      tags: Array.isArray(info.tags) ? info.tags : [],
       chapters,
     };
   },
@@ -138,14 +138,17 @@ export async function aggregateSearch(
     if (res.redirect_aid) {
       jmResult = { items: [], total: 0, redirect_aid: res.redirect_aid };
     } else {
-      const items = (res.content || []).map((c: any) => ({
-        id: String(c.id || c.album_id),
-        title: c.name || c.title || '',
-        author: c.author?.name || (typeof c.author === 'string' ? c.author : ''),
-        coverUrl: getCoverUrl(String(c.id)),
-        categories: (c.tags || c.category || c.category_sub || []).map((t: any) => typeof t === 'string' ? t : t.name || t.tag || ''),
-        source: 'jmcomic' as const,
-      }));
+      const items = (res.content || []).map((c: any) => {
+        const catRaw = c.tags || c.category || c.category_sub || [];
+        return {
+          id: String(c.id || c.album_id),
+          title: c.name || c.title || '',
+          author: c.author?.name || (typeof c.author === 'string' ? c.author : ''),
+          coverUrl: getCoverUrl(String(c.id)),
+          categories: Array.isArray(catRaw) ? catRaw.map((t: any) => typeof t === 'string' ? t : t.name || t.tag || '') : [],
+          source: 'jmcomic' as const,
+        };
+      });
       jmResult = { items, total: Number(res.total) || items.length };
     }
     jmLogger.log(`聚合搜索: JM结果 items=${jmResult.items.length} redirect=${jmResult.redirect_aid}`);

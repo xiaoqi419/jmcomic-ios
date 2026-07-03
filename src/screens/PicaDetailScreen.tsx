@@ -74,7 +74,7 @@ export function PicaDetailScreen() {
           <Text style={styles.author}>{detail.author}</Text>
 
           {/* 开始阅读按钮 */}
-          {detail.chapters.length > 0 && (
+          {Array.isArray(detail.chapters) && detail.chapters.length > 0 && (
             <Pressable
               onPress={() => nav.navigate('PicaReader', {
                 comicId: detail.id,
@@ -90,7 +90,7 @@ export function PicaDetailScreen() {
           )}
 
           {/* 标签 */}
-          {detail.tags.length > 0 && (
+          {Array.isArray(detail.tags) && detail.tags.length > 0 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
               {detail.tags.map((tag) => (
                 <Pressable key={tag} onPress={() => nav.navigate('Main', { screen: 'Search', params: { query: tag } })}>
@@ -116,7 +116,7 @@ export function PicaDetailScreen() {
           </View>
         )}
 
-        {activeTab === 1 && (
+        {activeTab === 1 && Array.isArray(detail.chapters) && (
           <View style={{ paddingHorizontal: Spacing.marginEdge, marginTop: 8 }}>
             {detail.chapters
               .slice()
