@@ -43,6 +43,7 @@ import { WeekRankScreen } from './src/screens/WeekRankScreen';
 import { ComicCommentScreen } from './src/screens/ComicCommentScreen';
 import { RegisterScreen, ForgotPasswordScreen } from './src/screens/AuthScreens';
 import { PicaDetailScreen } from './src/screens/PicaDetailScreen';
+import { PicaCategoryResultScreen } from './src/screens/PicaCategoryResultScreen';
 import { PicaReaderScreen } from './src/screens/PicaReaderScreen';
 import { AboutScreen } from './src/screens/AboutScreen';
 import { DownloadListScreen } from './src/screens/DownloadListScreen';
@@ -154,6 +155,8 @@ function AppInner() {
           options={{ headerShown: false }} />
         <Stack.Screen name="PicaDetail" component={PicaDetailWrapper}
           options={{ title: '详情', headerBackTitle: '返回' }} />
+        <Stack.Screen name="PicaCategoryResult" component={PicaCategoryResultScreen}
+          options={{ title: '分类结果' }} />
         <Stack.Screen name="PicaReader" component={PicaReaderScreen}
           options={{ headerShown: false }} />
         <Stack.Screen name="Blogs" component={BlogsScreen}

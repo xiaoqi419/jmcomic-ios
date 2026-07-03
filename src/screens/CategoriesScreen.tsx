@@ -158,18 +158,14 @@ export function CategoriesScreen() {
       <Text style={{ fontSize: FontSize.largeTitle, fontWeight: '800', color: C.textPrimary, marginBottom: 14 }}>Pica 分类</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP }}>
         {picaCatList.map((cat) => {
-          const active = selectedPicaCat === cat.title;
           const url = thumbUrl(cat.thumb);
           return (
             <Pressable
               key={cat._id}
-              onPress={() => {
-                setSelectedPicaCat(active ? null : cat.title);
-                setPicaComics([]);
-              }}
+              onPress={() => nav.navigate('PicaCategoryResult', { category: cat.title, sort: picaSort })}
               style={{ width: CAT_CARD_W, alignItems: 'center', marginBottom: 12 }}
             >
-              <View style={[styles.picaCatIcon, active && { borderColor: C.primary, borderWidth: 2 }]}>
+              <View style={[styles.picaCatIcon]}>
                 {url ? (
                   <Image source={{ uri: url }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                 ) : (
