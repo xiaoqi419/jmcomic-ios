@@ -12,13 +12,13 @@ export const SECRET_KEY = '~d}$Q7$eIni=V)9\\RK/P.RM4;9[7|@/CA}b~OW!3?EV`:<>M7pdd
  * PicaComic 使用 UUID v1，这里用随机字符串替代
  */
 export function createNonce(): string {
-  // 生成 32 位随机 hex 字符串（模拟 UUID 去横杠的格式）
+  // 32 位随机 hex 字符串（与 haka_comic 格式一致）
   const chars = '0123456789abcdef';
   let result = '';
   for (let i = 0; i < 32; i++) {
     result += chars[Math.floor(Math.random() * 16)];
   }
-  return result + Date.now().toString(16);
+  return result;
 }
 
 export function nowTs(): string {
@@ -55,7 +55,7 @@ export function buildHeaders(
     'app-platform': 'android',
     'app-uuid': 'defaultUuid',
     'app-version': '2.2.1.3.3.4',
-    'app-channel': '3',
+    'app-channel': '1',
     'image-quality': quality,
     authorization: token || '',
     time: ts,
