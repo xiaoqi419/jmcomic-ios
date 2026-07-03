@@ -5,7 +5,7 @@ import type { ComicSource, SourceItem, SourceDetail, SourceChapter, SourceImage 
 import { jmLogger } from '../utils/JmLogger';
 import { picaClient } from '../pica/client';
 import { searchComics, comicDetail, comicEps, epPages, comicsByCategory } from '../pica/endpoints';
-import { thumbUrl } from '../pica/types';
+import { thumbUrl, mediaUrl } from '../pica/types';
 import { usePicaStore } from '../store/usePica';
 import { searchComics as jmSearch, getCoverUrl } from '../api/endpoints';
 
@@ -123,7 +123,7 @@ export const picaSource: ComicSource = {
     // 响应结构: { pages: { docs: [{ media: { fileServer, path } }] } }
     const docs = (res as any).pages?.docs || (res as any).docs || [];
     return docs.map((p: any, i: number) => ({
-      url: p.media ? `${p.media.fileServer}/static/${p.media.path}` : '',
+      url: p.media ? mediaUrl(p.media) : '',
       index: i,
     }));
   },
