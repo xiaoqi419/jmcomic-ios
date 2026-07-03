@@ -34,6 +34,8 @@ export function ReaderScreen() {
 
   const { imageUrls, currentPage, setPage, isVertical, setVertical, startReading } = useReaderStore();
   const prefetchCount = useSettingsStore((s) => s.prefetchCount);
+  const imageLayout = useSettingsStore((s) => s.imageLayout);
+  const setImageLayout = useSettingsStore((s) => s.setImageLayout);
   const [showUI, setShowUI] = useState(true);
   const [loading, setLoading] = useState(false);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -421,6 +423,26 @@ export function ReaderScreen() {
               <MaterialIcons name="brightness-high" size={16} color="#aaa" />
             </View>
           )}
+
+            {/* 布局模式 + 亮度 */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 8, gap: 8 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  const modes: ('contain' | 'fitWidth' | 'fitHeight')[] = ['contain', 'fitWidth', 'fitHeight'];
+                  const idx = modes.indexOf(imageLayout);
+                  setImageLayout(modes[(idx + 1) % modes.length]);
+                }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+              >
+                <MaterialIcons name="photo-size-select-large" size={16} color={C.primary} />
+                <Text style={{ color: C.primary, fontSize: 11 }}>{imageLayout === 'contain' ? '适配' : imageLayout === 'fitWidth' ? '宽屏' : '高屏'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowBrightness(!showBrightness)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <MaterialIcons name={showBrightness ? 'brightness-high' : 'brightness-low'} size={16} color="#aaa" />
+                <Text style={{ color: '#aaa', fontSize: 11 }}>亮度</Text>
+              </TouchableOpacity>
+            </View>
+
         </SafeAreaView>
       )}
 

@@ -25,7 +25,7 @@ export function MemberScreen() {
   const { username: jmUser, loggedIn: jmLoggedIn, login: jmDoLogin, logout: jmDoLogout } = useAuthStore();
   const { username: picaUser, loggedIn: picaLoggedIn, login: picaDoLogin, logout: picaDoLogout, apiSource: picaApiSource, setApiSource: setPicaApiSource } = usePicaStore();
   const { info, signData, signed, doSignIn, loadInfo, loadSign, loadAchievements, achievements, notifications, loadNotifications, unread } = useMemberStore();
-  const { language, setLanguage, readingMode, setReadingMode, showDebugLog, setShowDebugLog, theme, setTheme, shunts, selectedShuntKey, selectShunt, prefetchCount, setPrefetchCount } = useSettingsStore();
+  const { language, setLanguage, readingMode, setReadingMode, showDebugLog, setShowDebugLog, theme, setTheme, shunts, selectedShuntKey, selectShunt, prefetchCount, setPrefetchCount, imageLayout, setImageLayout, lockOrientation, setLockOrientation } = useSettingsStore();
 
   const [showJmLogin, setShowJmLogin] = useState(false);
   const [jmUserInput, setJmUserInput] = useState('');
@@ -330,6 +330,24 @@ export function MemberScreen() {
               <Pressable onPress={() => setPrefetchCount(Math.min(10, prefetchCount + 1))} style={styles.toggleBtn}>
                 <Text style={styles.toggleText}>+</Text>
               </Pressable>
+            </View>
+          } />
+          <Row label="图片布局" right={
+            <View style={styles.toggleGroup}>
+              {(['contain', 'fitWidth', 'fitHeight'] as const).map((m) => (
+                <Pressable key={m} onPress={() => setImageLayout(m)} style={[styles.toggleBtn, imageLayout === m && styles.toggleBtnActive]}>
+                  <Text style={[styles.toggleText, imageLayout === m && styles.toggleTextActive]}>{m === 'contain' ? '适配' : m === 'fitWidth' ? '宽屏' : '高屏'}</Text>
+                </Pressable>
+              ))}
+            </View>
+          } />
+          <Row label="阅读器方向" right={
+            <View style={styles.toggleGroup}>
+              {([{ v: 0, l: '自动' }, { v: 1, l: '横屏' }, { v: 2, l: '竖屏' }] as const).map((opt) => (
+                <Pressable key={opt.v} onPress={() => setLockOrientation(opt.v)} style={[styles.toggleBtn, lockOrientation === opt.v && styles.toggleBtnActive]}>
+                  <Text style={[styles.toggleText, lockOrientation === opt.v && styles.toggleTextActive]}>{opt.l}</Text>
+                </Pressable>
+              ))}
             </View>
           } />
           {shunts.length > 0 && (

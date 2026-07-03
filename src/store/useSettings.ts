@@ -23,6 +23,8 @@ interface SettingsState {
   readingDirection: 'ltr' | 'rtl';
   showDebugLog: boolean;
   prefetchCount: number;
+  imageLayout: 'contain' | 'fitWidth' | 'fitHeight';
+  lockOrientation: 0 | 1 | 2;
   loaded: boolean;
 
   // 动态域名（从 /api/setting 获取）
@@ -42,6 +44,8 @@ interface SettingsState {
   setReadingDirection: (d: 'ltr' | 'rtl') => void;
   setShowDebugLog: (v: boolean) => void;
   setPrefetchCount: (n: number) => void;
+  setImageLayout: (v: 'contain' | 'fitWidth' | 'fitHeight') => void;
+  setLockOrientation: (v: 0 | 1 | 2) => void;
 
   /** 从 /api/setting 响应更新域名 */
   updateFromSetting: (data: SettingData) => void;
@@ -62,6 +66,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   readingDirection: 'ltr',
   showDebugLog: false,
   prefetchCount: 3,
+  imageLayout: 'contain',
+  lockOrientation: 0,
   loaded: false,
 
   mainWebHost: '',
@@ -77,6 +83,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setReadingDirection: (v) => { set({ readingDirection: v }); get().save(); },
   setShowDebugLog: (v) => { set({ showDebugLog: v }); get().save(); },
   setPrefetchCount: (n) => { set({ prefetchCount: n }); get().save(); },
+  setImageLayout: (v) => { set({ imageLayout: v }); get().save(); },
+  setLockOrientation: (v) => { set({ lockOrientation: v }); get().save(); },
 
   updateFromSetting: (data: SettingData) => {
     const shunts: Shunt[] = (data.app_shunts || []).map((s) => ({
