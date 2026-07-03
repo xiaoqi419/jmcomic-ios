@@ -50,6 +50,14 @@ import { DownloadListScreen } from './src/screens/DownloadListScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// 错误边界包裹组件（避免匿名函数导致 RN 重新挂载）
+function ComicDetailWrapper() {
+  return <ErrorBoundary title="漫画详情"><ComicDetailScreen /></ErrorBoundary>;
+}
+function PicaDetailWrapper() {
+  return <ErrorBoundary title="Pica 详情"><PicaDetailScreen /></ErrorBoundary>;
+}
+
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
   const { colors } = useAppTheme();
   return (
@@ -132,9 +140,8 @@ function AppInner() {
       >
         <Stack.Screen name="Main" component={HomeTabs} options={{ headerShown: false }} />
         <Stack.Screen name="Search" component={SearchScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="ComicDetail" options={{ title: '详情', headerBackTitle: '返回' }}>
-          {() => <ErrorBoundary title="漫画详情"><ComicDetailScreen /></ErrorBoundary>}
-        </Stack.Screen>
+        <Stack.Screen name="ComicDetail" component={ComicDetailWrapper}
+          options={{ title: '详情', headerBackTitle: '返回' }} />
         <Stack.Screen name="Reader" component={ReaderScreen}
           options={{ headerShown: false, orientation: 'default' as const }} />
         <Stack.Screen name="Novels" component={NovelsScreen}
@@ -145,9 +152,8 @@ function AppInner() {
           options={{ headerShown: false }} />
         <Stack.Screen name="MoviePlayer" component={MoviePlayerScreen}
           options={{ headerShown: false }} />
-        <Stack.Screen name="PicaDetail" options={{ headerShown: false }}>
-          {() => <ErrorBoundary title="Pica 详情"><PicaDetailScreen /></ErrorBoundary>}
-        </Stack.Screen>
+        <Stack.Screen name="PicaDetail" component={PicaDetailWrapper}
+          options={{ headerShown: false }} />
         <Stack.Screen name="PicaReader" component={PicaReaderScreen}
           options={{ headerShown: false }} />
         <Stack.Screen name="Blogs" component={BlogsScreen}
