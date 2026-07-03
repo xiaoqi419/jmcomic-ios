@@ -101,7 +101,7 @@ export function CategoryFilterSheet({ visible, onClose, onConfirm, initialSelect
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]} onPress={onClose}>
-        <Pressable style={[styles.sheet, { backgroundColor: C.background }]} onPress={() => {}}>
+        <Pressable style={[styles.sheet, { backgroundColor: C.surface }]} onPress={() => {}}>
           <SafeAreaView style={{ flex: 1 }}>
             {/* 头部 */}
             <View style={[styles.header, { borderBottomColor: 'rgba(255,255,255,0.06)' }]}>
