@@ -319,7 +319,7 @@ export async function fetchNovels(page = 1, searchQuery?: string): Promise<{ lis
   return encryptedGet('novels', params);
 }
 
-export async function fetchNovelDetail(novelId: string): Promise<{ novel: NovelItem; chapters: NovelChapter[] }> {
+export async function fetchNovelDetail(novelId: string): Promise<{ novel: NovelItem; series: NovelChapter[] }> {
   return encryptedGet('novel', { nid: novelId });
 }
 

@@ -118,7 +118,7 @@ export function NovelDetailScreen() {
   useEffect(() => {
     fetchNovelDetail(novelId).then((d) => {
       setNovel(d.novel);
-      setChapters(d.chapters || []);
+      setChapters(d.series || []);
     }).finally(() => setLoading(false));
   }, [novelId]);
 
@@ -186,7 +186,7 @@ export function NovelReaderScreen() {
     <SafeAreaView edges={["top"]} style={styles.cont}>
       <View style={styles.readerHeader}>
         <Pressable onPress={() => nav.goBack()}><MaterialIcons name="arrow-back" size={24} color={C.textPrimary} /></Pressable>
-        <Text style={styles.readerTitle} numberOfLines={1}>{content.title}</Text>
+        <Text style={styles.readerTitle} numberOfLines={1}>{content.name || content.title || ''}</Text>
         <View style={{ width: 24 }} />
       </View>
       <ScrollView contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 60 }}>

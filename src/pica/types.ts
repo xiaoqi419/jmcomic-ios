@@ -87,7 +87,7 @@ export interface PicaPage {
 export interface PicaCategory {
   _id: string;
   title: string;
-  thumb: PicaThumb;
+  thumb?: PicaThumb | null;
   description?: string;
   isWeb?: boolean;
   active?: boolean;
@@ -158,8 +158,8 @@ export interface PicaUser {
 /** ===== 工具函数 ===== */
 
 /** 从 PicaThumb 构建完整图片 URL */
-export function thumbUrl(t: PicaThumb): string {
-  if (!t) return '';
+export function thumbUrl(t: PicaThumb | null | undefined): string {
+  if (!t || !t.fileServer || !t.path) return '';
   const fs = (t.fileServer || '').replace('picacomic', 'go2778');
   return `${fs}/static/${t.path}`;
 }

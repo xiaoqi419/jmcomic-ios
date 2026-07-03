@@ -277,7 +277,8 @@ export interface NovelChapter {
 
 export interface NovelContent {
   id: string;
-  title: string;
+  name: string;  // API 返回 name 而非 title
+  title?: string; // 兼容旧格式
   content: string;
   prev_id?: string;
   next_id?: string;
