@@ -57,6 +57,15 @@ export function comicsByCategory(category: string, page = 1, sort: 'ua' | 'dd' |
   });
 }
 
+// GET /comics?ca=CREATOR_ID — 创作者/上传者的漫画
+export function comicsByCreator(creatorId: string, page = 1, sort: 'ua' | 'dd' | 'da' | 'ld' = 'ua') {
+  return c.get<PicaComicsData>('comics', {
+    ca: creatorId,
+    page,
+    s: sort,
+  });
+}
+
 // GET /users/profile — 用户信息
 export function userProfile() {
   return c.get<PicaUser>('users/profile');
