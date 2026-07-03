@@ -1,11 +1,11 @@
-// 分类筛选 BottomSheet — 参考 haka_comic dev category_filter_panel.dart
-// 支持 JM + Pica 分类多选过滤
+// 分类筛选 BottomSheet — 使用 @gorhom/bottom-sheet
+// @author Jason
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, Modal, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useLegacyColors, LegacyColors, FontSize, Radius } from '../theme';
+import { useLegacyColors, FontSize } from '../theme';
 import { fetchCategories } from '../api/endpoints';
 import { picaCategories } from '../pica/endpoints';
 import { usePicaStore } from '../store/usePica';
@@ -27,6 +27,7 @@ interface CatNode {
 
 export function CategoryFilterSheet({ visible, onClose, onConfirm, initialSelected, source = 'all' }: Props) {
   const C = useLegacyColors();
+  const sheetRef = useRef<BottomSheet>(null);
   const [jmCats, setJmCats] = useState<CatNode[]>([]);
   const [picaCats, setPicaCats] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +35,16 @@ export function CategoryFilterSheet({ visible, onClose, onConfirm, initialSelect
   const [selectedPica, setSelectedPica] = useState<Set<string>>(new Set(initialSelected?.pica || []));
   const picaLoggedIn = usePicaStore((s) => s.loggedIn);
 
+  // 控制 BottomSheet
+  useEffect(() => {
+    if (visible) {
+      sheetRef.current?.expand();
+    } else {
+      sheetRef.current?.close();
+    }
+  }, [visible]);
+
+  // 加载分类
   useEffect(() => {
     if (!visible) return;
     let cancelled = false;
@@ -44,7 +55,7 @@ export function CategoryFilterSheet({ visible, onClose, onConfirm, initialSelect
       promises.push(
         fetchCategories().then((d) => {
           if (cancelled) return;
-          const cats = (d.categories || []).map((c: any) => ({
+          setJmCats((d.categories || []).map((c: any) => ({
             id: c.slug || c.name,
             name: c.name || c.title || '',
             slug: c.slug || '0',
@@ -53,12 +64,10 @@ export function CategoryFilterSheet({ visible, onClose, onConfirm, initialSelect
               name: sc.name || '',
               slug: sc.slug || '0',
             })),
-          }));
-          setJmCats(cats);
+          })));
         }).catch(() => {})
       );
     }
-
     if ((source === 'all' || source === 'pica') && picaLoggedIn) {
       promises.push(
         picaCategories().then((d) => {
@@ -68,7 +77,6 @@ export function CategoryFilterSheet({ visible, onClose, onConfirm, initialSelect
         }).catch(() => {})
       );
     }
-
     Promise.all(promises).then(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [visible, source, picaLoggedIn]);
@@ -80,7 +88,6 @@ export function CategoryFilterSheet({ visible, onClose, onConfirm, initialSelect
       return next;
     });
   };
-
   const togglePica = (name: string) => {
     setSelectedPica((prev) => {
       const next = new Set(prev);
@@ -88,105 +95,92 @@ export function CategoryFilterSheet({ visible, onClose, onConfirm, initialSelect
       return next;
     });
   };
-
-  const handleConfirm = () => {
-    onConfirm({ jm: Array.from(selectedJm), pica: Array.from(selectedPica) });
-    onClose();
-  };
-
+  const handleConfirm = () => { onConfirm({ jm: Array.from(selectedJm), pica: Array.from(selectedPica) }); onClose(); };
   const handleClear = () => { setSelectedJm(new Set()); setSelectedPica(new Set()); };
+
   const hasSelection = selectedJm.size > 0 || selectedPica.size > 0;
   const hasAnyCats = jmCats.length > 0 || (picaLoggedIn && picaCats.length > 0);
 
+  const snapPoints = useCallback(() => ['60%', '85%'], []);
+
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={() => {}}>
-          <View style={styles.sheetInner}>
-            {/* 头部 */}
-            <View style={styles.header}>
-              <Pressable onPress={onClose} hitSlop={8}>
-                <Text style={{ color: '#9895A0', fontSize: 14 }}>取消</Text>
-              </Pressable>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: '#F0EDE8' }}>分类筛选</Text>
-              <Pressable onPress={handleClear} hitSlop={8}>
-                <Text style={{ color: hasSelection ? '#E85D3A' : '#5C5970', fontSize: 14 }}>清除</Text>
-              </Pressable>
-            </View>
+    <BottomSheet
+      ref={sheetRef}
+      snapPoints={snapPoints()}
+      index={visible ? 0 : -1}
+      enablePanDownToClose
+      onClose={onClose}
+      backgroundStyle={{ backgroundColor: '#1A1A24' }}
+      handleIndicatorStyle={{ backgroundColor: '#5C5970', width: 40 }}
+    >
+      <BottomSheetView style={{ flex: 1, paddingHorizontal: 16 }}>
+        {/* 头部 */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)' }}>
+          <Pressable onPress={onClose}><Text style={{ color: '#9895A0', fontSize: 14 }}>取消</Text></Pressable>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: '#F0EDE8' }}>分类筛选</Text>
+          <Pressable onPress={handleClear}><Text style={{ color: hasSelection ? '#E85D3A' : '#5C5970', fontSize: 14 }}>清除</Text></Pressable>
+        </View>
 
-            {loading ? (
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 }}>
-                <ActivityIndicator size="large" color="#E85D3A" />
-                <Text style={{ color: '#9895A0', marginTop: 12, fontSize: 14 }}>加载分类中…</Text>
-              </View>
-            ) : !hasAnyCats ? (
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 }}>
-                <MaterialIcons name="info-outline" size={48} color="#5C5970" />
-                <Text style={{ color: '#9895A0', marginTop: 12, fontSize: 14 }}>暂无分类数据</Text>
-              </View>
-            ) : (
-              <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 80 }}>
-                {/* JM 分类 */}
-                {(source === 'all' || source === 'jm') && jmCats.length > 0 && (
-                  <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: C.textPrimary }]}>JM 分类</Text>
-                    {jmCats.map((cat) => (
-                      <View key={cat.id}>
-                        <Pressable onPress={() => toggleJm(cat.slug)} style={styles.row}>
-                          <MaterialIcons name={selectedJm.has(cat.slug) ? 'check-box' : 'check-box-outline-blank'} size={22} color={selectedJm.has(cat.slug) ? C.primary : C.textTertiary} />
-                          <Text style={{ color: C.textPrimary, fontSize: FontSize.body, marginLeft: 10, flex: 1 }}>{cat.name}</Text>
-                        </Pressable>
-                        {cat.children && cat.children.length > 0 && (
-                          <View style={{ paddingLeft: 36 }}>
-                            {cat.children.map((sub) => (
-                              <Pressable key={sub.id} onPress={() => toggleJm(sub.slug)} style={styles.row}>
-                                <MaterialIcons name={selectedJm.has(sub.slug) ? 'check-box' : 'check-box-outline-blank'} size={20} color={selectedJm.has(sub.slug) ? C.primary : C.textTertiary} />
-                                <Text style={{ color: C.textSecondary, fontSize: FontSize.label, marginLeft: 10, flex: 1 }}>{sub.name}</Text>
-                              </Pressable>
-                            ))}
-                          </View>
-                        )}
-                      </View>
-                    ))}
-                  </View>
-                )}
-
-                {/* Pica 分类 */}
-                {(source === 'all' || source === 'pica') && picaLoggedIn && picaCats.length > 0 && (
-                  <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: C.textPrimary }]}>Pica 分类</Text>
-                    {picaCats.map((cat) => (
-                      <Pressable key={cat.id} onPress={() => togglePica(cat.name)} style={styles.row}>
-                        <MaterialIcons name={selectedPica.has(cat.name) ? 'check-box' : 'check-box-outline-blank'} size={22} color={selectedPica.has(cat.name) ? C.primary : C.textTertiary} />
-                        <Text style={{ color: C.textPrimary, fontSize: FontSize.body, marginLeft: 10 }}>{cat.name}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                )}
-              </ScrollView>
-            )}
-
-            {/* 底部确认按钮 */}
-            {!loading && (
-              <Pressable onPress={handleConfirm} style={[styles.confirmBtn, { backgroundColor: C.primary }]}>
-                <Text style={styles.confirmText}>确定 ({selectedJm.size + selectedPica.size})</Text>
-              </Pressable>
-            )}
+        {loading ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator size="large" color="#E85D3A" />
+            <Text style={{ color: '#9895A0', marginTop: 12, fontSize: 14 }}>加载分类中…</Text>
           </View>
-        </Pressable>
-      </Pressable>
-    </Modal>
+        ) : !hasAnyCats ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <MaterialIcons name="info-outline" size={48} color="#5C5970" />
+            <Text style={{ color: '#9895A0', marginTop: 12, fontSize: 14 }}>暂无分类数据</Text>
+          </View>
+        ) : (
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }}>
+            {(source === 'all' || source === 'jm') && jmCats.length > 0 && (
+              <View style={{ paddingTop: 12 }}>
+                <Text style={{ fontSize: 17, fontWeight: '700', color: '#F0EDE8', marginBottom: 10 }}>JM 分类</Text>
+                {jmCats.map((cat) => (
+                  <View key={cat.id}>
+                    <Pressable onPress={() => toggleJm(cat.slug)} style={styles.row}>
+                      <MaterialIcons name={selectedJm.has(cat.slug) ? 'check-box' : 'check-box-outline-blank'} size={22} color={selectedJm.has(cat.slug) ? '#E85D3A' : '#5C5970'} />
+                      <Text style={{ color: '#F0EDE8', fontSize: 14, marginLeft: 10, flex: 1 }}>{cat.name}</Text>
+                    </Pressable>
+                    {cat.children && cat.children.length > 0 && (
+                      <View style={{ paddingLeft: 36 }}>
+                        {cat.children.map((sub) => (
+                          <Pressable key={sub.id} onPress={() => toggleJm(sub.slug)} style={styles.row}>
+                            <MaterialIcons name={selectedJm.has(sub.slug) ? 'check-box' : 'check-box-outline-blank'} size={20} color={selectedJm.has(sub.slug) ? '#E85D3A' : '#5C5970'} />
+                            <Text style={{ color: '#9895A0', fontSize: 13, marginLeft: 10, flex: 1 }}>{sub.name}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {(source === 'all' || source === 'pica') && picaLoggedIn && picaCats.length > 0 && (
+              <View style={{ paddingTop: 16 }}>
+                <Text style={{ fontSize: 17, fontWeight: '700', color: '#F0EDE8', marginBottom: 10 }}>Pica 分类</Text>
+                {picaCats.map((cat) => (
+                  <Pressable key={cat.id} onPress={() => togglePica(cat.name)} style={styles.row}>
+                    <MaterialIcons name={selectedPica.has(cat.name) ? 'check-box' : 'check-box-outline-blank'} size={22} color={selectedPica.has(cat.name) ? '#E85D3A' : '#5C5970'} />
+                    <Text style={{ color: '#F0EDE8', fontSize: 14, marginLeft: 10 }}>{cat.name}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </ScrollView>
+        )}
+
+        {!loading && (
+          <Pressable onPress={handleConfirm} style={{ marginTop: 8, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#E85D3A' }}>
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>确定 ({selectedJm.size + selectedPica.size})</Text>
+          </Pressable>
+        )}
+      </BottomSheetView>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.55)' },
-  sheet: { maxHeight: '85%', borderTopLeftRadius: 20, borderTopRightRadius: 20, backgroundColor: '#1A1A24', overflow: 'hidden' },
-  sheetInner: { paddingBottom: 24 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)' },
-  section: { paddingHorizontal: 16, paddingTop: 16 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#F0EDE8', marginBottom: 10 },
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
-  confirmBtn: { marginHorizontal: 16, marginTop: 8, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#E85D3A' },
-  confirmText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
 });
