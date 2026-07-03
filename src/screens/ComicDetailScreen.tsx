@@ -128,7 +128,7 @@ export function ComicDetailScreen() {
     setLoadingMoreComments(false);
   }, [commentPage, hasMoreComments, loadingMoreComments, albumId]);
 
-  const openChapter = async (chId: string, chName: string) => {
+  const openChapter = async (chId: string, chName: string, initialPage = 0) => {
     try {
       let images: string[];
       const host = getImgHost();
@@ -166,13 +166,13 @@ export function ComicDetailScreen() {
       useReaderStore.getState().startReading(albumId, chId, chName, images, 220980);
       useHistoryStore.getState().add({
         id: albumId, title: detail?.name || '', coverUrl: getCoverUrl(albumId),
-        chapterId: chId, chapterTitle: chName, page: 0, readAt: Date.now(),
+        chapterId: chId, chapterTitle: chName, page: initialPage || 0, readAt: Date.now(),
       });
       try {
         const { default: AsyncStorage } = require('@react-native-async-storage/async-storage');
         AsyncStorage.setItem(`@jmcomic.readEp.${albumId}`, JSON.stringify({ readId: chId, episode: chName }));
       } catch {}
-      nav.navigate('Reader', { chapterId: chId, albumId, chapterTitle: chName });
+      nav.navigate('Reader', { chapterId: chId, albumId, chapterTitle: chName, initialPage });
     } catch (e: any) {
       Alert.alert('错误', e.message || '加载失败');
     }
@@ -180,11 +180,12 @@ export function ComicDetailScreen() {
 
   const handleStartReading = () => {
     if (!detail?.series?.length) return;
+    const page = historyItem?.page || 0;
     if (readEp?.readId) {
       const ep = detail.series.find((s) => s.id === readEp.readId);
-      openChapter(readEp.readId, ep?.name || readEp.episode);
+      openChapter(readEp.readId, ep?.name || readEp.episode, page);
     } else {
-      openChapter(detail.series[0].id, detail.series[0].name);
+      openChapter(detail.series[0].id, detail.series[0].name, page);
     }
   };
 
@@ -299,7 +300,7 @@ export function ComicDetailScreen() {
         }}>
         {/* 封面 + 渐变 */}
         <View style={{ position: 'relative' }}>
-          <Image source={{ uri: getCoverUrl(albumId) }} style={{ width: '100%', height: winW * 4 / 3 }} contentFit="cover" />
+          <Image source={{ uri: getCoverUrl(albumId) }} style={{ width: '100%', height: winW * 0.55 }} contentFit="cover" />
           <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={styles.coverGrad} pointerEvents="none" />
           <View style={styles.coverInfo}>
             <Text style={styles.title}>{detail.name}</Text>
@@ -314,7 +315,7 @@ export function ComicDetailScreen() {
         </View>
 
         {/* 开始阅读按钮 */}
-        <Pressable onPress={handleStartReading} style={styles.readBtn}>
+        <Pressable onPress={handleStartReading} style={[styles.readBtn, { marginTop: 12 }]}>
           <MaterialIcons name={readEp ? 'play-arrow' : 'play-circle-outline'} size={22} color={C.textOnPrimary} />
           <Text style={styles.readBtnText}>{readEp ? `${t('detail.continue_reading')}${historyItem?.chapterTitle ? ' ' + historyItem.chapterTitle : ''}${historyItem && historyItem.page > 0 ? ` P${historyItem.page}` : ''}` : t('detail.start_reading')}</Text>
         </Pressable>

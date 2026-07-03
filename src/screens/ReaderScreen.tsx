@@ -28,7 +28,7 @@ export function ReaderScreen() {
   const nav = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
-  const { albumId, chapterId, chapterTitle } = route.params || {};
+  const { albumId, chapterId, chapterTitle, initialPage } = route.params || {};
   const C = useLegacyColors();
   const styles = useMemo(() => getStyles(C), [C]);
 
@@ -60,6 +60,18 @@ export function ReaderScreen() {
       }).catch(() => {});
     }
   }, [albumId]);
+
+  // 初始页面定位
+  useEffect(() => {
+    if (initialPage && initialPage > 0) {
+      setPage(initialPage);
+      // 等渲染完成后 scroll
+      const timer = setTimeout(() => {
+        flatRef.current?.scrollToIndex({ index: initialPage, animated: false, viewPosition: 0 });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [initialPage, setPage]);
 
   const switchChapter = async (chId: string, chName: string) => {
     setShowChapterModal(false);
