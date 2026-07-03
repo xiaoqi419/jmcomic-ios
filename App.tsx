@@ -153,7 +153,7 @@ function AppInner() {
         <Stack.Screen name="MoviePlayer" component={MoviePlayerScreen}
           options={{ headerShown: false }} />
         <Stack.Screen name="PicaDetail" component={PicaDetailWrapper}
-          options={{ headerShown: false }} />
+          options={{ title: '详情', headerBackTitle: '返回' }} />
         <Stack.Screen name="PicaReader" component={PicaReaderScreen}
           options={{ headerShown: false }} />
         <Stack.Screen name="Blogs" component={BlogsScreen}
