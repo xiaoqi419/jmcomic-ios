@@ -245,10 +245,14 @@ export function SearchScreen() {
   };
 
   const openDetail = (item: SourceItem) => {
-    if (item.source === 'pica') {
-      nav.navigate('PicaDetail', { comicId: item.id });
-    } else {
-      nav.navigate('ComicDetail', { albumId: item.id, sourceItem: item });
+    try {
+      if (item.source === 'pica') {
+        nav.navigate('PicaDetail', { comicId: item.id });
+      } else {
+        nav.navigate('ComicDetail', { albumId: item.id, sourceItem: item });
+      }
+    } catch (e) {
+      console.error('openDetail error:', e, 'item:', JSON.stringify(item));
     }
   };
 

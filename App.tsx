@@ -31,6 +31,7 @@ import { MainScreen } from './src/screens/MainScreen';
 import { CategoriesScreen } from './src/screens/CategoriesScreen';
 import { SearchScreen } from './src/screens/SearchScreen';
 import { ComicDetailScreen } from './src/screens/ComicDetailScreen';
+import { SimpleErrorBoundary as ErrorBoundary } from './src/components/SimpleErrorBoundary';
 import { ReaderScreen } from './src/screens/ReaderScreen';
 import { MoviesScreen, MoviePlayerScreen } from './src/screens/MoviesScreen';
 import { NovelsScreen, NovelDetailScreen, NovelReaderScreen } from './src/screens/NovelsScreen';
@@ -174,6 +175,15 @@ function AppInner() {
 
 export default function App() {
   const [ready, setReady] = useState(false);
+  // 全局 JS 错误捕获
+  useEffect(() => {
+    const origHandler = (ErrorUtils as any).getGlobalHandler?.();
+    (ErrorUtils as any).setGlobalHandler?.((e: any, isFatal?: boolean) => {
+      console.error('[GlobalError]', e?.message || e, 'isFatal:', isFatal);
+      // 仍然保留原始处理，避免完全静默
+      if (origHandler) origHandler(e, isFatal);
+    });
+  }, []);
   const { load: loadSettings, updateFromSetting, selectShunt, theme } = useSettingsStore();
   const { load: loadAuth } = useAuthStore();
   const [showSourceSelect, setShowSourceSelect] = useState(false);
