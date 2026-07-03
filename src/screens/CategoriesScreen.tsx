@@ -186,11 +186,14 @@ export function CategoriesScreen() {
       {selectedPicaCat && (
         <>
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-            {(['ua', 'dd', 'da', 'ld'] as const).map((s) => (
+            {(['ua', 'dd', 'da', 'ld'] as const).map((s) => {
+              const labels: Record<string, string> = { ua: '更新', dd: '最新', da: '最早', ld: '最多赞' };
+              return (
               <Pressable key={s} onPress={() => setPicaSort(s)} style={[styles.sortBtn, picaSort === s && styles.sortBtnActive]}>
-                <Text style={[styles.sortText, picaSort === s && styles.sortTextActive]}>{s}</Text>
+                <Text style={[styles.sortText, picaSort === s && styles.sortTextActive]}>{labels[s] || s}</Text>
               </Pressable>
-            ))}
+              );
+            })}
           </View>
 
           {picaComics.length === 0 && picaLoading && <ActivityIndicator color={C.primary} />}

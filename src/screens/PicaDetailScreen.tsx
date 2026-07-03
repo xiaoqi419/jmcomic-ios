@@ -107,19 +107,19 @@ export function PicaDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0A0F' }}>
+      <View style={{ flex: 1, backgroundColor: '#0A0A0F' }}>
         <ActivityIndicator size="large" color="#E85D3A" style={{ marginTop: 100 }} />
-      </SafeAreaView>
+      </View>
     );
   }
   if (!detail) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0A0F' }}>
+      <View style={{ flex: 1, backgroundColor: '#0A0A0F' }}>
         <View style={{ alignItems: 'center', marginTop: 100 }}>
           <MaterialIcons name="error-outline" size={48} color="#6B6873" />
           <Text style={{ color: '#9895A0', marginTop: 12 }}>加载失败</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -127,7 +127,7 @@ export function PicaDetailScreen() {
   const sortedChs = sortAsc ? [...chs].sort((a, b) => a.order - b.order) : [...chs].sort((a, b) => b.order - a.order);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0A0F' }}>
+    <View style={{ flex: 1, backgroundColor: '#0A0A0F' }}>
       <StatusBar style="light" />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {/* ===== 头部：封面 + 基本信息 ===== */}
@@ -308,7 +308,7 @@ export function PicaDetailScreen() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
