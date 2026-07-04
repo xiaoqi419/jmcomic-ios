@@ -4,6 +4,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLegacyColors, LegacyColors, FontSize, Radius } from '../theme';
 import { fetchCategories } from '../api/endpoints';
@@ -27,6 +28,7 @@ interface CatNode {
 
 export function CategoryFilterSheet({ visible, onClose, onConfirm, initialSelected, source = 'all' }: Props) {
   const C = useLegacyColors();
+  const insets = useSafeAreaInsets();
   const sheetRef = useRef<BottomSheet>(null);
   const [jmCats, setJmCats] = useState<CatNode[]>([]);
   const [picaCats, setPicaCats] = useState<{ id: string; name: string }[]>([]);
@@ -90,7 +92,7 @@ export function CategoryFilterSheet({ visible, onClose, onConfirm, initialSelect
       backgroundStyle={{ backgroundColor: C.surface }}
       handleIndicatorStyle={{ backgroundColor: C.textTertiary, width: 36 }}
     >
-      <BottomSheetView style={{ flex: 1 }}>
+      <BottomSheetView style={{ flex: 1, paddingTop: insets.top }}>
         {/* Header — sticky */}
         <View style={[styles.header, { backgroundColor: C.surface, borderBottomColor: C.divider }]}>
           <Pressable onPress={onClose} hitSlop={8}><Text style={{ color: C.textSecondary, fontSize: 14 }}>取消</Text></Pressable>
