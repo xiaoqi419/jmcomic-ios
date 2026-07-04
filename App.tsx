@@ -158,7 +158,6 @@ function AppInner() {
           options={{ title: '详情', headerBackTitle: '返回' }} />
         <Stack.Screen name="PicaCreatorResult" component={PicaCreatorResultScreen}
           options={{ title: '' }} />
-          options={{ title: '详情', headerBackTitle: '返回' }} />
         <Stack.Screen name="PicaCategoryResult" component={PicaCategoryResultScreen}
           options={{ title: '分类结果' }} />
         <Stack.Screen name="PicaReader" component={PicaReaderScreen}
