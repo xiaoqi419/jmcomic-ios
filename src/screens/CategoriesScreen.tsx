@@ -11,6 +11,7 @@ import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLegacyColors, LegacyColors, Spacing, FontSize, Radius } from '../theme';
 import { AnimateEntrance } from '../components/AnimatedWrappers';
+import { AnimatePressable } from '../components/AnimatedWrappers';
 import { ComicCard } from '../components/ComicCard';
 import { fetchCategoriesFilter, fetchCategories, fetchHotTags, getCoverUrl as getCover } from '../api/endpoints';
 import { picaCategories, comicsByCategory } from '../pica/endpoints';

@@ -15,6 +15,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLegacyColors, Spacing, FontSize, Radius } from '../theme';
 import { AnimateEntrance } from '../components/AnimatedWrappers';
+import { AnimatePressable } from '../components/AnimatedWrappers';
 import type { LegacyColors } from '../theme';
 import { ComicCard } from '../components/ComicCard';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';

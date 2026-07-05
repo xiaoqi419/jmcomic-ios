@@ -10,6 +10,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useLegacyColors, LegacyColors, Radius, Spacing, FontSize } from '../theme';
 import { AnimateEntrance } from '../components/AnimatedWrappers';
+import { AnimatePressable } from '../components/AnimatedWrappers';
 import { useAuthStore } from '../store/useAuth';
 import { usePicaStore } from '../store/usePica';
 import { useMemberStore } from '../store/useMember';
