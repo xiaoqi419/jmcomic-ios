@@ -12,9 +12,10 @@ const isWeb = Platform.OS === 'web';
 const PROXIES = isWeb
   ? [`https://api.github.com/repos/${REPO}/releases/latest`]
   : [
-      `https://api.github.com/repos/${REPO}/releases/latest`,
+      // jsDelivr CDN 优先（国内可访问 + 无 API 限流）
       `https://cdn.jsdelivr.net/gh/${REPO}@main/latest-version.json`,
       `https://raw.githubusercontent.com/${REPO}/main/latest-version.json`,
+      `https://api.github.com/repos/${REPO}/releases/latest`,
       `https://ghproxy.net/https://api.github.com/repos/${REPO}/releases/latest`,
     ];
 
@@ -106,6 +107,6 @@ export async function checkForUpdate(currentVersion: string): Promise<CheckResul
     hasUpdate: false, latestVersion: '', currentVersion,
     release: null, error: '无法连接到更新服务器',
   };
-  setCachedResult(failResult);
+  // 不缓存失败结果，下次继续尝试
   return failResult;
 }
