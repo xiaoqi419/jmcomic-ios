@@ -14,6 +14,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLegacyColors, Spacing, FontSize, Radius } from '../theme';
+import { AnimateEntrance } from '../components/AnimatedWrappers';
 import type { LegacyColors } from '../theme';
 import { ComicCard } from '../components/ComicCard';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
@@ -117,10 +118,10 @@ export function MainScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.cont}>
+      <AnimateEntrance><SafeAreaView style={styles.cont}>
         <StatusBar style="light" />
         <LoadingSkeleton />
-      </SafeAreaView>
+      </SafeAreaView></AnimateEntrance>
     );
   }
 

@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useLegacyColors, LegacyColors, Radius, Spacing, FontSize } from '../theme';
+import { AnimateEntrance } from '../components/AnimatedWrappers';
 import { useAuthStore } from '../store/useAuth';
 import { usePicaStore } from '../store/usePica';
 import { useMemberStore } from '../store/useMember';
@@ -122,7 +123,7 @@ export function MemberScreen() {
   );
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.cont}>
+    <AnimateEntrance><SafeAreaView edges={["top"]} style={styles.cont}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}>
         <Text style={styles.pageTitle}>我的</Text>
 
@@ -390,7 +391,7 @@ export function MemberScreen() {
           </Pressable>
         </Section>
       </ScrollView>
-    </SafeAreaView>
+    </SafeAreaView></AnimateEntrance>
   );
 }
 
