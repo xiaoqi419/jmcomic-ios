@@ -20,7 +20,7 @@ const BAR_HEIGHT = 48;
 
 export function PicaReaderScreen() {
   const nav = useNavigation<any>();
-  const { comicId, chapterOrder, chapterId, title } = useRoute<any>().params;
+  const { comicId, chapterOrder, chapterId, title } = useRoute<any>().params || {};
 
   const [images, setImages] = useState<SourceImage[]>([]);
   const [chapters, setChapters] = useState<SourceChapter[]>([]);

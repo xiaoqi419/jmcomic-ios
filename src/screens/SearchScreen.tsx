@@ -75,7 +75,7 @@ export function SearchScreen() {
 
   useEffect(() => {
     AsyncStorage.getItem(HISTORY_KEY).then((json) => {
-      if (json) setHistory(JSON.parse(json));
+      if (json) try { setHistory(JSON.parse(json)); } catch {}
     });
     fetchHotTags().then(setHotTags).catch(() => {});
     fetchRandomRecommend().then(setRecommend).catch(() => {});

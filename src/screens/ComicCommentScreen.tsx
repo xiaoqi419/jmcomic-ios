@@ -131,7 +131,7 @@ export function ComicCommentScreen({ route, navigation }: Props) {
               <Image source={{ uri: item.photo }} style={css.avatarImg} contentFit="cover" />
             ) : (
               <Text style={[css.avatarText, { color: colors.onPrimaryContainer }]}>
-                {item.username[0]?.toUpperCase() || '?'}
+                {item.username?.[0]?.toUpperCase() || '?'}
               </Text>
             )}
           </View>

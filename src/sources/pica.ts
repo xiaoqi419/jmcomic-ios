@@ -99,7 +99,7 @@ export const picaSource: ComicSource = {
     await ensureAuth();
     const first = await comicEps(id);
     const eps = (first as any).eps || first;
-    let docs: any[] = eps.docs || eps || [];
+    let docs: any[] = eps?.docs || [];
     const pages = eps.pages || 1;
     // 多页并行加载
     if (pages > 1) {

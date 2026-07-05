@@ -108,7 +108,7 @@ export function NovelsScreen() {
 export function NovelDetailScreen() {
   const nav = useNavigation<any>();
   const route = useRoute<any>();
-  const { novelId } = route.params;
+  const { novelId } = route.params || {};
   const { t } = useTranslation();
   const C = useLegacyColors();
   const styles = useMemo(() => getStyles(C), [C]);
@@ -159,7 +159,7 @@ export function NovelReaderScreen() {
   const { t } = useTranslation();
   const route = useRoute<any>();
   const nav = useNavigation<any>();
-  const { novelId, chapterId } = route.params;
+  const { novelId, chapterId } = route.params || {};
   const C = useLegacyColors();
   const styles = useMemo(() => getStyles(C), [C]);
   const [content, setContent] = useState<NovelContent | null>(null);

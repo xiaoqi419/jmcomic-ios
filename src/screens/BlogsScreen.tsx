@@ -64,7 +64,7 @@ export function BlogsScreen() {
 export function BlogDetailScreen() {
   const route = useRoute<any>();
   const nav = useNavigation<any>();
-  const { blogId } = route.params;
+  const { blogId } = route.params || {};
   const { t } = useTranslation();
   const C = useLegacyColors();
   const [blog, setBlog] = useState<BlogItem | null>(null);

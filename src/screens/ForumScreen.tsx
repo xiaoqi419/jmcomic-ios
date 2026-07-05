@@ -22,7 +22,7 @@ export function ForumScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchForumPosts().then((d) => setPosts(d.list || [])).finally(() => setLoading(false));
+    fetchForumPosts().then((d) => setPosts(d.list || [])).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   return (
