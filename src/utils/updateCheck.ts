@@ -13,8 +13,9 @@ const PROXIES = isWeb
   ? [`https://api.github.com/repos/${REPO}/releases/latest`]
   : [
       `https://api.github.com/repos/${REPO}/releases/latest`,
+      `https://cdn.jsdelivr.net/gh/${REPO}@main/latest-version.json`,
+      `https://raw.githubusercontent.com/${REPO}/main/latest-version.json`,
       `https://ghproxy.net/https://api.github.com/repos/${REPO}/releases/latest`,
-      `https://github.moeyy.xyz/https://api.github.com/repos/${REPO}/releases/latest`,
     ];
 
 const FETCH_TIMEOUT = isWeb ? 5000 : 8000;
