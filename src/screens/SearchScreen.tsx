@@ -174,10 +174,23 @@ export function SearchScreen() {
         jmLogger.err(`搜索: JM 失败 ${(jmResult as any).reason?.message || (jmResult as any).reason}`);
       }
 
+      // JM 分类筛选（客户端过滤）
+      if (categoryFilter?.jm?.length && jmItems.length > 0) {
+        jmItems = jmItems.filter((item) =>
+          item.categories.some((cat) => categoryFilter.jm!.includes(cat))
+        );
+      }
+
       // 处理 Pica 结果
       let picaItems: SourceItem[] = [];
       if (picaResult.status === 'fulfilled' && picaResult.value) {
         picaItems = picaResult.value.items;
+        // Pica 分类筛选
+        if (categoryFilter?.pica?.length && picaItems.length > 0) {
+          picaItems = picaItems.filter((item) =>
+            item.categories.some((cat) => categoryFilter.pica!.includes(cat))
+          );
+        }
         jmLogger.log(`搜索: Pica 返回 items=${picaItems.length}`);
       }
 
@@ -453,7 +466,7 @@ export function SearchScreen() {
               />
             )}
 
-            {searched && loading && (
+            {loading && (
               <ActivityIndicator style={{ padding: 20 }} color={C.primary} />
             )}
           </View>
