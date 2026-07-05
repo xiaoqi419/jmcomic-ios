@@ -65,7 +65,7 @@ export function PicaCategoryResultScreen() {
         data={comics}
         renderItem={renderItem}
         keyExtractor={(i) => i._id}
-        numColumns={3}}
+        numColumns={3}
         contentContainerStyle={{ paddingHorizontal: Spacing.marginEdge, paddingTop: 12, paddingBottom: 40 }}
         onEndReached={() => { if (hasMore && !loading) loadComics(page + 1); }}
         onEndReachedThreshold={0.3}
