@@ -2,7 +2,8 @@
 // @author nyx
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, TextInput } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, TextInput } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -55,7 +56,7 @@ export function NovelsScreen() {
 
   return (
     <SafeAreaView edges={["top"]} style={styles.cont}>
-      <FlatList
+      <FlashList
         data={list}
         keyExtractor={(i) => i.id}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} colors={[C.primary]} />}

@@ -5,10 +5,11 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
-  View, Text, FlatList, Pressable, TextInput,
+  View, Text, Pressable, TextInput,
   ActivityIndicator, StyleSheet, Keyboard, KeyboardAvoidingView,
   Platform, useWindowDimensions, RefreshControl,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HtmlText } from '../components/HtmlText';
 import { Image } from 'expo-image';
@@ -193,7 +194,7 @@ export function ComicCommentScreen({ route, navigation }: Props) {
       {loading ? (
         <View style={css.center}><ActivityIndicator size="large" color={colors.primary} /></View>
       ) : (
-        <FlatList
+        <FlashList
           data={comments}
           keyExtractor={(i) => i.CID}
           renderItem={renderComment}

@@ -2,7 +2,8 @@
 // @author nyx
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +27,7 @@ export function ForumScreen() {
 
   return (
     <SafeAreaView edges={["top"]} style={styles.cont}>
-      <FlatList
+      <FlashList
         data={posts}
         keyExtractor={(i) => i.id}
         contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}

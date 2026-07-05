@@ -3,9 +3,10 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
-  View, Text, FlatList, Pressable, StyleSheet, ScrollView, Alert,
+  View, Text, Pressable, StyleSheet, ScrollView, Alert,
   RefreshControl, TextInput, Modal,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -127,7 +128,7 @@ export function LibraryScreen() {
 
   return (
     <SafeAreaView edges={["top"]} style={styles.cont}>
-      <FlatList
+      <FlashList
         data={displayItems}
         keyExtractor={(i) => i.id || i._id}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} colors={[C.primary]} />}

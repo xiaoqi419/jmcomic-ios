@@ -2,7 +2,8 @@
 // @author Jason
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, Alert, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert, Platform } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -89,7 +90,7 @@ export function DownloadListScreen() {
 
   return (
     <SafeAreaView edges={["top"]} style={styles.cont}>
-      <FlatList
+      <FlashList
         data={items}
         keyExtractor={(i) => i.comicId}
         contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}

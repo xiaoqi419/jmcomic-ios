@@ -3,9 +3,10 @@
 
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import {
-  View, Text, FlatList, Pressable, ActivityIndicator, Dimensions,
+  View, Text, Pressable, ActivityIndicator, Dimensions,
   Linking, StyleSheet, RefreshControl, TextInput,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -126,7 +127,7 @@ export function MoviesScreen() {
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: Colors.background }}>
-      <FlatList
+      <FlashList
         data={movies}
         numColumns={2}
         keyExtractor={(i) => i.id}

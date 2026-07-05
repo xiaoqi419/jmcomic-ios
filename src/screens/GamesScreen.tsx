@@ -2,7 +2,8 @@
 // @author nyx
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, Linking, Dimensions } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Linking, Dimensions } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
@@ -43,10 +44,9 @@ export function GamesScreen() {
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: C.background }}>
-      <FlatList
+      <FlashList
         data={games}
         numColumns={2}
-        columnWrapperStyle={{ justifyContent: 'space-between' }}
         keyExtractor={(i) => i.gid}
         contentContainerStyle={{ padding: Spacing.marginEdge, paddingBottom: 100 }}
         ListHeaderComponent={
