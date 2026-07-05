@@ -2,7 +2,8 @@
 // @author Jason
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Pressable, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, Dimensions } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -52,12 +53,11 @@ export function PicaCreatorResultScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.background }}>
-      <FlatList
+      <FlashList
         data={comics}
         renderItem={renderItem}
         keyExtractor={(i) => i._id}
-        numColumns={3}
-        columnWrapperStyle={{ justifyContent: 'space-between' }}
+        numColumns={3}}
         contentContainerStyle={{ paddingHorizontal: Spacing.marginEdge, paddingVertical: 12 }}
         onEndReached={() => { if (hasMore && !loading) load(page + 1); }}
         onEndReachedThreshold={0.3}

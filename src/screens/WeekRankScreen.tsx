@@ -5,9 +5,10 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
-  View, Text, FlatList, Pressable, RefreshControl,
+  View, Text, Pressable, RefreshControl,
   ActivityIndicator, ScrollView, StyleSheet, Modal, Platform,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -261,7 +262,7 @@ export function WeekRankScreen() {
         {loading ? (
           <View style={css.center}><ActivityIndicator size="large" color={colors.primary} /></View>
         ) : (
-          <FlatList
+          <FlashList
             data={list}
             numColumns={3}
             keyExtractor={(i) => i.id}
@@ -271,9 +272,7 @@ export function WeekRankScreen() {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
             }
             onEndReached={onEndReached}
-            onEndReachedThreshold={0.3}
-            columnWrapperStyle={css.columnWrapper}
-            ListEmptyComponent={
+            onEndReachedThreshold={0.3}ListEmptyComponent={
               <Text style={[css.emptyText, { color: colors.outline }]}>暂无数据</Text>
             }
             ListFooterComponent={

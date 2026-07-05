@@ -2,7 +2,8 @@
 // @author nyx
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, RefreshControl, ActivityIndicator, ScrollView, Dimensions, Alert } from 'react-native';
+import { View, Text, Pressable, StyleSheet, RefreshControl, ActivityIndicator, ScrollView, Dimensions, Alert } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -237,10 +238,9 @@ export function CategoriesScreen() {
       </View>
 
       {source === 'jm' ? (
-        <FlatList
+        <FlashList
           data={list}
           numColumns={3}
-          columnWrapperStyle={{ justifyContent: 'space-between' }}
           keyExtractor={(i) => i.id}
           contentContainerStyle={{ paddingHorizontal: Spacing.marginEdge, paddingBottom: 100 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} colors={[C.primary]} />}

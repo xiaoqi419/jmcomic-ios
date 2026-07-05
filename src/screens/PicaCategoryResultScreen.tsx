@@ -3,9 +3,10 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator,
+  View, Text, Pressable, StyleSheet, ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -60,12 +61,11 @@ export function PicaCategoryResultScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.background }}>
-      <FlatList
+      <FlashList
         data={comics}
         renderItem={renderItem}
         keyExtractor={(i) => i._id}
-        numColumns={3}
-        columnWrapperStyle={{ justifyContent: 'space-between' }}
+        numColumns={3}}
         contentContainerStyle={{ paddingHorizontal: Spacing.marginEdge, paddingTop: 12, paddingBottom: 40 }}
         onEndReached={() => { if (hasMore && !loading) loadComics(page + 1); }}
         onEndReachedThreshold={0.3}
