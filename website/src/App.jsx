@@ -134,12 +134,12 @@ export default function App() {
       {/* Nav */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${typeof window !== 'undefined' && window.scrollY > 60 ? 'bg-[rgba(7,7,13,0.82)] backdrop-blur-[20px] border-b border-[rgba(255,255,255,0.05)]' : ''}`}>
         <div className="max-w-[1100px] mx-auto px-6 py-[18px] flex items-center justify-between">
-          <button onClick={() => setPage('home')} className="text-[22px] font-extrabold bg-gradient-to-r from-[#E85D3A] to-[#FF8C5A] bg-clip-text text-transparent tracking-tight border-none cursor-pointer">
-            JOYComic
+          <button onClick={() => setPage('home')} className="flex items-center gap-2.5 border-none cursor-pointer">
+            <img src="/logo.svg" alt="JOYComic" className="w-7 h-7" />
+            <span className="text-[22px] font-extrabold bg-gradient-to-r from-[#E85D3A] to-[#FF8C5A] bg-clip-text text-transparent tracking-tight">JOYComic</span>
           </button>
           <div className="flex gap-7 items-center">
             <button onClick={() => setPage('home')} className={`bg-none border-none text-sm font-medium cursor-pointer ${page === 'home' ? 'text-[#F0EDE8] font-semibold' : 'text-[#9895A0]'} hover:text-[#F0EDE8] transition-colors`}>首页</button>
-            <button onClick={() => setPage('history')} className={`bg-none border-none text-sm font-medium cursor-pointer ${page === 'history' ? 'text-[#F0EDE8] font-semibold' : 'text-[#9895A0]'} hover:text-[#F0EDE8] transition-colors`}>Git 历史</button>
             <a href="https://github.com/xiaoqi419/joycomic-ios" target="_blank" rel="noreferrer" className="text-[#9895A0] text-sm hover:text-[#F0EDE8] transition-colors no-underline">GitHub</a>
           </div>
         </div>
@@ -273,65 +273,5 @@ export default function App() {
         {page === 'history' && <HistoryPage />}
       </div>
     </div>
-  );
-}
-
-/* ===== Git History ===== */
-function HistoryPage() {
-  const [commits, setCommits] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const fetchCommits = useCallback(async () => {
-    setLoading(true); setError(null);
-    const PROXIES = [
-      `https://api.github.com/repos/xiaoqi419/joycomic-ios/commits?per_page=50`,
-      `https://cdn.jsdelivr.net/gh/xiaoqi419/joycomic-ios@main/latest-version.json`,
-    ];
-    for (const url of PROXIES) {
-      try {
-        const ctrl = new AbortController();
-        const tid = setTimeout(() => ctrl.abort(), 8000);
-        const res = await fetch(url, { headers: { 'User-Agent': 'JOYComic-Site/1.0' }, signal: ctrl.signal });
-        clearTimeout(tid);
-        if (!res.ok) continue;
-        const data = await res.json();
-        if (Array.isArray(data)) { setCommits(data); setLoading(false); return; }
-      } catch {}
-    }
-    setError('无法连接到 GitHub'); setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchCommits(); }, [fetchCommits]);
-
-  return (
-    <section className="pt-[120px] min-h-[80vh] max-w-[720px] mx-auto px-6">
-      <div className="text-center mb-16">
-        <span className="inline-flex px-[14px] py-[5px] rounded-full bg-[rgba(232,93,58,0.08)] text-[#E85D3A] text-[11px] font-bold tracking-[1.5px] uppercase border border-[rgba(232,93,58,0.12)] mb-4">Git 历史</span>
-        <h2 className="text-[clamp(30px,3.5vw,42px)] font-extrabold mb-3">提交记录</h2>
-      </div>
-      {loading && <div className="text-center py-[60px] text-[#9895A0]"><div className="w-9 h-9 border-3 border-[rgba(232,93,58,0.15)] border-t-[#E85D3A] rounded-full mx-auto mb-4 animate-spin" /><p>正在获取提交记录…</p></div>}
-      {error && <div className="text-center py-[60px] text-[#9895A0]"><p>{error}</p><button onClick={fetchCommits} className="mt-4 px-[34px] py-4 bg-[#E85D3A] text-white rounded-[14px] text-[15px] font-semibold border-none cursor-pointer">重试</button></div>}
-      {!loading && !error && (
-        <div className="relative pl-[34px] before:content-[''] before:absolute before:left-[12px] before:top-0 before:bottom-0 before:w-[2px] before:bg-gradient-to-b before:from-[rgba(232,93,58,0.2)] before:to-transparent">
-          {commits.map((c, i) => (
-            <div key={c.sha} className="relative mb-5 animate-[fadeUp_0.5s_ease-out_both]" style={{ animationDelay: `${i * 0.03}s` }}>
-              <div className="absolute -left-[28px] top-[6px] w-3 h-3 rounded-full bg-[#07070D] border-2 border-[#E85D3A]" />
-              <div className="bg-[#12121E] rounded-[12px] p-[18px_22px] border border-[rgba(255,255,255,0.05)] hover:border-[rgba(232,93,58,0.15)] hover:translate-x-1 transition-all">
-                <div className="flex items-center gap-3.5 mb-1.5">
-                  <a href={c.html_url} target="_blank" rel="noreferrer" className="text-[12px] font-bold text-[#E85D3A] no-underline hover:underline font-mono">#{c.sha.slice(0, 7)}</a>
-                  <span className="text-[11px] text-[#6B6873]">{new Date(c.commit.committer.date).toISOString().slice(0, 10)}</span>
-                </div>
-                <p className="text-[14px] text-[#F0EDE8] leading-relaxed break-words">{c.commit.message.split('\n')[0]}</p>
-                <div className="flex items-center gap-2 mt-2.5 text-[12px] text-[#9895A0]">
-                  <img src={c.author?.avatar_url || ''} alt="" className="w-5 h-5 rounded-full" />
-                  <span>{c.commit.author.name}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
   );
 }
