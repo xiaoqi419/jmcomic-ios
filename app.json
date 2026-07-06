@@ -36,6 +36,9 @@
     "owner": "pekilovex",
     "experiments": {
       "reactCompiler": true
-    }
+    },
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
 }
