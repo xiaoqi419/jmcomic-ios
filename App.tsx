@@ -145,7 +145,8 @@ function AppInner() {
         <Stack.Screen name="ComicDetail" component={ComicDetailWrapper}
           options={{ title: '详情', headerBackTitle: '返回' }} />
         <Stack.Screen name="Reader" component={ReaderScreen}
-          options={{ headerShown: false, orientation: 'default' as const }} />        <Stack.Screen name="MoviePlayer" component={MoviePlayerScreen}
+          options={{ headerShown: false, orientation: 'default' as const }} />
+        <Stack.Screen name="MoviePlayer" component={MoviePlayerScreen}
           options={{ headerShown: false }} />
         <Stack.Screen name="PicaDetail" component={PicaDetailWrapper}
           options={{ title: '详情', headerBackTitle: '返回' }} />
