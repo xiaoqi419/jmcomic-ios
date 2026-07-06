@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useReaderStore } from '../store/useReader';
 import { useHistoryStore } from '../store/useHistory';
 import { useSettingsStore } from '../store/useSettings';
-import { fetchComicRead, fetchAlbumDetail, searchAlbums } from '../api/endpoints';
+import { fetchComicRead, fetchAlbumDetail, searchComics } from '../api/endpoints';
 import { extractFilenameWithoutExt } from '../utils/scramble';
 import { useLegacyColors, FontSize } from '../theme';
 import * as Brightness from 'expo-brightness';
@@ -154,7 +154,7 @@ export function ReaderScreen() {
   const handleSwitchSource = async () => {
     if (!albumId) return;
     try {
-      const res = await searchAlbums({ q: chapterTitle || albumId, page: 1 });
+      const res = await searchComics({ search_query: chapterTitle || albumId, page: 1 });
       const list = (res as any)?.list || [];
       if (list.length > 0) {
         nav.replace('Reader', { albumId: list[0].id, chapterTitle: list[0].name });
