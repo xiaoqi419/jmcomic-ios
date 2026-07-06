@@ -35,10 +35,15 @@
     },
     "owner": "pekilovex",
     "experiments": {
-      "reactCompiler": true
     },
     "plugins": [
-      "expo-image-picker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "JOYComic 需要访问你的相册来搜索图片来源",
+          "cameraPermission": "JOYComic 需要访问你的相机来拍摄搜索图片"
+        }
+      ],
       "expo-web-browser"
     ]
   }
