@@ -340,11 +340,65 @@ export function ReaderScreen() {
           </TouchableOpacity>
 
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <TouchableOpacity onPress={() => Alert.alert('下载', '选择下载方式', [
-              { text: '取消', style: 'cancel' },
-              { text: '当前话', onPress: () => Alert.alert('', '已添加下载任务') },
-              { text: '全部话', onPress: () => Alert.alert('', '已添加全部下载任务') },
-            ])}>
+            {/* 切换源 */}
+            <TouchableOpacity onPress={() => Alert.alert('切换源', '未找到其他源的同名漫画', [{ text: '确定' }])}>
+              <MaterialIcons name="swap-horiz" size={22} color="#fff" />
+            </TouchableOpacity>
+            {/* 下载 */}
+            <TouchableOpacity onPress={() => {
+              if (!albumId || !chapterTitle) { Alert.alert('', '无法下载'); return; }
+              Alert.alert('下载', '选择下载方式', [
+                { text: '取消', style: 'cancel' },
+                { text: '当前话', onPress: async () => {
+                  try {
+                    const pages = await fetchComicRead(albumId, chapterId || '');
+                    await downloadManager.addDownload({
+                      comicId: albumId,
+                      title: chapterTitle || `第${currentEpIdx + 1}话`,
+                      coverUrl: '',
+                      chapterCount: 1,
+                      downloadFn: async (onProgress) => {
+                        const urls = (Array.isArray(pages) ? pages : (pages as any)?.images || (pages as any)?.pages || []).map((p: any) => typeof p === 'string' ? p : p.url || p.image || '').filter(Boolean);
+                        for (let i = 0; i < urls.length; i++) {
+                          const local = FileSystem.documentDirectory + 'downloads/' + albumId + '/' + i + '.jpg';
+                          await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'downloads/' + albumId, { intermediates: true }).catch(() => {});
+                          await FileSystem.downloadAsync(urls[i], local);
+                          onProgress(i + 1, urls.length);
+                        }
+                      },
+                    });
+                    Alert.alert('', '已添加下载任务');
+                  } catch { Alert.alert('', '下载失败'); }
+                }},
+                { text: '全部话', style: 'destructive', onPress: async () => {
+                  try {
+                    const detail = await fetchAlbumDetail(albumId);
+                    const chs = detail?.series || [];
+                    await downloadManager.addDownload({
+                      comicId: albumId,
+                      title: chapterTitle || '全部章节',
+                      coverUrl: '',
+                      chapterCount: chs.length,
+                      downloadFn: async (onProgress) => {
+                        for (let ci = 0; ci < chs.length; ci++) {
+                          try {
+                            const pages = await fetchComicRead(albumId, chs[ci].id);
+                            const urls = (Array.isArray(pages) ? pages : (pages as any)?.images || (pages as any)?.pages || []).map((p: any) => typeof p === 'string' ? p : p.url || p.image || '').filter(Boolean);
+                            for (let i = 0; i < urls.length; i++) {
+                              const local = FileSystem.documentDirectory + 'downloads/' + albumId + '/' + ci + '_' + i + '.jpg';
+                              await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'downloads/' + albumId, { intermediates: true }).catch(() => {});
+                              await FileSystem.downloadAsync(urls[i], local);
+                            }
+                          } catch {}
+                          onProgress(ci + 1, chs.length);
+                        }
+                      },
+                    });
+                    Alert.alert('', '已添加全部下载任务');
+                  } catch { Alert.alert('', '下载失败'); }
+                }},
+              ]);
+            }}>
               <MaterialIcons name="download" size={22} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity onPress={handleSaveImage}>

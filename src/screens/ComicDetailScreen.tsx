@@ -23,6 +23,8 @@ import { useHistoryStore } from '../store/useHistory';
 import { HtmlText } from '../components/HtmlText';
 import { useAuthStore } from '../store/useAuth';
 import { chunkArray } from '../utils/helpers';
+import * as FileSystem from 'expo-file-system';
+import { downloadManager } from '../utils/DownloadManager';
 // DebugOverlay moved to App.tsx
 import type { AlbumDetail, Episode, CommentItem as ApiComment } from '../api/types';
 
@@ -331,15 +333,38 @@ export function ComicDetailScreen() {
 
         {/* 下载按钮 */}
         <Pressable
-          onPress={() => Alert.alert('下载', '选择下载方式', [
-            { text: '取消', style: 'cancel' },
-            { text: '下载全部章节', onPress: async () => {
-              for (const ep of (seriesGroups.flat() || detail.series || []).slice(0, 5)) {
-                try { await fetchComicRead(ep.id); } catch {}
-              }
-              Alert.alert('', '下载任务已添加');
-            }},
-          ])}
+          onPress={() => {
+            const chs = detail?.series || [];
+            if (chs.length === 0) { Alert.alert('', '暂无章节可下载'); return; }
+            Alert.alert('下载', '选择下载方式', [
+              { text: '取消', style: 'cancel' },
+              { text: '下载全部章节', onPress: async () => {
+                try {
+                  await downloadManager.addDownload({
+                    comicId: albumId,
+                    title: detail?.title || albumId,
+                    coverUrl: getCoverUrl(albumId),
+                    chapterCount: chs.length,
+                    downloadFn: async (onProgress) => {
+                      for (let ci = 0; ci < chs.length; ci++) {
+                        try {
+                          const pages = await fetchComicRead(albumId, chs[ci].id);
+                          const urls = (Array.isArray(pages) ? pages : (pages as any)?.images || (pages as any)?.pages || []).map((p: any) => typeof p === 'string' ? p : p.url || p.image || '').filter(Boolean);
+                          for (let i = 0; i < urls.length; i++) {
+                            const local = FileSystem.documentDirectory + 'downloads/' + albumId + '/' + ci + '_' + i + '.jpg';
+                            await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'downloads/' + albumId, { intermediates: true }).catch(() => {});
+                            await FileSystem.downloadAsync(urls[i], local);
+                          }
+                        } catch {}
+                        onProgress(ci + 1, chs.length);
+                      }
+                    },
+                  });
+                  Alert.alert('', '下载任务已添加');
+                } catch { Alert.alert('', '下载失败'); }
+              }},
+            ]);
+          }}
           style={{ marginHorizontal: 16, marginTop: 8, paddingVertical: 10, borderRadius: 10, backgroundColor: C.primary + '14', borderWidth: 1, borderColor: C.primary + '25', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}
         >
           <MaterialIcons name="download" size={18} color={C.primary} />
