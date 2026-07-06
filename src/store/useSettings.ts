@@ -25,6 +25,7 @@ interface SettingsState {
   prefetchCount: number;
   imageLayout: 'contain' | 'fitWidth' | 'fitHeight';
   lockOrientation: 0 | 1 | 2;
+  downloadToGallery: boolean;
   loaded: boolean;
 
   // 动态域名（从 /api/setting 获取）
@@ -46,6 +47,7 @@ interface SettingsState {
   setPrefetchCount: (n: number) => void;
   setImageLayout: (v: 'contain' | 'fitWidth' | 'fitHeight') => void;
   setLockOrientation: (v: 0 | 1 | 2) => void;
+  setDownloadToGallery: (v: boolean) => void;
 
   /** 从 /api/setting 响应更新域名 */
   updateFromSetting: (data: SettingData) => void;
@@ -68,6 +70,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   prefetchCount: 3,
   imageLayout: 'contain',
   lockOrientation: 0,
+  downloadToGallery: true,
   loaded: false,
 
   mainWebHost: '',
@@ -85,6 +88,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setPrefetchCount: (n) => { set({ prefetchCount: n }); get().save(); },
   setImageLayout: (v) => { set({ imageLayout: v }); get().save(); },
   setLockOrientation: (v) => { set({ lockOrientation: v }); get().save(); },
+  setDownloadToGallery: (v) => { set({ downloadToGallery: v }); get().save(); },
 
   updateFromSetting: (data: SettingData) => {
     const shunts: Shunt[] = (data.app_shunts || []).map((s) => ({

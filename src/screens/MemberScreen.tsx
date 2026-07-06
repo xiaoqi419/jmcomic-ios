@@ -27,7 +27,7 @@ export function MemberScreen() {
   const { username: jmUser, loggedIn: jmLoggedIn, login: jmDoLogin, logout: jmDoLogout } = useAuthStore();
   const { username: picaUser, loggedIn: picaLoggedIn, login: picaDoLogin, logout: picaDoLogout, apiSource: picaApiSource, setApiSource: setPicaApiSource } = usePicaStore();
   const { info, signData, signed, doSignIn, loadInfo, loadSign, loadAchievements, achievements, notifications, loadNotifications, unread } = useMemberStore();
-  const { language, setLanguage, readingMode, setReadingMode, showDebugLog, setShowDebugLog, theme, setTheme, shunts, selectedShuntKey, selectShunt, prefetchCount, setPrefetchCount, imageLayout, setImageLayout, lockOrientation, setLockOrientation } = useSettingsStore();
+  const { language, setLanguage, readingMode, setReadingMode, showDebugLog, setShowDebugLog, theme, setTheme, shunts, selectedShuntKey, selectShunt, prefetchCount, setPrefetchCount, imageLayout, setImageLayout, lockOrientation, setLockOrientation, downloadToGallery, setDownloadToGallery } = useSettingsStore();
 
   const [showJmLogin, setShowJmLogin] = useState(false);
   const [jmUserInput, setJmUserInput] = useState('');
@@ -346,6 +346,16 @@ export function MemberScreen() {
                   <Text style={[styles.toggleText, lockOrientation === opt.v && styles.toggleTextActive]}>{opt.l}</Text>
                 </Pressable>
               ))}
+            </View>
+          } />
+          <Row label="下载位置" right={
+            <View style={styles.toggleGroup}>
+              <Pressable onPress={() => setDownloadToGallery(true)} style={[styles.toggleBtn, downloadToGallery && styles.toggleBtnActive]}>
+                <Text style={[styles.toggleText, downloadToGallery && styles.toggleTextActive]}>图库</Text>
+              </Pressable>
+              <Pressable onPress={() => setDownloadToGallery(false)} style={[styles.toggleBtn, !downloadToGallery && styles.toggleBtnActive]}>
+                <Text style={[styles.toggleText, !downloadToGallery && styles.toggleTextActive]}>文件夹</Text>
+              </Pressable>
             </View>
           } />
           {shunts.length > 0 && (
