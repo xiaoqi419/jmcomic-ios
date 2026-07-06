@@ -13,6 +13,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, FontSize } from '../theme';
 
 const API_KEY_STORAGE = '@joycomic.saucenao_key';
+const TEST_KEY = '1f8fbe5632d20f8e025c610aef9e66c06ed39986';
 const W = Dimensions.get('window').width;
 
 interface SauceResult {
@@ -23,25 +24,27 @@ interface SauceResult {
 export function ImageSearchScreen() {
   const [apiKey, setApiKey] = useState('');
   const [showKeyInput, setShowKeyInput] = useState(false);
+  const [keyTab, setKeyTab] = useState<'test' | 'custom'>('test');
   const [keyInput, setKeyInput] = useState('');
   const [image, setImage] = useState<string | null>(null);
   const [results, setResults] = useState<SauceResult[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(API_KEY_STORAGE).then((k) => { if (k) setApiKey(k); });
+    AsyncStorage.getItem(API_KEY_STORAGE).then((k) => {
+      if (k) setApiKey(k);
+      else setApiKey(TEST_KEY);
+    });
   }, []);
 
-  const saveKey = async () => {
-    const trimmed = keyInput.trim();
-    if (trimmed.length < 10) { Alert.alert('', 'Key 格式不正确'); return; }
-    setApiKey(trimmed);
+  const useKey = (key: string) => {
+    setApiKey(key);
     setShowKeyInput(false);
-    await AsyncStorage.setItem(API_KEY_STORAGE, trimmed);
+    AsyncStorage.setItem(API_KEY_STORAGE, key);
   };
 
   const pickImage = async () => {
-    if (!apiKey) { Alert.alert('需要 API Key', '请先设置 SauceNAO API Key'); setShowKeyInput(true); return; }
+    if (!apiKey) { Alert.alert('', '请先设置 API Key'); setShowKeyInput(true); return; }
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) { Alert.alert('需要权限', '请允许访问相册'); return; }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7 });
@@ -51,7 +54,7 @@ export function ImageSearchScreen() {
   };
 
   const takePhoto = async () => {
-    if (!apiKey) { Alert.alert('需要 API Key', '请先设置 SauceNAO API Key'); setShowKeyInput(true); return; }
+    if (!apiKey) { Alert.alert('', '请先设置 API Key'); setShowKeyInput(true); return; }
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) { Alert.alert('需要权限', '请允许使用相机'); return; }
     const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
@@ -80,22 +83,54 @@ export function ImageSearchScreen() {
       {/* API Key 设置 */}
       {showKeyInput ? (
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: '#9895A0', fontSize: 13, marginBottom: 8 }}>SauceNAO API Key 在 https://saucenao.com/user.php?page=search-api</Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <TextInput
-              style={{ flex: 1, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 10, color: '#F0EDE8', backgroundColor: '#12121E' }}
-              placeholder="输入 API Key" placeholderTextColor="#6B6873" value={keyInput} onChangeText={setKeyInput} autoFocus
-            />
-            <Pressable onPress={saveKey} style={{ paddingHorizontal: 16, borderRadius: 8, backgroundColor: '#E85D3A', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#fff', fontWeight: '600' }}>保存</Text>
+          <Text style={{ color: '#9895A0', fontSize: 13, marginBottom: 10, lineHeight: 20 }}>
+            选择 Key 来源后点击使用即可搜索
+          </Text>
+          <View style={{ flexDirection: 'row', marginBottom: 12, borderRadius: 8, backgroundColor: '#12121E', padding: 3 }}>
+            <Pressable onPress={() => setKeyTab('test')} style={[styles.tab, keyTab === 'test' && styles.tabActive]}>
+              <Text style={[styles.tabText, keyTab === 'test' && styles.tabTextActive]}>🔑 测试 Key</Text>
+            </Pressable>
+            <Pressable onPress={() => setKeyTab('custom')} style={[styles.tab, keyTab === 'custom' && styles.tabActive]}>
+              <Text style={[styles.tabText, keyTab === 'custom' && styles.tabTextActive]}>📝 自定义 Key</Text>
             </Pressable>
           </View>
+
+          {keyTab === 'test' ? (
+            <View style={{ backgroundColor: '#1A1A24', borderRadius: 10, padding: 16 }}>
+              <Text style={{ color: '#9895A0', fontSize: 13, marginBottom: 12, lineHeight: 20 }}>
+                直接使用提供方的测试 Key，无需注册即可搜索。
+              </Text>
+              <Pressable onPress={() => useKey(TEST_KEY)} style={{ paddingVertical: 12, borderRadius: 10, backgroundColor: '#E85D3A', alignItems: 'center' }}>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>使用测试 Key 搜索</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View>
+              <View style={{ backgroundColor: '#1A1A24', borderRadius: 10, padding: 14, marginBottom: 12 }}>
+                <Text style={{ color: '#F0EDE8', fontSize: 13, lineHeight: 22 }}>
+                  <Text style={{ fontWeight: '700' }}>获取方式：</Text>{'\n'}
+                  1. 前往 https://saucenao.com/ 注册免费账号{'\n'}
+                  2. 登录后打开 user.php?page=search-api{'\n'}
+                  3. 复制页面中的 API Key
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TextInput
+                  style={{ flex: 1, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 10, color: '#F0EDE8', backgroundColor: '#12121E' }}
+                  placeholder="粘贴你的 API Key" placeholderTextColor="#6B6873" value={keyInput} onChangeText={setKeyInput} autoFocus
+                />
+                <Pressable onPress={() => { if (keyInput.trim().length > 5) useKey(keyInput.trim()); }} style={{ paddingHorizontal: 16, borderRadius: 8, backgroundColor: '#E85D3A', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: '#fff', fontWeight: '600' }}>保存</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
         </View>
       ) : (
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 }}>
-          <Pressable onPress={() => { setKeyInput(apiKey); setShowKeyInput(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Pressable onPress={() => { setKeyInput(''); setShowKeyInput(true); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <MaterialIcons name="vpn-key" size={14} color="#6B6873" />
-            <Text style={{ color: '#6B6873', fontSize: 12 }}>{apiKey ? 'Key 已设置' : '设置 API Key'}</Text>
+            <Text style={{ color: '#6B6873', fontSize: 12 }}>{apiKey === TEST_KEY ? '🔑 测试 Key' : '📝 自定义 Key'}</Text>
           </Pressable>
         </View>
       )}
@@ -145,4 +180,8 @@ const styles = StyleSheet.create({
   btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14, borderRadius: 12, backgroundColor: '#E85D3A' },
   btnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   resultCard: { flexDirection: 'row', backgroundColor: '#12121E', borderRadius: 10, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  tab: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 6 },
+  tabActive: { backgroundColor: '#E85D3A' },
+  tabText: { fontSize: 13, fontWeight: '600', color: '#9895A0' },
+  tabTextActive: { color: '#fff' },
 });
