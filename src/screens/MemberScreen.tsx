@@ -39,7 +39,7 @@ export function MemberScreen() {
   const [picaPassInput, setPicaPassInput] = useState('');
   const [picaLoginLoading, setPicaLoginLoading] = useState(false);
 
-  const dualSearch = isPicaEnabled();
+  const dualSearch = usePicaStore((s) => s.loggedIn);
 
   useEffect(() => {
     if (jmLoggedIn) {
