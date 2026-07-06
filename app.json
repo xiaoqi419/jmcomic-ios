@@ -38,6 +38,7 @@
       "reactCompiler": true
     },
     "plugins": [
+      "expo-image-picker",
       "expo-web-browser"
     ]
   }
