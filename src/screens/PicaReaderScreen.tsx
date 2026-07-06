@@ -1,261 +1,199 @@
-// Pica 阅读器 v5 — 全功能（亮度/章节弹窗/布局切换/保存）
+// Pica 阅读器 — PicaComic 风格 UI（平滑滚动 + 工具栏）
 // @author Jason
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, StyleSheet, ActivityIndicator, Dimensions,
-  FlatList, Text, Pressable, Platform, Animated, Modal, Alert,
+  View, Text, FlatList, TouchableOpacity, useWindowDimensions,
+  Pressable, ActivityIndicator, Modal, Alert, StyleSheet,
+  Animated, StatusBar, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
-import * as Brightness from 'expo-brightness';
-import * as MediaLibrary from 'expo-media-library';
-import { Colors, FontSize } from '../theme';
 import { picaSource } from '../sources/pica';
-import type { SourceImage, SourceChapter } from '../sources/types';
+import { comicComments } from '../pica/endpoints';
+import * as MediaLibrary from 'expo-media-library';
+import * as Brightness from 'expo-brightness';
+import * as FileSystem from 'expo-file-system';
 
-const { width: W, height: H } = Dimensions.get('window');
-const BAR_HEIGHT = 48;
+const { width: W } = Dimensions.get('window');
+const TOOLBAR_ANIM_DURATION = 150;
+const TAP_ZONE_RATIO = 0.2;
 
 export function PicaReaderScreen() {
+  const { height: H } = useWindowDimensions();
   const nav = useNavigation<any>();
-  const { comicId, chapterOrder, chapterId, title } = useRoute<any>().params || {};
-
-  const [images, setImages] = useState<SourceImage[]>([]);
-  const [chapters, setChapters] = useState<SourceChapter[]>([]);
-  const [currentChIdx, setCurrentChIdx] = useState(0);
+  const route = useRoute<any>();
+  const { comicId, chapterOrder, chapterId, title } = route.params || {};
   const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [showUI, setShowUI] = useState(false);
-  const [imgLayout, setImgLayout] = useState<'contain' | 'fitWidth' | 'fitHeight'>('fitWidth');
-  const [imgHeights, setImgHeights] = useState<Record<number, number>>({});
-  const [brightness, setBrightnessVal] = useState(1);
-  const [showBrightness, setShowBrightness] = useState(false);
-  const [showChapterModal, setShowChapterModal] = useState(false);
+  const [pages, setPages] = useState<{ url: string; index: number }[]>([]);
+  const [currentIdx, setCurrentIdx] = useState(0);
   const flatRef = useRef<FlatList>(null);
-  const uiOpacity = useRef(new Animated.Value(0)).current;
+  const [imageHeights, setImageHeights] = useState<Record<number, number>>({});
+  const [brightness, setBrightnessVal] = useState(1);
+
+  // 工具栏动画
+  const topAnim = useRef(new Animated.Value(0)).current;
+  const bottomAnim = useRef(new Animated.Value(0)).current;
+  const [showUI, setShowUI] = useState(true);
 
   const toggleUI = useCallback(() => {
-    const toValue = showUI ? 0 : 1;
-    Animated.timing(uiOpacity, { toValue, duration: 200, useNativeDriver: true }).start();
+    const to = showUI ? 0 : 1;
+    Animated.parallel([
+      Animated.timing(topAnim, { toValue: to, duration: TOOLBAR_ANIM_DURATION, useNativeDriver: true }),
+      Animated.timing(bottomAnim, { toValue: to, duration: TOOLBAR_ANIM_DURATION, useNativeDriver: true }),
+    ]).start();
     setShowUI(!showUI);
-  }, [showUI, uiOpacity]);
+  }, [showUI, topAnim, bottomAnim]);
 
   useEffect(() => {
     Brightness.getBrightnessAsync().then(setBrightnessVal).catch(() => {});
+    topAnim.setValue(1);
+    bottomAnim.setValue(1);
+    loadPages();
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const chs = await picaSource.fetchChapters(comicId);
-        if (cancelled) return;
-        setChapters(chs);
-        const idx = chs.findIndex((c) => c.id === chapterId || c.order === chapterOrder);
-        setCurrentChIdx(idx >= 0 ? idx : 0);
-      } catch {}
-    })();
-    picaSource.fetchImages(comicId, chapterOrder ?? 1)
-      .then((imgs) => { if (!cancelled) setImages(imgs); })
-      .catch(() => {}).finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [comicId, chapterOrder, chapterId]);
-
-  const goChapter = useCallback((order: number) => {
-    setShowChapterModal(false);
-    setLoading(true); setImages([]); setImgHeights({}); setCurrentIndex(0);
-    picaSource.fetchImages(comicId, order).then(setImages).catch(() => {}).finally(() => setLoading(false));
-  }, [comicId]);
-
-  const goPrev = useCallback(() => {
-    const prev = chapters[currentChIdx - 1];
-    if (prev) { setCurrentChIdx(currentChIdx - 1); goChapter(prev.order); }
-  }, [chapters, currentChIdx, goChapter]);
-
-  const goNext = useCallback(() => {
-    const next = chapters[currentChIdx + 1];
-    if (next) { setCurrentChIdx(currentChIdx + 1); goChapter(next.order); }
-  }, [chapters, currentChIdx, goChapter]);
-
-  const handleSaveImage = useCallback(async () => {
-    if (images.length === 0) return;
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status !== 'granted') { Alert.alert('需要权限', '请在设置中允许保存图片'); return; }
+  const loadPages = async () => {
+    setLoading(true);
     try {
-      await MediaLibrary.saveToLibraryAsync(images[currentIndex]?.url || images[0]?.url || '');
-      Alert.alert('', '已保存');
-    } catch { Alert.alert('', '保存失败'); }
-  }, [images, currentIndex]);
+      const imgs = await picaSource.fetchImages(comicId, chapterOrder || 0);
+      setPages(imgs || []);
+    } catch {}
+    setLoading(false);
+  };
 
-  const handleLoad = useCallback((index: number, w: number, h: number) => {
-    if (w > 0 && h > 0) {
-      setImgHeights((prev) => {
-        const nh = (W * h) / w;
-        if (prev[index] === nh) return prev;
-        return { ...prev, [index]: nh };
-      });
+  // 保存当前图片
+  const handleSaveImage = async () => {
+    const img = pages[currentIdx];
+    if (!img) return;
+    try {
+      const perm = await MediaLibrary.requestPermissionsAsync();
+      if (!perm.granted) { Alert.alert('需要权限', '请允许访问相册'); return; }
+      const local = FileSystem.cacheDirectory + 'pica_save.jpg';
+      await FileSystem.downloadAsync(img.url, local);
+      await MediaLibrary.saveToLibraryAsync(local);
+      Alert.alert('', '已保存到相册');
+    } catch {}
+  };
+
+  const handleTap = useCallback((evt: any) => {
+    const x = evt.nativeEvent.locationX;
+    const leftZone = W * TAP_ZONE_RATIO;
+    const rightZone = W * (1 - TAP_ZONE_RATIO);
+    if (x < leftZone && currentIdx > 0) {
+      flatRef.current?.scrollToIndex({ index: currentIdx - 1, animated: true });
+      setCurrentIdx(currentIdx - 1);
+    } else if (x > rightZone && currentIdx < pages.length - 1) {
+      flatRef.current?.scrollToIndex({ index: currentIdx + 1, animated: true });
+      setCurrentIdx(currentIdx + 1);
+    } else {
+      toggleUI();
     }
-  }, []);
-
-  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
-    if (viewableItems?.length > 0) setCurrentIndex(viewableItems[0].index ?? 0);
-  }).current;
-
-  const totalPages = images.length;
-  const pageStr = totalPages > 0 ? `${currentIndex + 1} / ${totalPages}` : '';
-  const hasPrev = currentChIdx > 0;
-  const hasNext = currentChIdx < chapters.length - 1;
-  const chTitle = chapters[currentChIdx]?.title || title || '';
-  const progress = totalPages > 0 ? ((currentIndex + 1) / totalPages) * 100 : 0;
-
-  if (loading) {
-    return <SafeAreaView edges={["top"]} style={styles.cont}><ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 100 }} /></SafeAreaView>;
-  }
+  }, [currentIdx, pages.length, toggleUI]);
 
   return (
-    <View style={styles.cont}>
-      <StatusBar style="light" />
+    <View style={{ flex: 1, backgroundColor: '#0A0A0F' }}>
+      <StatusBar hidden={!showUI} />
 
-      <FlatList
-        ref={flatRef}
-        data={images}
-        keyExtractor={(_, i) => String(i)}
-        renderItem={({ item, index }) => {
-          const imgH = imgHeights[index];
-          return (
-            <Pressable onPress={toggleUI}>
-              <View style={{ width: W, height: imgH || W * 1.4, backgroundColor: '#000' }}>
-                <Image source={{ uri: item.url }} style={{ width: '100%', height: '100%' }}
-                  contentFit={imgLayout === 'fitWidth' ? 'contain' : imgLayout === 'fitHeight' ? 'cover' : 'contain'}
-                  cachePolicy="memory-disk" placeholder={null}
-                  onLoad={(e) => { const { width: nw, height: nh } = e.source; if (nw && nh) handleLoad(index, nw, nh); }} />
-              </View>
-            </Pressable>
-          );
-        }}
-        horizontal={false} showsVerticalScrollIndicator={false}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={{ itemVisiblePercentThreshold: 30 }}
-        removeClippedSubviews={Platform.OS === 'android'}
-        windowSize={5} initialNumToRender={3} maxToRenderPerBatch={5} />
-
-      {/* 底栏 */}
-      <Animated.View style={[styles.bar, styles.bottomBar, { opacity: uiOpacity }]}>
-        <Pressable onPress={goPrev} disabled={!hasPrev} style={[styles.iconBtn, { opacity: hasPrev ? 1 : 0.25 }]}>
-          <MaterialIcons name="skip-previous" size={24} color="#fff" />
-        </Pressable>
-        <View style={styles.sliderWrap}>
-          <View style={styles.sliderTrack}>
-            <View style={[styles.sliderFill, { width: `${Math.min(100, progress)}%` }]} />
-            <View style={[styles.sliderThumb, { left: `${Math.min(96, progress)}%` }]} />
-          </View>
-          <Text style={styles.sliderLabel}>{pageStr}</Text>
+      {loading ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color="#E85D3A" />
         </View>
-        <Pressable onPress={goNext} disabled={!hasNext} style={[styles.iconBtn, { opacity: hasNext ? 1 : 0.25 }]}>
-          <MaterialIcons name="skip-next" size={24} color="#fff" />
-        </Pressable>
-      </Animated.View>
-
-      {/* 顶栏 */}
-      <Animated.View style={[styles.bar, styles.topBar, { opacity: uiOpacity }]}>
-        <SafeAreaView edges={["top"]} style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-          <Pressable onPress={() => nav.goBack()} hitSlop={12} style={styles.iconBtn}>
-            <MaterialIcons name="arrow-back" size={24} color="#fff" />
-          </Pressable>
-          <Pressable onPress={() => setShowChapterModal(true)} style={{ flex: 1, alignItems: 'center', paddingHorizontal: 4 }}>
-            <Text style={styles.titleText} numberOfLines={1}>{chTitle}</Text>
-          </Pressable>
-          {/* 布局切换 */}
-          <Pressable onPress={() => setImgLayout(imgLayout === 'contain' ? 'fitWidth' : imgLayout === 'fitWidth' ? 'fitHeight' : 'contain')} hitSlop={8} style={styles.iconBtn}>
-            <MaterialIcons name={imgLayout === 'contain' ? 'fullscreen' : imgLayout === 'fitWidth' ? 'photo-size-select-large' : 'photo-size-select-small'} size={22} color="#fff" />
-          </Pressable>
-          {/* 保存 */}
-          <Pressable onPress={handleSaveImage} hitSlop={8} style={styles.iconBtn}>
-            <MaterialIcons name="save-alt" size={22} color="#fff" />
-          </Pressable>
-          {/* 下载 */}
-          <Pressable onPress={() => Alert.alert('下载', '选择下载方式', [
-            { text: '取消', style: 'cancel' },
-            { text: '当前话', onPress: () => Alert.alert('', '已添加下载任务') },
-            { text: '全部话', onPress: () => Alert.alert('', '已添加全部下载任务') },
-          ])} hitSlop={8} style={styles.iconBtn}>
-            <MaterialIcons name="download" size={22} color="#fff" />
-          </Pressable>
-          {/* 亮度 */}
-          <Pressable onPress={() => setShowBrightness(!showBrightness)} hitSlop={8} style={styles.iconBtn}>
-            <MaterialIcons name={showBrightness ? 'brightness-high' : 'brightness-low'} size={22} color="#fff" />
-          </Pressable>
-        </SafeAreaView>
-        {/* 亮度滑块 */}
-        {showBrightness && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 6, gap: 8 }}>
-            <MaterialIcons name="brightness-low" size={18} color="rgba(255,255,255,0.6)" />
-            <View style={styles.brightTrack}>
-              <View style={[styles.brightFill, { width: `${brightness * 100}%` }]} />
-              <View style={[styles.brightThumb, { left: `${brightness * 96}%` }]} />
-            </View>
-            <MaterialIcons name="brightness-high" size={18} color="rgba(255,255,255,0.6)" />
-          </View>
-        )}
-      </Animated.View>
-
-      {/* 章节弹窗 */}
-      <Modal visible={showChapterModal} transparent animationType="slide" onRequestClose={() => setShowChapterModal(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#F0EDE8' }}>选择章节</Text>
-              <Pressable onPress={() => setShowChapterModal(false)} hitSlop={8}>
-                <MaterialIcons name="close" size={24} color="#9895A0" />
-              </Pressable>
-            </View>
-            <FlatList
-              data={chapters}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item, index }) => (
-                <Pressable
-                  onPress={() => {
-                    setCurrentChIdx(index);
-                    goChapter(item.order);
+      ) : pages.length === 0 ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: '#9895A0' }}>暂无内容</Text>
+        </View>
+      ) : (
+        <Pressable style={{ flex: 1 }} onPress={handleTap}>
+          <FlatList
+            ref={flatRef}
+            data={pages}
+            keyExtractor={(_, i) => String(i)}
+            renderItem={({ item, index }) => (
+              <View style={{ width: W }}>
+                <Image
+                  source={{ uri: item.url }}
+                  style={{ width: W, height: imageHeights[index] || H }}
+                  contentFit="contain"
+                  onLoad={(e) => {
+                    const h = (e as any).source?.height || H;
+                    const w = (e as any).source?.width || W;
+                    const ratio = Math.min(h / w, 3);
+                    const calcH = W * ratio;
+                    if (calcH > H * 0.5) {
+                      setImageHeights((prev) => ({ ...prev, [index]: calcH }));
+                    }
                   }}
-                  style={[styles.chapterItem, index === currentChIdx && { backgroundColor: Colors.primary + '30' }]}>
-                  <Text style={{ color: index === currentChIdx ? Colors.primary : '#F0EDE8', fontWeight: index === currentChIdx ? '700' : '500' }}>
-                    {item.title}
-                  </Text>
-                  {index === currentChIdx && <MaterialIcons name="check" size={16} color={Colors.primary} />}
-                </Pressable>
-              )}
-            />
+                />
+              </View>
+            )}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(e) => {
+              const idx = Math.round(e.nativeEvent.contentOffset.x / W);
+              setCurrentIdx(idx);
+            }}
+            getItemLayout={(_, index) => ({ length: W, offset: W * index, index })}
+          />
+        </Pressable>
+      )}
+
+      {/* 顶部栏 */}
+      <Animated.View style={[{
+        position: 'absolute', top: 0, left: 0, right: 0,
+        backgroundColor: 'rgba(0,0,0,0.75)',
+        borderBottomLeftRadius: 16, borderBottomRightRadius: 16,
+      }, { transform: [{ translateY: topAnim.interpolate({ inputRange: [0, 1], outputRange: [-80, 0] }) }] }]}>
+        <SafeAreaView edges={['top']} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8 }}>
+          <TouchableOpacity onPress={() => nav.goBack()} style={{ padding: 8 }}>
+            <MaterialIcons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }} numberOfLines={1}>{title || '阅读'}</Text>
           </View>
-        </View>
-      </Modal>
+          <TouchableOpacity style={{ padding: 8, opacity: 0 }}><MaterialIcons name="settings" size={22} color="#fff" /></TouchableOpacity>
+        </SafeAreaView>
+      </Animated.View>
+
+      {/* 底部栏 */}
+      <Animated.View style={[{
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        backgroundColor: 'rgba(0,0,0,0.75)',
+        borderTopLeftRadius: 16, borderTopRightRadius: 16, paddingBottom: 4,
+      }, { transform: [{ translateY: bottomAnim.interpolate({ inputRange: [0, 1], outputRange: [120, 0] }) }] }]}>
+        <SafeAreaView edges={['bottom']}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, gap: 8, paddingTop: 8 }}>
+            <TouchableOpacity
+              onPress={() => { flatRef.current?.scrollToIndex({ index: 0, animated: true }); setCurrentIdx(0); }}
+              disabled={currentIdx === 0}
+            >
+              <MaterialIcons name="first-page" size={20} color={currentIdx === 0 ? 'rgba(255,255,255,0.3)' : '#fff'} />
+            </TouchableOpacity>
+            <View style={{ flex: 1, height: 24, justifyContent: 'center' }}>
+              <View style={{ height: 4, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 2 }}>
+                <View style={{ width: `${pages.length > 1 ? (currentIdx / (pages.length - 1)) * 100 : 0}%`, height: 4, backgroundColor: '#E85D3A', borderRadius: 2 }} />
+              </View>
+            </View>
+            <TouchableOpacity
+              onPress={() => { flatRef.current?.scrollToIndex({ index: pages.length - 1, animated: true }); setCurrentIdx(pages.length - 1); }}
+              disabled={currentIdx === pages.length - 1}
+            >
+              <MaterialIcons name="last-page" size={20} color={currentIdx === pages.length - 1 ? 'rgba(255,255,255,0.3)' : '#fff'} />
+            </TouchableOpacity>
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 4 }}>
+            <View style={{ backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>P{currentIdx + 1}/{pages.length}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 16 }}>
+              <TouchableOpacity onPress={handleSaveImage}><MaterialIcons name="save-alt" size={22} color="#fff" /></TouchableOpacity>
+              <TouchableOpacity onPress={loadPages}><MaterialIcons name="refresh" size={22} color="#fff" /></TouchableOpacity>
+            </View>
+          </View>
+        </SafeAreaView>
+      </Animated.View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  cont: { flex: 1, backgroundColor: '#000' },
-  bar: { position: 'absolute', left: 8, right: 8, borderRadius: 14, backgroundColor: 'rgba(20,20,30,0.85)', overflow: 'hidden' },
-  topBar: { top: Platform.OS === 'ios' ? 0 : 0, },
-  bottomBar: { bottom: Platform.OS === 'ios' ? 34 : 8, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4, paddingVertical: 2, height: BAR_HEIGHT },
-  iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
-  titleText: { color: '#fff', fontSize: 15, fontWeight: '600', letterSpacing: 0.3 },
-  sliderWrap: { flex: 1, alignItems: 'center', gap: 3, paddingHorizontal: 4 },
-  sliderTrack: { width: '100%', height: 4, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 3, position: 'relative', justifyContent: 'center' },
-  sliderFill: { position: 'absolute', left: 0, top: 0, height: '100%', backgroundColor: Colors.primary, borderRadius: 3 },
-  sliderThumb: { position: 'absolute', width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.primary, borderWidth: 2, borderColor: '#fff', top: -4, marginLeft: -6 },
-  sliderLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: '600', fontVariant: ['tabular-nums'] },
-  // 亮度
-  brightTrack: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 3, position: 'relative', justifyContent: 'center' },
-  brightFill: { position: 'absolute', left: 0, top: 0, height: '100%', backgroundColor: Colors.primary, borderRadius: 3 },
-  brightThumb: { position: 'absolute', width: 12, height: 12, borderRadius: 6, backgroundColor: '#fff', top: -4, marginLeft: -6 },
-  // 章节弹窗
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#1A1A24', borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: '70%', paddingBottom: 30 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
-  chapterItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16 },
-});
