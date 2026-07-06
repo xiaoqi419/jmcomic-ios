@@ -330,9 +330,6 @@ export function SearchScreen() {
                   <MaterialIcons name="close" size={18} color={C.textTertiary} style={{ marginRight: 10 }} />
                 </Pressable>
               )}
-              <Pressable onPress={() => nav.navigate('ImageSearch')} hitSlop={8} style={{ padding: 4 }}>
-                <MaterialIcons name="image-search" size={22} color={C.textTertiary} />
-              </Pressable>
             </View>
 
             {/* 排序+筛选工具栏 */}
