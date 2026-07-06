@@ -6,7 +6,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View, Text, Pressable, RefreshControl,
-  ActivityIndicator, ScrollView, StyleSheet, Modal, Platform,
+  ActivityIndicator, ScrollView, StyleSheet, Modal, Platform, Dimensions,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +18,10 @@ import { jmLogger } from '../utils/JmLogger';
 import { useAppTheme } from '../theme';
 import { Spacing, FontSize, Radius } from '../theme';
 import type { ComicItem } from '../api/types';
+
+const { width: SCREEN_W } = Dimensions.get('window');
+const CARD_GAP = 8;
+const CARD_W = (SCREEN_W - Spacing.marginEdge * 2 - CARD_GAP * 2) / 3;
 
 interface WeekCategory {
   id: string;
@@ -335,9 +339,9 @@ const css = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listContent: { paddingHorizontal: Spacing.marginEdge, paddingBottom: 100 },
   columnWrapper: { gap: 8 },
-  cardOuter: { width: '30%', margin: 4, borderRadius: Radius.card, overflow: 'hidden', marginBottom: 12 },
-  cardInner: { padding: 0 },
-  cover: { width: '100%', aspectRatio: 0.7, backgroundColor: '#2C2C30' },
+  cardOuter: { width: CARD_W, borderRadius: Radius.card, overflow: 'hidden', marginBottom: 12 },
+  cardInner: { padding: 0, backgroundColor: '#2C2C30', borderRadius: Radius.card, overflow: 'hidden' },
+  cover: { width: '100%', aspectRatio: 0.7 },
   cardTitle: { fontSize: FontSize.label, fontWeight: '600', paddingHorizontal: 8, paddingTop: 6, lineHeight: 18 },
   cardAuthor: { fontSize: FontSize.caption, paddingHorizontal: 8, paddingBottom: 4, paddingTop: 2 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, paddingHorizontal: 8, paddingBottom: 8 },
