@@ -46,6 +46,8 @@ export function ReaderScreen() {
   const isVertical = useReaderStore((s) => s.isVertical);
   const setReadingMode = useSettingsStore((s) => s.setReadingMode);
   const readingMode = useSettingsStore((s) => s.readingMode);
+  const imageLayout = useSettingsStore((s) => s.imageLayout);
+  const prefetchCount = useSettingsStore((s) => s.prefetchCount);
 
   const [loading, setLoading] = useState(true);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -191,7 +193,7 @@ export function ReaderScreen() {
         ) : (
           <Image source={{ uri: item }}
             style={{ width: W, height: isVertical ? (imageHeights[index] || W * 1.4) : H }}
-            contentFit="contain"
+            contentFit={imageLayout === 'contain' ? 'contain' : imageLayout === 'fitWidth' ? 'cover' : 'contain'}
             onLoad={(e) => {
               const src = (e as any).source || {};
               const rh = src.height || H;
