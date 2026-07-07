@@ -56,8 +56,12 @@ export function LibraryScreen() {
         setLoading(true);
         const d = type === 'like' ? await myLikes() : await myFavourites();
         const data = (d as any).comics || d;
-        setItems(data.docs || []);
-        setTotal(data.total || data.docs?.length || 0);
+        const docs = (data.docs || []).map((c: any) => ({
+          ...c,
+          _source: 'cloud' as const,
+        }));
+        setItems(docs);
+        setTotal(data.total || docs.length);
       } catch {}
       if (!silent) setLoading(false);
       return;
