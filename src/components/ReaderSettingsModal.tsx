@@ -8,7 +8,6 @@ import {
   Switch, Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import Slider from '@react-native-community/slider';
 
 interface Props {
   visible: boolean;
@@ -75,14 +74,12 @@ function Page0({ isVertical, onSetVertical, readingMode, onSetReadingMode, onOpe
       {tapFlip && (
         <View style={s.rowSub}>
           <Text style={s.rowSubLabel}>翻页识别范围 {tapRange}%</Text>
-          <View style={{ flex: 1, height: 30, justifyContent: 'center' }}>
-            <Slider
-              style={{ width: '100%', height: 30 }}
-              minimumValue={5} maximumValue={40} step={5}
-              value={tapRange} onValueChange={setTapRange}
-              minimumTrackTintColor="#E85D3A" maximumTrackTintColor="#333"
-              thumbTintColor="#E85D3A"
-            />
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+            <TouchableOpacity onPress={() => setTapRange(Math.max(5, tapRange - 5))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>{'−'}</Text></TouchableOpacity>
+            <View style={{ flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 3 }}>
+              <View style={{ width: `${(tapRange / 40) * 100}%`, height: 6, backgroundColor: '#E85D3A', borderRadius: 3 }} />
+            </View>
+            <TouchableOpacity onPress={() => setTapRange(Math.min(40, tapRange + 5))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>+</Text></TouchableOpacity>
           </View>
         </View>
       )}
@@ -97,14 +94,12 @@ function Page0({ isVertical, onSetVertical, readingMode, onSetReadingMode, onOpe
       {/* 自动翻页间隔 */}
       <View style={s.rowSub}>
         <Text style={s.rowSubLabel}>自动翻页 {autoPageInterval}s</Text>
-        <View style={{ flex: 1, height: 30, justifyContent: 'center' }}>
-          <Slider
-            style={{ width: '100%', height: 30 }}
-            minimumValue={1} maximumValue={20} step={1}
-            value={autoPageInterval} onValueChange={setAutoPageInterval}
-            minimumTrackTintColor="#E85D3A" maximumTrackTintColor="#333"
-            thumbTintColor="#E85D3A"
-          />
+        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => setAutoPageInterval(Math.max(1, autoPageInterval - 1))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>{'−'}</Text></TouchableOpacity>
+          <View style={{ flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 3 }}>
+            <View style={{ width: `${(autoPageInterval / 20) * 100}%`, height: 6, backgroundColor: '#E85D3A', borderRadius: 3 }} />
+          </View>
+          <TouchableOpacity onPress={() => setAutoPageInterval(Math.min(20, autoPageInterval + 1))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>+</Text></TouchableOpacity>
         </View>
       </View>
 
