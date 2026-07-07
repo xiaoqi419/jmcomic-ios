@@ -58,6 +58,9 @@ function ComicDetailWrapper() {
 function PicaDetailWrapper() {
   return <ErrorBoundary title="Pica 详情"><PicaDetailScreen /></ErrorBoundary>;
 }
+function ReaderScreenWrapper() {
+  return <ErrorBoundary title="阅读器"><ReaderScreen /></ErrorBoundary>;
+}
 
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
   const { colors } = useAppTheme();
@@ -143,7 +146,7 @@ function AppInner() {
         <Stack.Screen name="Search" component={SearchScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ComicDetail" component={ComicDetailWrapper}
           options={{ title: '详情', headerBackTitle: '返回' }} />
-        <Stack.Screen name="Reader" component={ReaderScreen}
+        <Stack.Screen name="Reader" component={ReaderScreenWrapper}
           options={{ headerShown: false, orientation: 'default' as const }} />
         <Stack.Screen name="MoviePlayer" component={MoviePlayerScreen}
           options={{ headerShown: false }} />
@@ -153,7 +156,7 @@ function AppInner() {
           options={{ title: '' }} />
         <Stack.Screen name="PicaCategoryResult" component={PicaCategoryResultScreen}
           options={{ title: '分类结果' }} />
-        <Stack.Screen name="PicaReader" component={ReaderScreen}
+        <Stack.Screen name="PicaReader" component={ReaderScreenWrapper}
           options={{ headerShown: false }} />
         <Stack.Screen name="Blogs" component={BlogsScreen}
           options={{ headerShown: false }} />
