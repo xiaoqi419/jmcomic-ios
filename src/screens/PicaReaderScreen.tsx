@@ -62,6 +62,10 @@ export function PicaReaderScreen() {
     loadPages();
   }, []);
 
+  useEffect(() => {
+    setVertical(readingMode === 'scroll');
+  }, [readingMode]);
+
   const loadPages = async () => {
     setLoading(true);
     try {
