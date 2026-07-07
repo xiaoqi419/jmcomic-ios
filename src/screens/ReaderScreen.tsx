@@ -18,6 +18,7 @@ import { useSettingsStore } from '../store/useSettings';
 import { fetchComicRead, fetchAlbumDetail } from '../api/endpoints';
 import * as Brightness from 'expo-brightness';
 import * as MediaLibrary from 'expo-media-library';
+import { ReaderSettingsModal } from '../components/ReaderSettingsModal';
 import type { Episode } from '../api/types';
 
 const { width: W } = Dimensions.get('window');
@@ -282,24 +283,10 @@ export function ReaderScreen() {
         </>
       )}
 
-      {/* 设置弹窗 */}
-      <Modal visible={showSettings} transparent animationType="slide" onRequestClose={() => setShowSettings(false)}>
-        <Pressable style={{ flex: 1 }} onPress={() => setShowSettings(false)}>
-          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#1C1C24', borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 20, paddingBottom: 40 }}>
-            <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 16 }}>阅读设置</Text>
-            <TouchableOpacity style={s.sr} onPress={() => { store.setVertical(!isVertical); setReadingMode(!isVertical ? 'scroll' : 'page'); }}>
-              <MaterialIcons name="swap-vert" size={20} color="#fff" />
-              <Text style={{ color: '#fff', flex: 1, marginLeft: 12 }}>滚动模式</Text>
-              <Text style={{ color: '#999' }}>{isVertical ? '竖滑' : '分页'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={s.sr} onPress={() => { const b = brightness > 0.5 ? 0.3 : 1; Brightness.setBrightnessAsync(b); setBrightnessVal(b); }}>
-              <MaterialIcons name={brightness > 0.5 ? 'brightness-high' : 'brightness-low'} size={20} color="#fff" />
-              <Text style={{ color: '#fff', flex: 1, marginLeft: 12 }}>亮度</Text>
-              <Text style={{ color: '#999' }}>{Math.round(brightness * 100)}%</Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Modal>
+      <ReaderSettingsModal visible={showSettings} onClose={() => setShowSettings(false)}
+        isVertical={isVertical} onSetVertical={(v) => store.setVertical(v)}
+        readingMode={readingMode} onSetReadingMode={setReadingMode}
+      />
 
       {/* 章节选择弹窗 */}
       <Modal visible={showChapterModal} transparent animationType="slide" onRequestClose={() => setShowChapterModal(false)}>

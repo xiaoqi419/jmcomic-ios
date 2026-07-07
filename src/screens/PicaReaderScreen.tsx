@@ -16,6 +16,7 @@ import { useSettingsStore } from '../store/useSettings';
 import * as MediaLibrary from 'expo-media-library';
 import * as Brightness from 'expo-brightness';
 import * as FileSystem from 'expo-file-system';
+import { ReaderSettingsModal } from '../components/ReaderSettingsModal';
 
 const { width: W } = Dimensions.get('window');
 const ANIM_DUR = 150;
@@ -35,6 +36,7 @@ export function PicaReaderScreen() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const flatRef = useRef<FlatList>(null);
   const [imageHeights, setImageHeights] = useState<Record<number, number>>({});
+  const [showSettings, setShowSettings] = useState(false);
 
   const topAnim = useRef(new Animated.Value(0)).current;
   const bottomAnim = useRef(new Animated.Value(0)).current;
@@ -174,7 +176,7 @@ export function PicaReaderScreen() {
           <View style={{ flex: 1, alignItems: 'center', height: 50, justifyContent: 'center' }}>
             <Text style={{ color: '#fff', fontSize: 20, fontWeight: '600' }} numberOfLines={1}>{title || '阅读'}</Text>
           </View>
-          <TouchableOpacity style={{ padding: 8, opacity: 0 }}>
+          <TouchableOpacity onPress={() => setShowSettings(true)} style={{ padding: 8 }}>
             <MaterialIcons name="settings" size={25} color="#fff" />
           </TouchableOpacity>
         </SafeAreaView>
@@ -235,8 +237,10 @@ export function PicaReaderScreen() {
         </>
       )}
 
-      {/* 深色模式遮罩 */}
-      <View style={styles.dimOverlay} pointerEvents="none" />
+      <ReaderSettingsModal visible={showSettings} onClose={() => setShowSettings(false)}
+        isVertical={isVertical} onSetVertical={(v) => setVertical(v)}
+        readingMode={readingMode} onSetReadingMode={setReadingMode}
+      />
     </View>
   );
 }
