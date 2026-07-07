@@ -18,6 +18,8 @@ import { useSettingsStore } from '../store/useSettings';
 import { fetchComicRead, fetchAlbumDetail } from '../api/endpoints';
 import * as Brightness from 'expo-brightness';
 import * as MediaLibrary from 'expo-media-library';
+import * as FileSystem from 'expo-file-system';
+import { downloadManager } from '../utils/DownloadManager';
 import { ReaderSettingsModal } from '../components/ReaderSettingsModal';
 import type { Episode } from '../api/types';
 
@@ -31,6 +33,7 @@ export function ReaderScreen() {
   const { albumId, chapterId, chapterTitle, initialPage } = route.params || {};
 
   const store = useReaderStore();
+  const isVertical = useReaderStore((s) => s.isVertical);
   const setReadingMode = useSettingsStore((s) => s.setReadingMode);
   const readingMode = useSettingsStore((s) => s.readingMode);
 
@@ -49,7 +52,6 @@ export function ReaderScreen() {
 
   const imageUrls = store.imageUrls;
   const currentPage = store.currentPage;
-  const isVertical = store.isVertical;
 
   const toggleUI = useCallback(() => {
     const next = showUI ? 0 : 1;
@@ -65,7 +67,7 @@ export function ReaderScreen() {
     topAnim.setValue(1);
     bottomAnim.setValue(1);
     store.setVertical(readingMode === 'scroll');
-  }, []);
+  }, [readingMode]);
 
   useEffect(() => {
     if (albumId) {
@@ -253,6 +255,59 @@ export function ReaderScreen() {
               </Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 12 }}>
+              {/* 下载 */}
+              <TouchableOpacity onPress={() => {
+                Alert.alert('下载', '选择下载方式', [
+                  { text: '取消', style: 'cancel' },
+                  { text: '当前话', onPress: async () => {
+                    try {
+                      const data = await fetchComicRead(albumId || store.chapterId || '', store.chapterId || '');
+                      const urls = (data.images || []).map((i: any) => i.image).filter(Boolean);
+                      await downloadManager.addDownload({
+                        comicId: albumId || store.albumId,
+                        title: chapterTitle || store.chapterTitle,
+                        coverUrl: '', chapterCount: 1,
+                        downloadFn: async (onProgress) => {
+                          for (let i = 0; i < urls.length; i++) {
+                            const local = FileSystem.documentDirectory + 'downloads/' + (albumId || store.albumId) + '/' + i + '.jpg';
+                            await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'downloads/' + (albumId || store.albumId), { intermediates: true }).catch(() => {});
+                            await FileSystem.downloadAsync(urls[i], local);
+                            onProgress(i + 1, urls.length);
+                          }
+                        },
+                      });
+                      Alert.alert('', '已添加下载任务');
+                    } catch { Alert.alert('', '下载失败'); }
+                  }},
+                  { text: '全部话', style: 'destructive', onPress: async () => {
+                    try {
+                      if (!episodes.length) { Alert.alert('', '没有章节数据'); return; }
+                      await downloadManager.addDownload({
+                        comicId: albumId || store.albumId,
+                        title: chapterTitle || '全部章节',
+                        coverUrl: '', chapterCount: episodes.length,
+                        downloadFn: async (onProgress) => {
+                          for (let ci = 0; ci < episodes.length; ci++) {
+                            try {
+                              const data = await fetchComicRead(albumId || store.albumId, episodes[ci].id);
+                              const urls = (data.images || []).map((i: any) => i.image).filter(Boolean);
+                              for (let i = 0; i < urls.length; i++) {
+                                const local = FileSystem.documentDirectory + 'downloads/' + (albumId || store.albumId) + '/' + ci + '_' + i + '.jpg';
+                                await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'downloads/' + (albumId || store.albumId), { intermediates: true }).catch(() => {});
+                                await FileSystem.downloadAsync(urls[i], local);
+                              }
+                            } catch {}
+                            onProgress(ci + 1, episodes.length);
+                          }
+                        },
+                      });
+                      Alert.alert('', '已添加全部下载任务');
+                    } catch { Alert.alert('', '下载失败'); }
+                  }},
+                ]);
+              }}>
+                <MaterialIcons name="download" size={22} color="#fff" />
+              </TouchableOpacity>
               {/* 保存图片 */}
               <TouchableOpacity onPress={handleSaveImage}>
                 <MaterialIcons name="save-alt" size={22} color="#fff" />
@@ -297,7 +352,7 @@ export function ReaderScreen() {
       {/* 章节选择弹窗 */}
       <Modal visible={showChapterModal} transparent animationType="slide" onRequestClose={() => setShowChapterModal(false)}>
         <Pressable style={{ flex: 1 }} onPress={() => setShowChapterModal(false)}>
-          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#1C1C24', borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: 400 }}>
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#1C1C24', borderTopLeftRadius: 16, borderTopRightRadius: 16, maxHeight: 400, paddingBottom: 40 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)' }}>
               <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>章节</Text>
               <TouchableOpacity onPress={() => setShowChapterModal(false)}><MaterialIcons name="close" size={22} color="#fff" /></TouchableOpacity>

@@ -17,6 +17,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as Brightness from 'expo-brightness';
 import * as FileSystem from 'expo-file-system';
 import { ZoomableImage } from '../components/ZoomableImage';
+import { downloadManager } from '../utils/DownloadManager';
 import { ReaderSettingsModal } from '../components/ReaderSettingsModal';
 
 const { width: W } = Dimensions.get('window');
@@ -38,6 +39,7 @@ export function PicaReaderScreen() {
   const flatRef = useRef<FlatList>(null);
   const [imageHeights, setImageHeights] = useState<Record<number, number>>({});
   const [showSettings, setShowSettings] = useState(false);
+  const [showChapterModal, setShowChapterModal] = useState(false);
 
   const topAnim = useRef(new Animated.Value(0)).current;
   const bottomAnim = useRef(new Animated.Value(0)).current;
@@ -215,6 +217,33 @@ export function PicaReaderScreen() {
               <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>P{currentIdx + 1}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity onPress={() => {
+                Alert.alert('下载', '选择下载方式', [
+                  { text: '取消', style: 'cancel' },
+                  { text: '当前话', onPress: async () => {
+                    try {
+                      const imgs = await picaSource.fetchImages(comicId, chapterOrder || 0);
+                      if (!imgs || imgs.length === 0) { Alert.alert('', '没有可下载的内容'); return; }
+                      await downloadManager.addDownload({
+                        comicId: comicId,
+                        title: title || '章节',
+                        coverUrl: '', chapterCount: 1,
+                        downloadFn: async (onProgress) => {
+                          for (let i = 0; i < imgs.length; i++) {
+                            const local = FileSystem.documentDirectory + 'downloads/' + comicId + '/' + i + '.jpg';
+                            await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'downloads/' + comicId, { intermediates: true }).catch(() => {});
+                            await FileSystem.downloadAsync(imgs[i].url, local);
+                            onProgress(i + 1, imgs.length);
+                          }
+                        },
+                      });
+                      Alert.alert('', '已添加下载任务');
+                    } catch { Alert.alert('', '下载失败'); }
+                  }},
+                ]);
+              }}>
+                <MaterialIcons name="download" size={22} color="#fff" />
+              </TouchableOpacity>
               <TouchableOpacity onPress={handleSaveImage}><MaterialIcons name="save-alt" size={22} color="#fff" /></TouchableOpacity>
               <TouchableOpacity onPress={() => { setVertical(!isVertical); setReadingMode(!isVertical ? 'scroll' : 'page'); }}>
                 <MaterialIcons name={isVertical ? 'view-stream' : 'view-carousel'} size={22} color="#fff" />
