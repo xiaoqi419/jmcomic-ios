@@ -369,7 +369,6 @@ export function ReaderScreen() {
         </Pressable>
       </Modal>
     </View>
-    </View>
     </ErrorBoundary>
   );
 
