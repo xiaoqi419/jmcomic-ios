@@ -25,7 +25,8 @@ export function ReaderSettingsModal({ visible, onClose, isVertical, onSetVertica
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={{ flex: 1 }} onPress={onClose}>
+      <View style={{ flex: 1 }}>
+        <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} onPress={onClose} />
         <View style={s.container}>
           <Text style={s.title}>阅读设置</Text>
 
@@ -43,7 +44,7 @@ export function ReaderSettingsModal({ visible, onClose, isVertical, onSetVertica
             />
           )}
         </View>
-      </Pressable>
+      </View>
     </Modal>
   );
 }
@@ -99,11 +100,11 @@ function Page0({ isVertical, onSetVertical, readingMode, onSetReadingMode, onOpe
       <View style={s.rowSub}>
         <Text style={s.rowSubLabel}>自动翻页 {autoInterval}s</Text>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => onSetAutoInterval(Math.max(1, autoInterval - 1))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>{'−'}</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => onSetAutoInterval(Math.max(1, autoInterval - 1))} onPressIn={(e) => e.stopPropagation?.()}><Text style={{ color: '#E85D3A', fontSize: 18 }}>{'−'}</Text></TouchableOpacity>
           <View style={{ flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 3 }}>
             <View style={{ width: `${(autoInterval / 20) * 100}%`, height: 6, backgroundColor: '#E85D3A', borderRadius: 3 }} />
           </View>
-          <TouchableOpacity onPress={() => onSetAutoInterval(Math.min(20, autoInterval + 1))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>+</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => onSetAutoInterval(Math.min(20, autoInterval + 1))} onPressIn={(e) => e.stopPropagation?.()}><Text style={{ color: '#E85D3A', fontSize: 18 }}>+</Text></TouchableOpacity>
         </View>
       </View>
 
