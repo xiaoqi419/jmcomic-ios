@@ -58,6 +58,7 @@ export function PicaDetailScreen() {
   const [sending, setSending] = useState(false);
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const addLocal = useFavoritesStore((s) => s.addLocal);
+  const removeLocal = useFavoritesStore((s) => s.removeLocal);
 
   useEffect(() => {
     picaSource.fetchDetail(comicId).then((d) => {
@@ -173,6 +174,7 @@ export function PicaDetailScreen() {
               const next = !detail?.isFavourite;
               setDetail({ ...detail, isFavourite: next } as any);
               if (next) addLocal({ id: comicId, title: detail?.title || '', coverUrl: (detail as any)?.coverUrl || '', author: detail?.author || '', addedAt: Date.now() });
+              else removeLocal(comicId);
             } catch {
               addLocal({ id: comicId, title: detail?.title || '', coverUrl: (detail as any)?.coverUrl || '', author: detail?.author || '', addedAt: Date.now() });
             }
