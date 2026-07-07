@@ -26,6 +26,7 @@ interface SettingsState {
   imageLayout: 'contain' | 'fitWidth' | 'fitHeight';
   lockOrientation: 0 | 1 | 2;
   downloadToGallery: boolean;
+  favoriteMode: 'cloud' | 'local';
   loaded: boolean;
 
   // 动态域名（从 /api/setting 获取）
@@ -48,6 +49,7 @@ interface SettingsState {
   setImageLayout: (v: 'contain' | 'fitWidth' | 'fitHeight') => void;
   setLockOrientation: (v: 0 | 1 | 2) => void;
   setDownloadToGallery: (v: boolean) => void;
+  setFavoriteMode: (v: 'cloud' | 'local') => void;
 
   /** 从 /api/setting 响应更新域名 */
   updateFromSetting: (data: SettingData) => void;
@@ -71,6 +73,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   imageLayout: 'contain',
   lockOrientation: 0,
   downloadToGallery: true,
+  favoriteMode: 'cloud',
   loaded: false,
 
   mainWebHost: '',
@@ -89,6 +92,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setImageLayout: (v) => { set({ imageLayout: v }); get().save(); },
   setLockOrientation: (v) => { set({ lockOrientation: v }); get().save(); },
   setDownloadToGallery: (v) => { set({ downloadToGallery: v }); get().save(); },
+  setFavoriteMode: (v) => { set({ favoriteMode: v }); get().save(); },
 
   updateFromSetting: (data: SettingData) => {
     const shunts: Shunt[] = (data.app_shunts || []).map((s) => ({

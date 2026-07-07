@@ -208,16 +208,22 @@ export function ComicDetailScreen() {
   };
 
   const handleToggleFav = async () => {
+    const favoriteMode = useSettingsStore.getState().favoriteMode;
     if (fav) {
       if (loggedIn) await toggle(albumId);
       removeLocal(albumId);
-    } else if (!loggedIn) {
+    } else if (!loggedIn && favoriteMode === 'cloud') {
       Alert.alert('提示', '请先登录后再收藏', [
         { text: '取消', style: 'cancel' },
         { text: '去登录', onPress: () => nav.navigate('Member') },
       ]);
     } else {
-      setShowFolderPicker(true);
+      if (loggedIn) await toggle(albumId);
+      addLocal({
+        id: albumId, title: detail?.name || '', coverUrl: getCoverUrl(albumId),
+        author: Array.isArray(detail?.author) ? detail.author.join(', ') : String(detail?.author || ''), addedAt: Date.now(),
+      });
+      Alert.alert('', '已收藏');
     }
   };
 
