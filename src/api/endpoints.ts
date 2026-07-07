@@ -244,7 +244,7 @@ export async function fetchFavorites(params: { page?: number; o?: string; folder
 }
 
 export async function toggleFavorite(albumId: string): Promise<any> {
-  return encryptedPost('favorite', { aid: Number(albumId) });
+  return encryptedPost('favorite', { aid: String(albumId) });
 }
 
 export async function createFolder(name: string): Promise<any> {
