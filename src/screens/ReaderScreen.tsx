@@ -410,6 +410,7 @@ export function ReaderScreen() {
       <ReaderSettingsModal visible={showSettings} onClose={() => setShowSettings(false)}
         isVertical={isVertical} onSetVertical={(v) => store.setVertical(v)}
         readingMode={readingMode} onSetReadingMode={setReadingMode}
+        autoInterval={autoIntervalRef.current} onSetAutoInterval={(v) => { autoIntervalRef.current = v; }}
       />
 
       {/* 章节选择弹窗 — 仅 JM 源 */}

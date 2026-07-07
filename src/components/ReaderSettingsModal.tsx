@@ -16,9 +16,11 @@ interface Props {
   onSetVertical: (v: boolean) => void;
   readingMode: 'scroll' | 'page';
   onSetReadingMode: (m: 'scroll' | 'page') => void;
+  autoInterval: number;
+  onSetAutoInterval: (v: number) => void;
 }
 
-export function ReaderSettingsModal({ visible, onClose, isVertical, onSetVertical, readingMode, onSetReadingMode }: Props) {
+export function ReaderSettingsModal({ visible, onClose, isVertical, onSetVertical, readingMode, onSetReadingMode, autoInterval, onSetAutoInterval }: Props) {
   const [page, setPage] = useState(0); // 0-设置列表, 1-阅读模式选择
 
   return (
@@ -32,6 +34,7 @@ export function ReaderSettingsModal({ visible, onClose, isVertical, onSetVertica
               isVertical={isVertical} onSetVertical={onSetVertical}
               readingMode={readingMode} onSetReadingMode={onSetReadingMode}
               onOpenPage1={() => setPage(1)}
+              autoInterval={autoInterval} onSetAutoInterval={onSetAutoInterval}
             />
           ) : (
             <Page1
@@ -45,14 +48,15 @@ export function ReaderSettingsModal({ visible, onClose, isVertical, onSetVertica
   );
 }
 
-function Page0({ isVertical, onSetVertical, readingMode, onSetReadingMode, onOpenPage1 }: {
+function Page0({ isVertical, onSetVertical, readingMode, onSetReadingMode, onOpenPage1, autoInterval, onSetAutoInterval }: {
   isVertical: boolean; onSetVertical: (v: boolean) => void;
   readingMode: string; onSetReadingMode: (m: 'scroll' | 'page') => void;
   onOpenPage1: () => void;
+  autoInterval: number;
+  onSetAutoInterval: (v: number) => void;
 }) {
   const [tapFlip, setTapFlip] = useState(true);
   const [tapRange, setTapRange] = useState(20);
-  const [autoPageInterval, setAutoPageInterval] = useState(5);
 
   return (
     <>
@@ -93,13 +97,13 @@ function Page0({ isVertical, onSetVertical, readingMode, onSetReadingMode, onOpe
 
       {/* 自动翻页间隔 */}
       <View style={s.rowSub}>
-        <Text style={s.rowSubLabel}>自动翻页 {autoPageInterval}s</Text>
+        <Text style={s.rowSubLabel}>自动翻页 {autoInterval}s</Text>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => setAutoPageInterval(Math.max(1, autoPageInterval - 1))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>{'−'}</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => onSetAutoInterval(Math.max(1, autoInterval - 1))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>{'−'}</Text></TouchableOpacity>
           <View style={{ flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 3 }}>
-            <View style={{ width: `${(autoPageInterval / 20) * 100}%`, height: 6, backgroundColor: '#E85D3A', borderRadius: 3 }} />
+            <View style={{ width: `${(autoInterval / 20) * 100}%`, height: 6, backgroundColor: '#E85D3A', borderRadius: 3 }} />
           </View>
-          <TouchableOpacity onPress={() => setAutoPageInterval(Math.min(20, autoPageInterval + 1))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>+</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => onSetAutoInterval(Math.min(20, autoInterval + 1))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>+</Text></TouchableOpacity>
         </View>
       </View>
 
@@ -122,10 +126,10 @@ function Page1({ currentReadingMode, onSelect }: { currentReadingMode: string; o
   return (
     <>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-        <TouchableOpacity onPress={() => onSelect(currentReadingMode as 'scroll' | 'page')} style={{ marginRight: 8 }}>
+        <TouchableOpacity onPress={() => onSelect(currentReadingMode as 'scroll' | 'page')} style={{ padding: 6 }}>
           <MaterialIcons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
-        <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>阅读模式</Text>
+        <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', lineHeight: 24 }}>阅读模式</Text>
       </View>
       {options.map((opt) => (
         <TouchableOpacity key={opt.value} style={s.row} onPress={() => onSelect(opt.value)}>
