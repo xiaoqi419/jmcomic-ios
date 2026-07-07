@@ -52,31 +52,33 @@ export function LibraryScreen() {
   const loadData = useCallback(async (silent = false) => {
     if (source === 'jm') loadLocal();
 
-    if (!loggedIn && source === 'jm') {
-      if (!silent) {
-        Alert.alert('提示', '未登录状态下仅显示本地收藏', [
-          { text: '好的' },
-          { text: '去登录', onPress: () => nav.navigate('Member') },
-        ]);
-      }
-      if (!silent) setLoading(false);
-      return;
+    // 合并本地 + 云端数据
+    let cloudItems: any[] = [];
+    let localItems = source === 'jm' ? local.map((f: any) => ({ ...f, _source: 'local' as const })) : [];
+
+    if (loggedIn) {
+      try {
+        if (source === 'pica') {
+          const d = type === 'like' ? await myLikes() : await myFavourites();
+          const data = (d as any).comics || d;
+          cloudItems = (data.docs || []).map((c: any) => ({
+            id: c._id, name: c.title, author: c.author || c._author?.name || '', image: c.thumb?.fileServer ? `${c.thumb.fileServer}/static/${c.thumb.path}` : '',
+            _source: 'cloud' as const,
+          }));
+        } else {
+          const o = type === 'like' ? 'ml' : 'mr';
+          const folderId = selectedFolder || '0';
+          const d = await fetchFavorites({ page: 1, o, folder_id: folderId });
+          cloudItems = (d.list || []).map((f: any) => ({ ...f, _source: 'cloud' as const }));
+        }
+        // 去重：云端已存在的从本地移除
+        const cloudIds = new Set(cloudItems.map((c: any) => c.id));
+        localItems = localItems.filter((l: any) => !cloudIds.has(l.id));
+      } catch {}
     }
 
-    try {
-      if (source === 'pica') {
-        const d = type === 'like' ? await myLikes() : await myFavourites();
-        const data = (d as any).comics || d;
-        setItems(data.docs || []);
-        setTotal(data.total || data.docs?.length || 0);
-      } else {
-        const o = type === 'like' ? 'ml' : 'mr';
-        const folderId = selectedFolder || '0';
-        const d = await fetchFavorites({ page: 1, o, folder_id: folderId });
-        setItems(d.list || []);
-        setTotal(parseInt(d.total) || 0);
-      }
-    } catch {}
+    setItems([...cloudItems, ...localItems]);
+    setTotal(cloudItems.length + localItems.length);
     if (!silent) setLoading(false);
   }, [loggedIn, source, type, loadLocal, selectedFolder]);
 
@@ -223,6 +225,13 @@ export function LibraryScreen() {
                 </Text>
                 {(item as any).author && <Text style={styles.itemAuthor}>{(item as any).author}</Text>}
               </View>
+              {(item as any)._source && (
+                <View style={{ position: 'absolute', top: 4, right: 4, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, backgroundColor: (item as any)._source === 'cloud' ? 'rgba(232,93,58,0.15)' : 'rgba(255,255,255,0.1)' }}>
+                  <Text style={{ fontSize: 10, fontWeight: '600', color: (item as any)._source === 'cloud' ? '#E85D3A' : '#9895A0' }}>
+                    {(item as any)._source === 'cloud' ? '云端' : '本地'}
+                  </Text>
+                </View>
+              )}
             </Pressable>
           );
         }}

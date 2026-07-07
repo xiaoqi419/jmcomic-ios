@@ -65,7 +65,7 @@ export function ReaderScreen() {
   const [showSettings, setShowSettings] = useState(false);
   const [showSourceSelect, setShowSourceSelect] = useState(false);
   const [autoPageRunning, setAutoPageRunning] = useState(false);
-  const autoIntervalRef = useRef(3);
+  const [autoInterval, setAutoInterval] = useState(3);
   const shunts = useSettingsStore((s) => s.shunts);
   const selectShunt = useSettingsStore((s) => s.selectShunt);
   const selectedShuntKey = useSettingsStore((s) => s.selectedShuntKey);
@@ -90,9 +90,9 @@ export function ReaderScreen() {
       } else {
         setAutoPageRunning(false);
       }
-    }, autoIntervalRef.current * 1000);
+    }, autoInterval * 1000);
     return () => clearInterval(timer);
-  }, [autoPageRunning, pages.length]);
+  }, [autoPageRunning, pages.length, autoInterval]);
 
   useEffect(() => {
     Brightness.getBrightnessAsync().then(setBrightnessVal).catch(() => {});
@@ -409,7 +409,7 @@ export function ReaderScreen() {
       <ReaderSettingsModal visible={showSettings} onClose={() => setShowSettings(false)}
         isVertical={isVertical} onSetVertical={(v) => store.setVertical(v)}
         readingMode={readingMode} onSetReadingMode={setReadingMode}
-        autoInterval={autoIntervalRef.current} onSetAutoInterval={(v) => { autoIntervalRef.current = v; }}
+        autoInterval={autoInterval} onSetAutoInterval={(v) => { setAutoInterval(v); }}
       />
 
       {/* 章节选择弹窗 — 仅 JM 源 */}
