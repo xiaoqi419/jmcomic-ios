@@ -50,25 +50,27 @@ export function LibraryScreen() {
     : (type === 'like' ? '我的喜欢' : '我的收藏');
 
   const loadData = useCallback(async (silent = false) => {
-    // Pica 源：直接调 API
+    // Pica 源：API + 本地合并
     if (source === 'pica') {
       try {
         setLoading(true);
         const d = type === 'like' ? await myLikes() : await myFavourites();
         const data = (d as any).comics || d;
-        const docs = (data.docs || []).map((c: any) => ({
+        const cloudDocs = (data.docs || []).map((c: any) => ({
           ...c,
           _source: 'cloud' as const,
         }));
-        setItems(docs);
-        setTotal(data.total || docs.length);
+        const cloudIds = new Set(cloudDocs.map((c: any) => c._id));
+        const localItems = local.filter((l: any) => !cloudIds.has(l.id)).map((f: any) => ({ ...f, _source: 'local' as const }));
+        setItems([...cloudDocs, ...localItems]);
+        setTotal(cloudDocs.length + localItems.length);
       } catch {}
       if (!silent) setLoading(false);
       return;
     }
 
     // JM 源：本地 + 云端合并
-    loadLocal();
+    await loadLocal();
     let cloudItems: any[] = [];
     let localItems = local.map((f: any) => ({ ...f, _source: 'local' as const }));
 

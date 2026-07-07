@@ -11,6 +11,7 @@ import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLegacyColors, LegacyColors, FontSize, Radius, Spacing } from '../theme';
 import { picaSource } from '../sources/pica';
+import { useFavoritesStore } from '../store/useFavorites';
 import { comicComments, sendComment, likeComment, replyComment, recommendation, likeComic, favouriteComic } from '../pica/endpoints';
 import { thumbUrl } from '../pica/types';
 import type { SourceDetail } from '../sources/types';
@@ -56,6 +57,7 @@ export function PicaDetailScreen() {
   const [commText, setCommText] = useState('');
   const [sending, setSending] = useState(false);
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
+  const addLocal = useFavoritesStore((s) => s.addLocal);
 
   useEffect(() => {
     picaSource.fetchDetail(comicId).then((d) => {
@@ -160,10 +162,24 @@ export function PicaDetailScreen() {
         {/* 操作 */}
         <View style={styles.actionRow}>
           <Pressable style={styles.actionBtn} onPress={async () => {
-            try { await likeComic(comicId); Alert.alert('', '已点赞'); } catch { Alert.alert('', '点赞失败'); }
+            try {
+              await likeComic(comicId);
+              Alert.alert('', '已点赞');
+            } catch { Alert.alert('', '点赞失败'); }
           }}><MaterialIcons name="favorite-outline" size={18} color={C.primary} /><Text style={styles.actionText}>点赞</Text></Pressable>
           <Pressable style={styles.actionBtn} onPress={async () => {
-            try { await favouriteComic(comicId); Alert.alert('', '已收藏'); } catch { Alert.alert('', '收藏失败'); }
+            try {
+              await favouriteComic(comicId);
+              addLocal({
+                id: comicId, title: detail?.title || '', coverUrl: (detail as any)?.coverUrl || '', author: detail?.author || '', addedAt: Date.now(),
+              });
+              Alert.alert('', '已收藏');
+            } catch {
+              addLocal({
+                id: comicId, title: detail?.title || '', coverUrl: (detail as any)?.coverUrl || '', author: detail?.author || '', addedAt: Date.now(),
+              });
+              Alert.alert('', '收藏失败，已保存到本地');
+            }
           }}><MaterialIcons name="bookmark-outline" size={18} color={C.primary} /><Text style={styles.actionText}>收藏</Text></Pressable>
           <Pressable style={styles.actionBtn} onPress={handleDownload}><MaterialIcons name="download" size={18} color={C.primary} /><Text style={styles.actionText}>下载</Text></Pressable>
         </View>
