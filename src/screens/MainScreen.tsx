@@ -235,7 +235,7 @@ export function MainScreen() {
                   keyExtractor={(h) => h.id}
                   renderItem={({ item: h }) => (
                     <Pressable
-                      onPress={() => nav.navigate('ComicDetail', { albumId: h.id })}
+                      onPress={() => nav.navigate('Reader', { albumId: h.id, chapterId: h.chapterId, chapterTitle: h.chapterTitle, initialPage: h.page || 0 })}
                       style={{ marginRight: 10, width: 120 }}
                     >
                       <Image

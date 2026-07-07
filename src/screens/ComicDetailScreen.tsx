@@ -25,6 +25,7 @@ import { useAuthStore } from '../store/useAuth';
 import { chunkArray } from '../utils/helpers';
 import * as FileSystem from 'expo-file-system';
 import { downloadManager } from '../utils/DownloadManager';
+import { useSettingsStore } from '../store/useSettings';
 // DebugOverlay moved to App.tsx
 import type { AlbumDetail, Episode, CommentItem as ApiComment } from '../api/types';
 

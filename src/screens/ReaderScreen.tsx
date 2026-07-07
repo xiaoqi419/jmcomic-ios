@@ -9,6 +9,7 @@ import {
 import { SafeImage } from '../components/SafeImage';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Linking } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useReaderStore } from '../store/useReader';
@@ -170,7 +171,7 @@ export function ReaderScreen() {
     if (!url) return;
     try {
       const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') { Alert.alert('', '需要相册权限才能保存'); return; }
+      if (status !== 'granted') { Alert.alert('权限', '需要相册权限才能保存', [{ text: '取消', style: 'cancel' }, { text: '去设置', onPress: () => Linking.openSettings() }]); return; }
       const response = await fetch(url);
       await MediaLibrary.saveToLibraryAsync(URL.createObjectURL(await response.blob()));
       Alert.alert('', '已保存到相册');
@@ -247,9 +248,20 @@ export function ReaderScreen() {
               ? { showsVerticalScrollIndicator: false, pagingEnabled: false, horizontal: false }
               : { horizontal: true, pagingEnabled: true, showsHorizontalScrollIndicator: false }
             )}
+            onScrollBeginDrag={() => { if (showUI) { topAnim.setValue(0); bottomAnim.setValue(0); setShowUI(false); } }}
             onMomentumScrollEnd={(e) => {
-              const offset = isVertical ? e.nativeEvent.contentOffset.y : e.nativeEvent.contentOffset.x;
-              setCurrentIdx(Math.min(Math.round(offset / (isVertical ? H : W)), pages.length - 1));
+              if (isVertical) {
+                // 垂直模式：按累计高度估算页面索引
+                const y = e.nativeEvent.contentOffset.y;
+                let acc = 0;
+                for (let i = 0; i < pages.length; i++) {
+                  acc += imageHeights[i] || W * 1.4;
+                  if (y < acc) { setCurrentIdx(i); break; }
+                }
+              } else {
+                const idx = Math.round(e.nativeEvent.contentOffset.x / W);
+                setCurrentIdx(Math.min(idx, pages.length - 1));
+              }
             }}
             getItemLayout={(_, index) => ({
               length: isVertical ? (imageHeights[index] || W * 1.4) : W,
@@ -372,7 +384,7 @@ export function ReaderScreen() {
                 <TouchableOpacity onPress={() => setShowChapterModal(true)}><MaterialIcons name="format-list-numbered" size={22} color="#fff" /></TouchableOpacity>
               )}
               <TouchableOpacity onPress={() => setAutoPageRunning(!autoPageRunning)}>
-                <MaterialIcons name={autoPageRunning ? 'timer' : 'timer-outlined'} size={22} color={autoPageRunning ? '#E85D3A' : '#fff'} />
+                <MaterialIcons name={autoPageRunning ? 'timer' : 'timer-off'} size={22} color={autoPageRunning ? '#E85D3A' : '#fff'} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => { store.setVertical(!isVertical); setReadingMode(!isVertical ? 'scroll' : 'page'); }}>
                 <MaterialIcons name={isVertical ? 'view-stream' : 'view-carousel'} size={22} color="#fff" />

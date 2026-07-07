@@ -125,7 +125,7 @@ function Page1({ currentReadingMode, onSelect }: { currentReadingMode: string; o
         <TouchableOpacity onPress={() => onSelect(currentReadingMode as 'scroll' | 'page')} style={{ marginRight: 8 }}>
           <MaterialIcons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
-        <Text style={s.title}>阅读模式</Text>
+        <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>阅读模式</Text>
       </View>
       {options.map((opt) => (
         <TouchableOpacity key={opt.value} style={s.row} onPress={() => onSelect(opt.value)}>
