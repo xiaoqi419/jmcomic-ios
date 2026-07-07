@@ -14,6 +14,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useReaderStore } from '../store/useReader';
 import { useHistoryStore } from '../store/useHistory';
 import { useSettingsStore } from '../store/useSettings';
+import { usePicaStore } from '../store/usePica';
 import { fetchComicRead, fetchAlbumDetail } from '../api/endpoints';
 import { picaSource } from '../sources/pica';
 import * as Brightness from 'expo-brightness';
@@ -55,6 +56,12 @@ export function ReaderScreen() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [showChapterModal, setShowChapterModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showSourceSelect, setShowSourceSelect] = useState(false);
+  const shunts = useSettingsStore((s) => s.shunts);
+  const selectShunt = useSettingsStore((s) => s.selectShunt);
+  const selectedShuntKey = useSettingsStore((s) => s.selectedShuntKey);
+  const picaApiSource = usePicaStore((s) => s.apiSource);
+  const setPicaApiSource = usePicaStore((s) => s.setApiSource);
   const [brightness, setBrightnessVal] = useState(1);
   const flatRef = useRef<FlatList>(null);
   const [imageHeights, setImageHeights] = useState<Record<number, number>>({});
@@ -264,6 +271,9 @@ export function ReaderScreen() {
           <View style={{ flex: 1, alignItems: 'center', height: 50, justifyContent: 'center' }}>
             <Text style={{ color: '#fff', fontSize: 20, fontWeight: '600' }} numberOfLines={1}>{chapterTitle || '阅读'}</Text>
           </View>
+          <TouchableOpacity onPress={() => setShowSourceSelect(true)} style={{ padding: 8 }}>
+            <MaterialIcons name="dns" size={22} color="#fff" />
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => setShowSettings(true)} style={{ padding: 8 }}>
             <MaterialIcons name="settings" size={25} color="#fff" />
           </TouchableOpacity>
@@ -401,6 +411,33 @@ export function ReaderScreen() {
           </View>
         </Pressable>
       </Modal>
+
+      {/* 源选择弹窗 */}
+      <Modal visible={showSourceSelect} transparent animationType="fade" onRequestClose={() => setShowSourceSelect(false)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }} onPress={() => setShowSourceSelect(false)}>
+          <View style={{ backgroundColor: '#1C1C24', borderRadius: 16, padding: 20, width: W * 0.75 }}>
+            <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 16, textAlign: 'center' }}>
+              {source === 'jm' ? '图片源' : 'Pica API 源'}
+            </Text>
+            {source === 'jm'
+              ? shunts.map((shunt) => (
+                <TouchableOpacity key={shunt.key} onPress={() => { selectShunt(shunt.key); setShowSourceSelect(false); loadImages(); }} style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' }}>
+                  <Text style={{ color: selectedShuntKey === shunt.key ? '#E85D3A' : '#fff', fontWeight: selectedShuntKey === shunt.key ? '700' : '400', fontSize: 15 }}>{shunt.title}</Text>
+                </TouchableOpacity>
+              ))
+              : [
+                { key: 'go2778' as const, label: '中转 (go2778)' },
+                { key: 'picacomic' as const, label: '直连 (picacomic)' },
+              ].map((opt) => (
+                <TouchableOpacity key={opt.key} onPress={() => { setPicaApiSource(opt.key); setShowSourceSelect(false); loadImages(); }} style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' }}>
+                  <Text style={{ color: picaApiSource === opt.key ? '#E85D3A' : '#fff', fontWeight: picaApiSource === opt.key ? '700' : '400', fontSize: 15 }}>{opt.label}</Text>
+                </TouchableOpacity>
+              ))
+            }
+          </View>
+        </Pressable>
+      </Modal>
+
     </View>
   );
 }
