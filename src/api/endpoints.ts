@@ -36,7 +36,10 @@ async function cachedGet<T>(path: string, q: Record<string, string | number> | u
 async function encryptedPost<T>(path: string, f?: Record<string, string | number>): Promise<T> {
   const ts = nowTs();
   const data = await apiClient.post<string>(path, f, ts);
-  return decryptAndParse<T>(ts, data);
+  if (typeof data === 'string' && data.length > 20) {
+    try { return decryptAndParse<T>(ts, data); } catch {}
+  }
+  try { return JSON.parse(data as string) as T; } catch { return data as T; }
 }
 
 // 路径对照 APK 源码: {token:"185Hcomic3PAPP7R", API_APP_SETTING:"setting", API_COMIC_PROMOTE:"promote", ...}
