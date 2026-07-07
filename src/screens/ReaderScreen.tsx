@@ -175,10 +175,15 @@ export function ReaderScreen() {
             keyExtractor={(_, i) => String(i)}
             renderItem={({ item }) => (
               <View style={{ width: W, height: H }}>
-                <SafeImage imageUrl={item} epsId={store.chapterId || chapterId}
+                <ZoomableImage uri={item} epsId={store.chapterId || chapterId}
                   pictureName={item.split('/').pop()?.split('.')[0] || ''}
-                  containerWidth={W} style={{ width: W, height: H }}
-                />
+                  containerWidth={W}
+                >
+                  <SafeImage imageUrl={item} epsId={store.chapterId || chapterId}
+                    pictureName={item.split('/').pop()?.split('.')[0] || ''}
+                    containerWidth={W} style={{ width: W, height: H }}
+                  />
+                </ZoomableImage>
               </View>
             )}
             showsHorizontalScrollIndicator={false}
@@ -188,7 +193,8 @@ export function ReaderScreen() {
         </Pressable>
       )}
 
-      {/* 页面信息浮层（PicaComic 左下角 E1:P3/20 描边文字） */}
+      {/* 深色模式遮罩 */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.2)' }} pointerEvents="none" />
       {showUI && (
         <View style={s.pageInfo}>
           <Text style={s.pageInfoText}>

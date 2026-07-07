@@ -16,6 +16,7 @@ import { useSettingsStore } from '../store/useSettings';
 import * as MediaLibrary from 'expo-media-library';
 import * as Brightness from 'expo-brightness';
 import * as FileSystem from 'expo-file-system';
+import { ZoomableImage } from '../components/ZoomableImage';
 import { ReaderSettingsModal } from '../components/ReaderSettingsModal';
 
 const { width: W } = Dimensions.get('window');
@@ -103,21 +104,23 @@ export function PicaReaderScreen() {
 
   const renderItem = ({ item, index }: { item: { url: string }; index: number }) => (
     <View style={{ width: W }}>
-      <Image
-        source={{ uri: item.url }}
-        style={{ width: W, height: isVertical ? (imageHeights[index] || W * 1.4) : H }}
-        contentFit="contain"
-        onLoad={(e) => {
-          const src = (e as any).source || {};
-          const h = src.height || H;
-          const w = src.width || W;
-          const ratio = Math.min(h / w, 3);
-          const calcH = W * ratio;
-          if (calcH > H * 0.3) {
-            setImageHeights((prev) => ({ ...prev, [index]: calcH }));
-          }
-        }}
-      />
+      <ZoomableImage uri={item.url}>
+        <Image
+          source={{ uri: item.url }}
+          style={{ width: W, height: isVertical ? (imageHeights[index] || W * 1.4) : H }}
+          contentFit="contain"
+          onLoad={(e) => {
+            const src = (e as any).source || {};
+            const h = src.height || H;
+            const w = src.width || W;
+            const ratio = Math.min(h / w, 3);
+            const calcH = W * ratio;
+            if (calcH > H * 0.3) {
+              setImageHeights((prev) => ({ ...prev, [index]: calcH }));
+            }
+          }}
+        />
+      </ZoomableImage>
     </View>
   );
 
