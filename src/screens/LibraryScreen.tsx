@@ -14,7 +14,6 @@ import { useTranslation } from 'react-i18next';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLegacyColors, LegacyColors, Radius, Spacing, FontSize, Shadow } from '../theme';
 import { useAuthStore } from '../store/useAuth';
-import { usePicaStore } from '../store/usePica';
 import { useFavoritesStore } from '../store/useFavorites';
 import { fetchFavorites, getCoverUrl as getCover, createFolder as apiCreateFolder, deleteFolder as apiDeleteFolder, renameFolder as apiRenameFolder } from '../api/endpoints';
 import { myFavourites, myLikes } from '../pica/endpoints';
@@ -34,9 +33,7 @@ export function LibraryScreen() {
   const { t } = useTranslation();
   const C = useLegacyColors();
   const styles = useMemo(() => getStyles(C), [C]);
-  const { loggedIn: jmLoggedIn } = useAuthStore();
-  const { loggedIn: picaLoggedIn } = usePicaStore();
-  const loggedIn = source === 'pica' ? picaLoggedIn : jmLoggedIn;
+  const { loggedIn } = useAuthStore();
   const { local, loadLocal, folders, createFolder, renameFolder, deleteFolder, loadFolders } = useFavoritesStore();
   const [items, setItems] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
@@ -53,28 +50,30 @@ export function LibraryScreen() {
     : (type === 'like' ? '我的喜欢' : '我的收藏');
 
   const loadData = useCallback(async (silent = false) => {
-    if (source === 'jm') loadLocal();
+    // Pica 源：直接调 API
+    if (source === 'pica') {
+      try {
+        setLoading(true);
+        const d = type === 'like' ? await myLikes() : await myFavourites();
+        const data = (d as any).comics || d;
+        setItems(data.docs || []);
+        setTotal(data.total || data.docs?.length || 0);
+      } catch {}
+      if (!silent) setLoading(false);
+      return;
+    }
 
-    // 合并本地 + 云端数据
+    // JM 源：本地 + 云端合并
+    loadLocal();
     let cloudItems: any[] = [];
-    let localItems = source === 'jm' ? local.map((f: any) => ({ ...f, _source: 'local' as const })) : [];
+    let localItems = local.map((f: any) => ({ ...f, _source: 'local' as const }));
 
     if (loggedIn) {
       try {
-        if (source === 'pica') {
-          const d = type === 'like' ? await myLikes() : await myFavourites();
-          const data = (d as any).comics || d;
-          cloudItems = (data.docs || []).map((c: any) => ({
-            id: c._id, name: c.title, author: c.author || c._author?.name || '', image: c.thumb?.fileServer ? `${c.thumb.fileServer}/static/${c.thumb.path}` : '',
-            _source: 'cloud' as const,
-          }));
-        } else {
-          const o = type === 'like' ? 'ml' : 'mr';
-          const folderId = selectedFolder || '0';
-          const d = await fetchFavorites({ page: 1, o, folder_id: folderId });
-          cloudItems = (d.list || []).map((f: any) => ({ ...f, _source: 'cloud' as const }));
-        }
-        // 去重：云端已存在的从本地移除
+        const o = type === 'like' ? 'ml' : 'mr';
+        const folderId = selectedFolder || '0';
+        const d = await fetchFavorites({ page: 1, o, folder_id: folderId });
+        cloudItems = (d.list || []).map((f: any) => ({ ...f, _source: 'cloud' as const }));
         const cloudIds = new Set(cloudItems.map((c: any) => c.id));
         localItems = localItems.filter((l: any) => !cloudIds.has(l.id));
       } catch {}
