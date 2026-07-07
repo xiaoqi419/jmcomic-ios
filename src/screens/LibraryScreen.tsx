@@ -34,7 +34,7 @@ export function LibraryScreen() {
   const C = useLegacyColors();
   const styles = useMemo(() => getStyles(C), [C]);
   const { loggedIn } = useAuthStore();
-  const { local, loadLocal, folders: storeFolders, createFolder, renameFolder, deleteFolder, loadFolders } = useFavoritesStore();
+  const { local, loadLocal, folders, createFolder, renameFolder, deleteFolder, loadFolders } = useFavoritesStore();
   const [items, setItems] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
