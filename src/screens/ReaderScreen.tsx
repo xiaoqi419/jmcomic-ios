@@ -63,6 +63,8 @@ export function ReaderScreen() {
   const [showChapterModal, setShowChapterModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showSourceSelect, setShowSourceSelect] = useState(false);
+  const [autoPageRunning, setAutoPageRunning] = useState(false);
+  const autoIntervalRef = useRef(3);
   const shunts = useSettingsStore((s) => s.shunts);
   const selectShunt = useSettingsStore((s) => s.selectShunt);
   const selectedShuntKey = useSettingsStore((s) => s.selectedShuntKey);
