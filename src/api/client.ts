@@ -125,6 +125,13 @@ export class ApiClient {
       clearTimeout(tid);
       const text = await resp.text();
 
+      // 日志
+      const logMsg = `${method} ${path}`;
+      import('../utils/HaKaLogger').then(m => {
+        if (resp.ok) m.logger.ok(logMsg + ` 200`);
+        else m.logger.warn(logMsg + ` ${resp.status}`);
+      }).catch(() => {});
+
       if (text.includes('Just a moment')) throw new ApiError('被拦截', 403, 'cf');
 
       if (!resp.ok) {
@@ -137,10 +144,13 @@ export class ApiClient {
       return text as T;
     } catch (e: any) {
       clearTimeout(tid);
+      try { const HaKaLogger = require("../utils/HaKaLogger"); if (HaKaLogger.logger) HaKaLogger.logger.error(method + " " + path, e); } catch {}
       if (retry < 3 && this.switchDomain()) {
         return this.request<T>(path, config, retry + 1);
       }
       throw e;
+    } finally {
+      // 错误日志
     }
   }
 

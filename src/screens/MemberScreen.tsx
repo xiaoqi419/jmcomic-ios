@@ -387,6 +387,11 @@ export function MemberScreen() {
               <Text style={[styles.toggleText, showDebugLog && styles.toggleTextActive]}>{showDebugLog ? '开启' : '关闭'}</Text>
             </Pressable>
           } />
+          <Pressable onPress={() => nav.navigate('Logs')}>
+            <Row label="日志查看" right={
+              <MaterialIcons name="chevron-right" size={20} color={C.textTertiary} />
+            } />
+          </Pressable>
           <Pressable onPress={() => nav.navigate('DownloadList')}>
             <Row label="下载管理" right={
               <MaterialIcons name="chevron-right" size={20} color={C.textTertiary} />

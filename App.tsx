@@ -24,6 +24,7 @@ import { DebugOverlay } from './src/components/DebugOverlay';
 import { loadSelectedShunt } from './src/utils/SourceSelector';
 import { downloadManager } from './src/utils/DownloadManager';
 import { useHistoryStore } from './src/store/useHistory';
+import { logger } from './src/utils/HaKaLogger';
 import type { ThemeMode } from './src/theme';
 
 // Screens
@@ -47,6 +48,7 @@ import { PicaCreatorResultScreen } from './src/screens/PicaCreatorResultScreen';
 import { AboutScreen } from './src/screens/AboutScreen';
 import { ImageSearchScreen } from './src/screens/ImageSearchScreen';
 import { DownloadListScreen } from './src/screens/DownloadListScreen';
+import { LogsScreen } from './src/screens/LogsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -178,6 +180,8 @@ function AppInner() {
           options={{ headerShown: false }} />
         <Stack.Screen name="DownloadList" component={DownloadListScreen}
           options={{ headerShown: false }} />
+        <Stack.Screen name="Logs" component={LogsScreen}
+          options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -190,6 +194,8 @@ export default function App() {
     const origHandler = (ErrorUtils as any).getGlobalHandler?.();
     (ErrorUtils as any).setGlobalHandler?.((e: any, isFatal?: boolean) => {
       console.error('[GlobalError]', e?.message || e, 'isFatal:', isFatal);
+      logger.fatal('unhandled', e);
+      logger.init();
       // 仍然保留原始处理，避免完全静默
       if (origHandler) origHandler(e, isFatal);
     });
@@ -218,6 +224,7 @@ export default function App() {
         }
       } catch {}
 
+      try { logger.init(); } catch {}
       try { downloadManager.init(); } catch {}
       try { await useHistoryStore.getState().load(); } catch {}
 
