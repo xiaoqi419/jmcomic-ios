@@ -12,6 +12,7 @@ import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { picaSource } from '../sources/pica';
 import { useReaderStore } from '../store/useReader';
+import { useSettingsStore } from '../store/useSettings';
 import * as MediaLibrary from 'expo-media-library';
 import * as Brightness from 'expo-brightness';
 import * as FileSystem from 'expo-file-system';
@@ -27,6 +28,8 @@ export function PicaReaderScreen() {
   const { comicId, chapterOrder, chapterId, title } = route.params || {};
   const isVertical = useReaderStore((s) => s.isVertical);
   const setVertical = useReaderStore((s) => s.setVertical);
+  const readingMode = useSettingsStore((s) => s.readingMode);
+  const setReadingMode = useSettingsStore((s) => s.setReadingMode);
 
   const [loading, setLoading] = useState(true);
   const [pages, setPages] = useState<{ url: string; index: number }[]>([]);
@@ -51,6 +54,7 @@ export function PicaReaderScreen() {
     Brightness.getBrightnessAsync().catch(() => {});
     topAnim.setValue(1);
     bottomAnim.setValue(1);
+    setVertical(readingMode === 'scroll');
     loadPages();
   }, []);
 
@@ -197,7 +201,11 @@ export function PicaReaderScreen() {
             </View>
             <View style={{ flexDirection: 'row', gap: 16 }}>
               <TouchableOpacity onPress={handleSaveImage}><MaterialIcons name="save-alt" size={22} color="#fff" /></TouchableOpacity>
-              <TouchableOpacity onPress={() => setVertical(!isVertical)}>
+              <TouchableOpacity onPress={() => {
+                const next = !isVertical;
+                setVertical(next);
+                setReadingMode(next ? 'scroll' : 'page');
+              }}>
                 <MaterialIcons name={isVertical ? 'view-carousel' : 'view-stream'} size={22} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity onPress={loadPages}><MaterialIcons name="refresh" size={22} color="#fff" /></TouchableOpacity>

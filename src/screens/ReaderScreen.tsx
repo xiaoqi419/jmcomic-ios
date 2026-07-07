@@ -41,6 +41,8 @@ export function ReaderScreen() {
   const imageLayout = useSettingsStore((s) => s.imageLayout);
   const setImageLayout = useSettingsStore((s) => s.setImageLayout);
   const downloadToGallery = useSettingsStore((s) => s.downloadToGallery);
+  const readingMode = useSettingsStore((s) => s.readingMode);
+  const setReadingMode = useSettingsStore((s) => s.setReadingMode);
 
   const [loading, setLoading] = useState(false);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -64,6 +66,11 @@ export function ReaderScreen() {
     ]).start();
     setShowUI(!showUI);
   }, [showUI, topAnim, bottomAnim]);
+
+  useEffect(() => {
+    // 同步设置到阅读器
+    setVertical(readingMode === 'scroll');
+  }, []);
 
   useEffect(() => {
     Brightness.getBrightnessAsync().then(setBrightnessVal).catch(() => {});
@@ -289,7 +296,11 @@ export function ReaderScreen() {
               <TouchableOpacity onPress={handleSaveImage}><MaterialIcons name="save-alt" size={22} color="#fff" /></TouchableOpacity>
               <TouchableOpacity onPress={() => setShowChapterModal(true)}><MaterialIcons name="format-list-numbered" size={22} color="#fff" /></TouchableOpacity>
               <TouchableOpacity onPress={() => handleDownload(false)}><MaterialIcons name="download" size={22} color="#fff" /></TouchableOpacity>
-              <TouchableOpacity onPress={() => setVertical(!isVertical)}>
+              <TouchableOpacity onPress={() => {
+                const next = !isVertical;
+                setVertical(next);
+                setReadingMode(next ? 'scroll' : 'page');
+              }}>
                 <MaterialIcons name={isVertical ? 'view-carousel' : 'view-stream'} size={22} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity onPress={handleSwitchSource}><MaterialIcons name="swap-horiz" size={22} color="#fff" /></TouchableOpacity>
@@ -308,7 +319,11 @@ export function ReaderScreen() {
               <Text style={{ color: C.textPrimary, flex: 1, marginLeft: 12 }}>图片缩放</Text>
               <Text style={{ color: C.textSecondary }}>{imageLayout === 'contain' ? '适应' : imageLayout === 'fitWidth' ? '适配宽度' : '适配高度'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.settingRow} onPress={() => setVertical(!isVertical)}>
+            <TouchableOpacity style={styles.settingRow} onPress={() => {
+              const next = !isVertical;
+              setVertical(next);
+              setReadingMode(next ? 'scroll' : 'page');
+            }}>
               <MaterialIcons name="swap-vert" size={20} color={C.textPrimary} />
               <Text style={{ color: C.textPrimary, flex: 1, marginLeft: 12 }}>滚动模式</Text>
               <Text style={{ color: C.textSecondary }}>{isVertical ? '竖滑' : '分页'}</Text>
