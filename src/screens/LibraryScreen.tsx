@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -82,10 +82,12 @@ export function LibraryScreen() {
     if (!silent) setLoading(false);
   }, [loggedIn, source, type, loadLocal, selectedFolder]);
 
-  useEffect(() => {
-    setLoading(true);
-    loadData();
-  }, [loggedIn, source, type, selectedFolder]);
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      loadData();
+    }, [loggedIn, source, type, selectedFolder, loadData])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
