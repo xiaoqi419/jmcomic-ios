@@ -211,7 +211,7 @@ export function ComicDetailScreen() {
   const handleToggleFav = async () => {
     const favoriteMode = useSettingsStore.getState().favoriteMode;
     if (fav) {
-      if (loggedIn) await toggle(albumId);
+      if (loggedIn) await toggle(albumId).catch(() => {});
       removeLocal(albumId);
     } else if (!loggedIn && favoriteMode === 'cloud') {
       Alert.alert('提示', '请先登录后再收藏', [
@@ -220,15 +220,15 @@ export function ComicDetailScreen() {
       ]);
     } else {
       if (loggedIn) {
-        try {
-          if (albumId) await toggle(albumId);
-        } catch {}
+        const ok = await toggle(albumId).catch(() => false);
+        if (ok === false) {
+          Alert.alert('提示', '云端收藏失败，已保存到本地');
+        }
       }
       addLocal({
         id: albumId, title: detail?.name || '', coverUrl: getCoverUrl(albumId),
         author: Array.isArray(detail?.author) ? detail.author.join(', ') : String(detail?.author || ''), addedAt: Date.now(),
       });
-      Alert.alert('', '已收藏');
     }
   };
 
