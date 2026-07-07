@@ -219,7 +219,12 @@ export function ComicDetailScreen() {
         { text: '去登录', onPress: () => nav.navigate('Member') },
       ]);
     } else {
-      if (loggedIn) await toggle(albumId);
+      if (loggedIn) {
+        const ok = await toggle(albumId);
+        if (!ok) {
+          Alert.alert('提示', '云端收藏失败，已添加到本地');
+        }
+      }
       addLocal({
         id: albumId, title: detail?.name || '', coverUrl: getCoverUrl(albumId),
         author: Array.isArray(detail?.author) ? detail.author.join(', ') : String(detail?.author || ''), addedAt: Date.now(),

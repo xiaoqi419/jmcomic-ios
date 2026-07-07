@@ -37,13 +37,13 @@ export function ZoomableImage({ children }: Props) {
         curX.current = 0;
         curY.current = 0;
         Animated.parallel([
-          Animated.timing(scale, { toValue: 1, duration: 200, useNativeDriver: true }),
-          Animated.timing(translateX, { toValue: 0, duration: 200, useNativeDriver: true }),
-          Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 1, duration: 200, useNativeDriver: false }),
+          Animated.timing(translateX, { toValue: 0, duration: 200, useNativeDriver: false }),
+          Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: false }),
         ]).start();
       } else {
         curScale.current = 1.75;
-        Animated.timing(scale, { toValue: 1.75, duration: 200, useNativeDriver: true }).start();
+        Animated.timing(scale, { toValue: 1.75, duration: 200, useNativeDriver: false }).start();
       }
     });
 
