@@ -37,6 +37,8 @@ export function ReaderScreen() {
   const imageLayout = useSettingsStore((s) => s.imageLayout);
   const setImageLayout = useSettingsStore((s) => s.setImageLayout);
   const [showUI, setShowUI] = useState(true);
+  const readingMode = useSettingsStore((s) => s.readingMode);
+  const setReadingMode = useSettingsStore((s) => s.setReadingMode);
   const [loading, setLoading] = useState(false);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [showChapterModal, setShowChapterModal] = useState(false);
@@ -50,6 +52,11 @@ export function ReaderScreen() {
 
   useEffect(() => {
     Brightness.getBrightnessAsync().then(setBrightnessVal).catch(() => {});
+  }, []);
+
+  // 从设置同步阅读模式
+  useEffect(() => {
+    setVertical(readingMode === 'scroll');
   }, []);
 
   // 加载章节列表
