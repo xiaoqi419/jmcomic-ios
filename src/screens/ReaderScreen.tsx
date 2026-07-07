@@ -18,6 +18,7 @@ import { useSettingsStore } from '../store/useSettings';
 import { fetchComicRead, fetchAlbumDetail, searchComics } from '../api/endpoints';
 import { extractFilenameWithoutExt } from '../utils/scramble';
 import { useLegacyColors, FontSize } from '../theme';
+import { SimpleErrorBoundary as ErrorBoundary } from '../components/SimpleErrorBoundary';
 import * as Brightness from 'expo-brightness';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
@@ -188,6 +189,7 @@ export function ReaderScreen() {
   const currentEpIdx = episodes.findIndex((e) => e.id === chapterId);
 
   return (
+    <ErrorBoundary title="阅读器">
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <StatusBar hidden={!showUI} />
 
@@ -352,8 +354,9 @@ export function ReaderScreen() {
         </Pressable>
       </Modal>
     </View>
+    </View>
+    </ErrorBoundary>
   );
-}
 
 const styles = StyleSheet.create({
   topBar: {

@@ -159,7 +159,7 @@ export function PicaReaderScreen() {
         position: 'absolute', top: 0, left: 0, right: 0,
         backgroundColor: 'rgba(0,0,0,0.8)',
         borderBottomLeftRadius: 16, borderBottomRightRadius: 16,
-      }, { transform: [{ translateY: topAnim.interpolate({ inputRange: [0, 1], outputRange: [-120, 0] }) }] }]}>
+      }, { transform: [{ translateY: topAnim.interpolate({ inputRange: [0, 1], outputRange: [-200, 0] }) }] }]}>
         <SafeAreaView edges={['top']} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8 }}>
           <TouchableOpacity onPress={() => nav.goBack()} style={{ padding: 8 }}>
             <MaterialIcons name="arrow-back" size={22} color="#fff" />
