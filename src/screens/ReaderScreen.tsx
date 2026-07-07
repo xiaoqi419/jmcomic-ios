@@ -312,20 +312,28 @@ export function ReaderScreen() {
                     });
                     Alert.alert('', '已添加下载任务');
                   }},
-                  ...(source === 'jm' ? [{
+                  ...(episodes.length > 0 ? [{
                     text: '全部话' as const, style: 'destructive' as const, onPress: async () => {
-                      if (!episodes.length) { Alert.alert('', '没有章节数据'); return; }
                       await downloadManager.addDownload({
                         comicId: albumId, title: chapterTitle || '全部', coverUrl: '', chapterCount: episodes.length,
                         downloadFn: async (onProgress) => {
                           for (let ci = 0; ci < episodes.length; ci++) {
                             try {
-                              const data = await fetchComicRead(albumId, episodes[ci].id);
-                              const urls = (data.images || []).map((i: any) => i.image).filter(Boolean);
-                              for (let i = 0; i < urls.length; i++) {
-                                const local = FileSystem.documentDirectory + 'downloads/' + albumId + '/' + ci + '_' + i + '.jpg';
-                                await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'downloads/' + albumId, { intermediates: true }).catch(() => {});
-                                await FileSystem.downloadAsync(urls[i], local);
+                              if (source === 'jm') {
+                                const data = await fetchComicRead(albumId, episodes[ci].id);
+                                const urls = (data.images || []).map((i: any) => i.image).filter(Boolean);
+                                for (let i = 0; i < urls.length; i++) {
+                                  const local = FileSystem.documentDirectory + 'downloads/' + albumId + '/' + ci + '_' + i + '.jpg';
+                                  await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'downloads/' + albumId, { intermediates: true }).catch(() => {});
+                                  await FileSystem.downloadAsync(urls[i], local);
+                                }
+                              } else {
+                                const imgs = await picaSource.fetchImages(albumId, episodes[ci].order ?? ci);
+                                for (let i = 0; i < (imgs || []).length; i++) {
+                                  const local = FileSystem.documentDirectory + 'downloads/' + albumId + '/' + ci + '_' + i + '.jpg';
+                                  await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'downloads/' + albumId, { intermediates: true }).catch(() => {});
+                                  await FileSystem.downloadAsync((imgs || [])[i]?.url || (imgs || [])[i], local);
+                                }
                               }
                             } catch {}
                             onProgress(ci + 1, episodes.length);
