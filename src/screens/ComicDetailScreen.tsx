@@ -220,10 +220,9 @@ export function ComicDetailScreen() {
       ]);
     } else {
       if (loggedIn) {
-        const ok = await toggle(albumId);
-        if (!ok) {
-          Alert.alert('提示', '云端收藏失败，已添加到本地');
-        }
+        try {
+          if (albumId) await toggle(albumId);
+        } catch {}
       }
       addLocal({
         id: albumId, title: detail?.name || '', coverUrl: getCoverUrl(albumId),
