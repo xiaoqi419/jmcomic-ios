@@ -367,7 +367,6 @@ export function ReaderScreen() {
         </Pressable>
       </Modal>
     </View>
-    </View>
   );
 
 const styles = StyleSheet.create({
