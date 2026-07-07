@@ -61,6 +61,21 @@ export function ReaderScreen() {
   const bottomAnim = useRef(new Animated.Value(0)).current;
   const [showUI, setShowUI] = useState(true);
 
+  // 自动翻页
+  useEffect(() => {
+    if (!autoPageRunning) return;
+    const timer = setInterval(() => {
+      const next = currentIdx + 1;
+      if (next < pages.length) {
+        setCurrentIdx(next);
+        flatRef.current?.scrollToIndex({ index: next, animated: true });
+      } else {
+        setAutoPageRunning(false);
+      }
+    }, autoIntervalRef.current * 1000);
+    return () => clearInterval(timer);
+  }, [autoPageRunning, pages.length]);
+
   useEffect(() => {
     Brightness.getBrightnessAsync().then(setBrightnessVal).catch(() => {});
     topAnim.setValue(1);
@@ -328,6 +343,9 @@ export function ReaderScreen() {
               {source === 'jm' && episodes.length > 0 && (
                 <TouchableOpacity onPress={() => setShowChapterModal(true)}><MaterialIcons name="format-list-numbered" size={22} color="#fff" /></TouchableOpacity>
               )}
+              <TouchableOpacity onPress={() => setAutoPageRunning(!autoPageRunning)}>
+                <MaterialIcons name={autoPageRunning ? 'timer' : 'timer-outlined'} size={22} color={autoPageRunning ? '#E85D3A' : '#fff'} />
+              </TouchableOpacity>
               <TouchableOpacity onPress={() => { store.setVertical(!isVertical); setReadingMode(!isVertical ? 'scroll' : 'page'); }}>
                 <MaterialIcons name={isVertical ? 'view-stream' : 'view-carousel'} size={22} color="#fff" />
               </TouchableOpacity>
