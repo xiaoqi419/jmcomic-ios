@@ -44,7 +44,6 @@ import { RegisterScreen, ForgotPasswordScreen } from './src/screens/AuthScreens'
 import { PicaDetailScreen } from './src/screens/PicaDetailScreen';
 import { PicaCategoryResultScreen } from './src/screens/PicaCategoryResultScreen';
 import { PicaCreatorResultScreen } from './src/screens/PicaCreatorResultScreen';
-import { PicaReaderScreen } from './src/screens/PicaReaderScreen';
 import { AboutScreen } from './src/screens/AboutScreen';
 import { ImageSearchScreen } from './src/screens/ImageSearchScreen';
 import { DownloadListScreen } from './src/screens/DownloadListScreen';
@@ -154,7 +153,7 @@ function AppInner() {
           options={{ title: '' }} />
         <Stack.Screen name="PicaCategoryResult" component={PicaCategoryResultScreen}
           options={{ title: '分类结果' }} />
-        <Stack.Screen name="PicaReader" component={PicaReaderScreen}
+        <Stack.Screen name="PicaReader" component={ReaderScreen}
           options={{ headerShown: false }} />
         <Stack.Screen name="Blogs" component={BlogsScreen}
           options={{ headerShown: false }} />
