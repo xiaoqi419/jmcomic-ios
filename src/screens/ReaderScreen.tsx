@@ -86,6 +86,8 @@ export function ReaderScreen() {
   const isVertical = useReaderStore((s) => s.isVertical);
   const setReadingMode = useSettingsStore((s) => s.setReadingMode);
   const readingMode = useSettingsStore((s) => s.readingMode);
+  const tapRange = useSettingsStore((s) => s.tapRange);
+  const setTapRange = useSettingsStore((s) => s.setTapRange);
   const imageLayout = useSettingsStore((s) => s.imageLayout);
   const prefetchCount = useSettingsStore((s) => s.prefetchCount);
 
@@ -213,7 +215,7 @@ export function ReaderScreen() {
   const handleTap = useCallback((evt: any) => {
     const x = evt.nativeEvent.locationX;
     const y = evt.nativeEvent.locationY;
-    const range = 0.2;
+    const range = tapRange / 100;
     if (showUI && (y < 60 || y > H - 130)) { toggleUI(); return; }
     if (x < W * range && currentIdx > 0) {
       setCurrentIdx(currentIdx - 1);
@@ -417,6 +419,7 @@ export function ReaderScreen() {
         isVertical={isVertical} onSetVertical={(v) => store.setVertical(v)}
         readingMode={readingMode} onSetReadingMode={setReadingMode}
         autoInterval={autoInterval} onSetAutoInterval={(v) => { setAutoInterval(v); }}
+        tapRange={tapRange} onSetTapRange={setTapRange}
       />
 
       {/* 章节选择弹窗 — 仅 JM 源 */}

@@ -18,9 +18,11 @@ interface Props {
   onSetReadingMode: (m: 'scroll' | 'page') => void;
   autoInterval: number;
   onSetAutoInterval: (v: number) => void;
+  tapRange: number;
+  onSetTapRange: (v: number) => void;
 }
 
-export function ReaderSettingsModal({ visible, onClose, isVertical, onSetVertical, readingMode, onSetReadingMode, autoInterval, onSetAutoInterval }: Props) {
+export function ReaderSettingsModal({ visible, onClose, isVertical, onSetVertical, readingMode, onSetReadingMode, autoInterval, onSetAutoInterval, tapRange, onSetTapRange }: Props) {
   const [page, setPage] = useState(0); // 0-设置列表, 1-阅读模式选择
 
   return (
@@ -36,6 +38,7 @@ export function ReaderSettingsModal({ visible, onClose, isVertical, onSetVertica
               readingMode={readingMode} onSetReadingMode={onSetReadingMode}
               onOpenPage1={() => setPage(1)}
               autoInterval={autoInterval} onSetAutoInterval={onSetAutoInterval}
+              tapRange={tapRange} onSetTapRange={onSetTapRange}
             />
           ) : (
             <Page1
@@ -57,7 +60,8 @@ function Page0({ isVertical, onSetVertical, readingMode, onSetReadingMode, onOpe
   onSetAutoInterval: (v: number) => void;
 }) {
   const [tapFlip, setTapFlip] = useState(true);
-  const [tapRange, setTapRange] = useState(20);
+  const tapRange = autoInterval;
+  const setTapRange = onSetAutoInterval;
 
   return (
     <>
@@ -80,11 +84,11 @@ function Page0({ isVertical, onSetVertical, readingMode, onSetReadingMode, onOpe
         <View style={s.rowSub}>
           <Text style={s.rowSubLabel}>翻页识别范围 {tapRange}%</Text>
           <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-            <TouchableOpacity onPress={() => setTapRange(Math.max(5, tapRange - 5))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>{'−'}</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => onSetTapRange(Math.max(5, tapRange - 5))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>{'−'}</Text></TouchableOpacity>
             <View style={{ flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 3 }}>
               <View style={{ width: `${(tapRange / 40) * 100}%`, height: 6, backgroundColor: '#E85D3A', borderRadius: 3 }} />
             </View>
-            <TouchableOpacity onPress={() => setTapRange(Math.min(40, tapRange + 5))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>+</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => onSetTapRange(Math.min(40, tapRange + 5))}><Text style={{ color: '#E85D3A', fontSize: 18 }}>+</Text></TouchableOpacity>
           </View>
         </View>
       )}

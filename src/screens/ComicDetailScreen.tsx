@@ -130,8 +130,9 @@ export function ComicDetailScreen() {
       if (list.length === 0) { setHasMoreComments(false); setLoadingMoreComments(false); return; }
       // 去重：按 id 过滤已存在的评论
       setComments((prev) => {
-        const ids = new Set(prev.map((c) => c.id));
+        const ids = new Set(prev.map((c) => (c as any).id));
         const newItems = list.filter((c: any) => !ids.has(c.id));
+        if (newItems.length === 0) setHasMoreComments(false);
         return [...prev, ...newItems];
       });
       setCommentPage(np);

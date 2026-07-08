@@ -27,6 +27,7 @@ interface SettingsState {
   lockOrientation: 0 | 1 | 2;
   downloadToGallery: boolean;
   favoriteMode: 'cloud' | 'local';
+  tapRange: number;
   loaded: boolean;
 
   // 动态域名（从 /api/setting 获取）
@@ -50,6 +51,7 @@ interface SettingsState {
   setLockOrientation: (v: 0 | 1 | 2) => void;
   setDownloadToGallery: (v: boolean) => void;
   setFavoriteMode: (v: 'cloud' | 'local') => void;
+  setTapRange: (v: number) => void;
 
   /** 从 /api/setting 响应更新域名 */
   updateFromSetting: (data: SettingData) => void;
@@ -74,6 +76,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   lockOrientation: 0,
   downloadToGallery: true,
   favoriteMode: 'cloud',
+  tapRange: 5,
   loaded: false,
 
   mainWebHost: '',
@@ -93,6 +96,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setLockOrientation: (v) => { set({ lockOrientation: v }); get().save(); },
   setDownloadToGallery: (v) => { set({ downloadToGallery: v }); get().save(); },
   setFavoriteMode: (v) => { set({ favoriteMode: v }); get().save(); },
+  setTapRange: (v) => { set({ tapRange: v }); get().save(); },
 
   updateFromSetting: (data: SettingData) => {
     const shunts: Shunt[] = (data.app_shunts || []).map((s) => ({
