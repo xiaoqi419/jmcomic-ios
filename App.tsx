@@ -64,6 +64,13 @@ function ReaderScreenWrapper() {
   return <ErrorBoundary title="阅读器"><ReaderScreen /></ErrorBoundary>;
 }
 
+// 通用错误边界包裹
+function withErrorBoundary(Comp: React.ComponentType<any>, title: string) {
+  return function Wrapped() {
+    return <ErrorBoundary title={title}><Comp /></ErrorBoundary>;
+  };
+}
+
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
   const { colors } = useAppTheme();
   return (
@@ -96,15 +103,15 @@ function HomeTabs() {
         tabBarIconStyle: { marginTop: 4 },
       }}
     >
-      <Tab.Screen name="Home" component={MainScreen}
+            <Tab.Screen name="Home" component={withErrorBoundary(MainScreen, '首页')}
         options={{ tabBarLabel: t('nav.home'), tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} /> }} />
-      <Tab.Screen name="Categories" component={CategoriesScreen}
+      <Tab.Screen name="Categories" component={withErrorBoundary(CategoriesScreen, '分类')}
         options={{ tabBarLabel: t('nav.categories'), tabBarIcon: ({ focused }) => <TabIcon name="window" focused={focused} /> }} />
-      <Tab.Screen name="Search" component={SearchScreen}
+      <Tab.Screen name="Search" component={withErrorBoundary(SearchScreen, '搜索')}
         options={{ tabBarLabel: '搜索', tabBarIcon: ({ focused }) => <TabIcon name="search" focused={focused} /> }} />
-      <Tab.Screen name="Movies" component={MoviesScreen}
+            <Tab.Screen name="Movies" component={withErrorBoundary(MoviesScreen, '影视')}
         options={{ tabBarLabel: t('nav.movie'), tabBarIcon: ({ focused }) => <TabIcon name="video-library" focused={focused} /> }} />
-      <Tab.Screen name="Member" component={MemberScreen}
+            <Tab.Screen name="Member" component={withErrorBoundary(MemberScreen, '我的')}
         options={{ tabBarLabel: t('nav.member'), tabBarIcon: ({ focused }) => <TabIcon name="account-circle" focused={focused} /> }} />
     </Tab.Navigator>
   );
@@ -144,43 +151,44 @@ function AppInner() {
           headerBackTitle: '返回',
         }}
       >
-        <Stack.Screen name="Main" component={HomeTabs} options={{ headerShown: false }} />
-        <Stack.Screen name="Search" component={SearchScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Main" component={withErrorBoundary(HomeTabs, '首页')} options={{ headerShown: false }} />
+        <Stack.Screen name="Search" component={withErrorBoundary(SearchScreen, '搜索')}
+          options={{ headerShown: false }} />
         <Stack.Screen name="ComicDetail" component={ComicDetailWrapper}
           options={{ title: '详情', headerBackTitle: '返回' }} />
         <Stack.Screen name="Reader" component={ReaderScreenWrapper}
           options={{ headerShown: false, orientation: 'default' as const }} />
-        <Stack.Screen name="MoviePlayer" component={MoviePlayerScreen}
+        <Stack.Screen name="MoviePlayer" component={withErrorBoundary(MoviePlayerScreen, '播放器')}
           options={{ headerShown: false }} />
         <Stack.Screen name="PicaDetail" component={PicaDetailWrapper}
           options={{ title: '详情', headerBackTitle: '返回' }} />
-        <Stack.Screen name="PicaCreatorResult" component={PicaCreatorResultScreen}
+        <Stack.Screen name="PicaCreatorResult" component={withErrorBoundary(PicaCreatorResultScreen, '创作者')}
           options={{ title: '' }} />
-        <Stack.Screen name="PicaCategoryResult" component={PicaCategoryResultScreen}
+        <Stack.Screen name="PicaCategoryResult" component={withErrorBoundary(PicaCategoryResultScreen, '分类结果')}
           options={{ title: '分类结果' }} />
         <Stack.Screen name="PicaReader" component={ReaderScreenWrapper}
           options={{ headerShown: false }} />
-        <Stack.Screen name="Blogs" component={BlogsScreen}
+        <Stack.Screen name="Blogs" component={withErrorBoundary(BlogsScreen, '公告')}
           options={{ headerShown: false }} />
-        <Stack.Screen name="BlogDetail" component={BlogDetailScreen}
+        <Stack.Screen name="BlogDetail" component={withErrorBoundary(BlogDetailScreen, '公告详情')}
           options={{ headerShown: false }} />
-        <Stack.Screen name="Library" component={LibraryScreen}
+        <Stack.Screen name="Library" component={withErrorBoundary(LibraryScreen, '收藏')}
           options={{ headerShown: false }} />
-        <Stack.Screen name="WeekRank" component={WeekRankScreen}
+        <Stack.Screen name="WeekRank" component={withErrorBoundary(WeekRankScreen, '周榜')}
           options={{ headerShown: false }} />
-        <Stack.Screen name="ComicComment" component={ComicCommentScreen}
+        <Stack.Screen name="ComicComment" component={withErrorBoundary(ComicCommentScreen, '评论')}
           options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="Register" component={RegisterScreen}
+        <Stack.Screen name="Register" component={withErrorBoundary(RegisterScreen, '注册')}
           options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen}
+        <Stack.Screen name="ForgotPassword" component={withErrorBoundary(ForgotPasswordScreen, '忘记密码')}
           options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="ImageSearch" component={ImageSearchScreen}
+        <Stack.Screen name="ImageSearch" component={withErrorBoundary(ImageSearchScreen, '以图搜图')}
           options={{ title: '以图搜图', headerBackTitle: '返回' }} />
-        <Stack.Screen name="About" component={AboutScreen}
+        <Stack.Screen name="About" component={withErrorBoundary(AboutScreen, '关于')}
           options={{ headerShown: false }} />
-        <Stack.Screen name="DownloadList" component={DownloadListScreen}
+        <Stack.Screen name="DownloadList" component={withErrorBoundary(DownloadListScreen, '下载')}
           options={{ headerShown: false }} />
-        <Stack.Screen name="Logs" component={LogsScreen}
+        <Stack.Screen name="Logs" component={withErrorBoundary(LogsScreen, '日志')}
           options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
