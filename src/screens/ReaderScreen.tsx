@@ -255,8 +255,8 @@ export function ReaderScreen() {
             renderItem={renderItem}
             windowSize={7}
             maxToRenderPerBatch={5}
-            {...(isVertical
-              ? { showsVerticalScrollIndicator: false, pagingEnabled: false, horizontal: false }
+                        {...(isVertical
+              ? { showsVerticalScrollIndicator: false, pagingEnabled: false }
               : { horizontal: true, pagingEnabled: true, showsHorizontalScrollIndicator: false }
             )}
             onScrollBeginDrag={() => { topAnim.setValue(0); bottomAnim.setValue(0); }}
@@ -274,11 +274,7 @@ export function ReaderScreen() {
                 setCurrentIdx(Math.min(idx, pages.length - 1));
               }
             }}
-            getItemLayout={(_, index) => ({
-              length: isVertical ? (imageHeights[index] || W * 1.4) : W,
-              offset: isVertical ? (imageHeights[index] || W * 1.4) * index : W * index,
-              index,
-            })}
+            getItemLayout={isVertical ? undefined : (_, index) => ({ length: W, offset: W * index, index })}
           />
         </Pressable>
       )}

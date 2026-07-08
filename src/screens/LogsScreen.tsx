@@ -56,13 +56,20 @@ export function LogsScreen() {
         <Text style={{ color: C.textPrimary, fontSize: 18, fontWeight: '700' }}>日志</Text>
         <View style={{ flexDirection: 'row', gap: 6 }}>
           <Pressable onPress={loadLogs} style={{ padding: 6 }}><MaterialIcons name="refresh" size={20} color={C.primary} /></Pressable>
-                    <Pressable onPress={async () => {
+                              <Pressable onPress={async () => {
             const fileLogs = await logger.loadFromFile();
             const all = [...fileLogs, ...logger.getEntries()]
               .sort((a, b) => b.time - a.time)
               .map((e) => JSON.stringify(e))
               .join('\n');
-            await Share.share({ message: all || '无日志', title: 'JOYComic 日志' });
+            try {
+              const { FileSystem } = require('expo-file-system');
+              const path = FileSystem.cacheDirectory + 'joycomic_logs.txt';
+              await FileSystem.writeAsStringAsync(path, all || '无日志');
+              await Share.share({ url: path, title: 'JOYComic 日志' });
+            } catch {
+              await Share.share({ message: all || '无日志', title: 'JOYComic 日志' });
+            }
           }} style={{ padding: 6 }}>
             <MaterialIcons name="file-upload" size={20} color={C.primary} />
           </Pressable>
