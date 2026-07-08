@@ -144,7 +144,7 @@ export class ApiClient {
       return text as T;
     } catch (e: any) {
       clearTimeout(tid);
-            import('../utils/HaKaLogger').then(m => m.logger.error(`${method} ${path}`, e)).catch(() => {});
+      import('../utils/HaKaLogger').then(m => { m.logger.error(`${method} ${path}`, e); if (retry >= 2) m.logger.warn(`所有域名失败，尝试切换源`); }).catch(() => {});
       if (retry < 3 && this.switchDomain()) {
         return this.request<T>(path, config, retry + 1);
       }
