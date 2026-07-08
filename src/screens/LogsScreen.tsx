@@ -1,4 +1,4 @@
-// 日志查看页面 — 参照 haka_comic logs.dart
+// 日志查看页面 v2 — 小巧 tab + 浅色适配 + 完整 JSON
 // @author Jason
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { logger, LogEntry } from '../utils/HaKaLogger';
-import { useLegacyColors, Radius, Spacing, FontSize } from '../theme';
+import { useLegacyColors, Spacing } from '../theme';
 
 const LEVEL_CONFIG: Record<string, { color: string; icon: string }> = {
   fatal: { color: '#e74c3c', icon: 'error' },
@@ -39,13 +39,11 @@ export function LogsScreen() {
 
   useEffect(() => { loadLogs(); }, []);
 
-  const filtered = filter ? entries.filter((e) => e.level === filter) : entries;
-
   const copyLog = (entry: LogEntry) => {
-    const text = `[${entry.level.toUpperCase()}] ${new Date(entry.time).toLocaleString()}\n${entry.msg}${entry.error ? '\nError: ' + entry.error : ''}${entry.stackTrace ? '\nStack: ' + entry.stackTrace : ''}`;
+    const full = JSON.stringify(entry, null, 2);
     try {
-      Clipboard.setString(text);
-      Alert.alert('', '已复制到剪贴板');
+      Clipboard.setString(full);
+      Alert.alert('', '已复制完整 JSON');
     } catch {}
   };
 
@@ -53,28 +51,20 @@ export function LogsScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: C.background }}>
-      {/* 顶栏 */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.marginEdge }}>
-        <Text style={{ color: C.textPrimary, fontSize: FontSize.title, fontWeight: '700' }}>日志</Text>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Pressable onPress={loadLogs} style={{ padding: 6 }}>
-            <MaterialIcons name="refresh" size={22} color={C.primary} />
-          </Pressable>
-          <Pressable onPress={async () => { await logger.clear(); setEntries([]); }} style={{ padding: 6 }}>
-            <MaterialIcons name="delete-sweep" size={22} color={C.error} />
-          </Pressable>
+      {/* 顶栏：紧凑布局 */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 10 }}>
+        <Text style={{ color: C.textPrimary, fontSize: 18, fontWeight: '700' }}>日志</Text>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          <Pressable onPress={loadLogs} style={{ padding: 6 }}><MaterialIcons name="refresh" size={20} color={C.primary} /></Pressable>
+          <Pressable onPress={async () => { await logger.clear(); setEntries([]); }} style={{ padding: 6 }}><MaterialIcons name="delete-sweep" size={20} color={C.error} /></Pressable>
         </View>
       </View>
 
-      {/* 分级过滤 */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal: Spacing.marginEdge, marginBottom: 8 }}>
-        <Pressable onPress={() => setFilter(null)} style={[s.filterChip, !filter && s.filterChipActive]}>
-          <Text style={[s.filterText, !filter && s.filterTextActive]}>全部</Text>
-        </Pressable>
-        {levels.map((lvl) => (
-          <Pressable key={lvl} onPress={() => setFilter(filter === lvl ? null : lvl)} style={[s.filterChip, filter === lvl && s.filterChipActive]}>
-            <MaterialIcons name={(LEVEL_CONFIG[lvl]?.icon || 'info') as any} size={14} color={filter === lvl ? '#fff' : LEVEL_CONFIG[lvl]?.color} />
-            <Text style={[s.filterText, filter === lvl && s.filterTextActive]}>{lvl}</Text>
+      {/* 分级过滤 — 紧凑一排 */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingLeft: 14, marginBottom: 6 }}>
+        {[{ key: null, label: 'ALL' } as any, ...levels.map((l) => ({ key: l, label: l.toUpperCase() }))].map((item) => (
+          <Pressable key={item.key || 'all'} onPress={() => setFilter(item.key)} style={[s.chip, filter === item.key && s.chipActive]}>
+            <Text style={[s.chipText, filter === item.key && s.chipTextActive]}>{item.label}</Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -82,33 +72,31 @@ export function LogsScreen() {
       {/* 日志列表 */}
       {loading ? (
         <ActivityIndicator color={C.primary} style={{ marginTop: 40 }} />
-      ) : filtered.length === 0 ? (
+      ) : entries.length === 0 ? (
         <View style={{ alignItems: 'center', marginTop: 60 }}>
-          <MaterialIcons name="inbox" size={48} color={C.textTertiary} />
-          <Text style={{ color: C.textSecondary, marginTop: 12 }}>暂无日志</Text>
+          <MaterialIcons name="inbox" size={36} color={C.textTertiary} />
+          <Text style={{ color: C.textSecondary, marginTop: 8, fontSize: 14 }}>暂无日志</Text>
         </View>
       ) : (
-        <ScrollView style={{ flex: 1, paddingHorizontal: Spacing.marginEdge }}>
-          {filtered.map((entry, i) => {
+        <ScrollView style={{ flex: 1, paddingHorizontal: 14 }}>
+          {(filter ? entries.filter((e) => e.level === filter) : entries).map((entry, i) => {
             const cfg = LEVEL_CONFIG[entry.level] || LEVEL_CONFIG.info;
             return (
-              <Pressable key={i} onPress={() => copyLog(entry)} style={s.card}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <MaterialIcons name={cfg.icon as any} size={18} color={cfg.color} />
-                  <View style={[s.levelBadge, { backgroundColor: cfg.color + '20' }]}>
-                    <Text style={{ color: cfg.color, fontSize: 10, fontWeight: '700' }}>{entry.level.toUpperCase()}</Text>
-                  </View>
-                  <Text style={{ color: C.textTertiary, fontSize: 11 }}>
-                    {new Date(entry.time).toLocaleTimeString()}
-                  </Text>
+              <Pressable key={i} onPress={() => copyLog(entry)} style={[s.card, { backgroundColor: C.surface, borderColor: C.divider }]}>
+                {/* 顶行：级别 + 时间 */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <MaterialIcons name={cfg.icon as any} size={14} color={cfg.color} />
+                  <Text style={{ color: cfg.color, fontSize: 10, fontWeight: '700' }}>{entry.level.toUpperCase()}</Text>
+                  <Text style={{ color: C.textTertiary, fontSize: 10, marginLeft: 'auto' }}>{new Date(entry.time).toLocaleTimeString()}</Text>
                 </View>
-                <Text style={{ color: C.textPrimary, fontSize: 13, marginTop: 4, lineHeight: 18 }}>{entry.msg}</Text>
-                {entry.error && <Text style={{ color: C.error, fontSize: 12, marginTop: 4 }}>{entry.error}</Text>}
-                {entry.stackTrace && (
-                  <View style={{ backgroundColor: C.surface, borderRadius: 6, padding: 8, marginTop: 6 }}>
-                    <Text style={{ color: C.textSecondary, fontSize: 10, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }} numberOfLines={5}>{entry.stackTrace}</Text>
-                  </View>
-                )}
+                {/* 消息 */}
+                <Text style={{ color: C.textPrimary, fontSize: 12, marginTop: 4, lineHeight: 16 }} numberOfLines={3}>{entry.msg}</Text>
+                {/* 错误 + 堆栈 — 仅简略 */}
+                {entry.error && <Text style={{ color: C.error, fontSize: 11, marginTop: 3 }} numberOfLines={2}>{entry.error}</Text>}
+                {/* JSON 摘要 */}
+                <Text style={{ color: C.textTertiary, fontSize: 9, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', marginTop: 4 }}>
+                  {JSON.stringify(entry).substring(0, 80)}...
+                </Text>
               </Pressable>
             );
           })}
@@ -119,17 +107,15 @@ export function LogsScreen() {
 }
 
 const s = StyleSheet.create({
-  filterChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.06)', marginRight: 6,
+  chip: {
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10,
+    backgroundColor: 'rgba(128,128,128,0.12)', marginRight: 5,
   },
-  filterChipActive: { backgroundColor: '#E85D3A' },
-  filterText: { color: '#9895A0', fontSize: 12, fontWeight: '600' },
-  filterTextActive: { color: '#fff' },
+  chipActive: { backgroundColor: '#E85D3A' },
+  chipText: { color: '#9895A0', fontSize: 11, fontWeight: '600' },
+  chipTextActive: { color: '#fff' },
   card: {
-    backgroundColor: '#12121E', borderRadius: 10, padding: 12, marginBottom: 8,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 8, padding: 10, marginBottom: 6,
+    borderWidth: 1,
   },
-  levelBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
 });
