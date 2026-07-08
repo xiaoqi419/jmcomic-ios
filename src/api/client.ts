@@ -144,7 +144,7 @@ export class ApiClient {
       return text as T;
     } catch (e: any) {
       clearTimeout(tid);
-      try { const HaKaLogger = require("../utils/HaKaLogger"); if (HaKaLogger.logger) HaKaLogger.logger.error(method + " " + path, e); } catch {}
+            import('../utils/HaKaLogger').then(m => m.logger.error(`${method} ${path}`, e)).catch(() => {});
       if (retry < 3 && this.switchDomain()) {
         return this.request<T>(path, config, retry + 1);
       }
