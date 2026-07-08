@@ -42,7 +42,16 @@ async function encryptedPost<T>(path: string, f?: Record<string, string | number
 // 路径对照 APK 源码: {token:"185Hcomic3PAPP7R", API_APP_SETTING:"setting", API_COMIC_PROMOTE:"promote", ...}
 // 注意: 路径无 /api/ 前缀，直接拼接在域名后
 
-export async function fetchSetting(): Promise<SettingData> {
+export async function fetchSetting(customUrl?: string): Promise<SettingData> {
+  // 自定义 CDN 优先
+  if (customUrl) {
+    try {
+      const ctrl = new AbortController();
+      setTimeout(() => ctrl.abort(), 3000);
+      const res = await fetch(customUrl, { signal: ctrl.signal });
+      if (res.ok) return (await res.json()).data;
+    } catch {}
+  }
   try { return await encryptedGet<SettingData>('setting'); } catch {}
   const res = await apiClient.getWeb('setting');
   return JSON.parse(res).data;

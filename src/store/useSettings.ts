@@ -28,6 +28,7 @@ interface SettingsState {
   downloadToGallery: boolean;
   favoriteMode: 'cloud' | 'local';
   tapRange: number;
+  customConfigUrl: string;
   loaded: boolean;
 
   // 动态域名（从 /api/setting 获取）
@@ -52,6 +53,7 @@ interface SettingsState {
   setDownloadToGallery: (v: boolean) => void;
   setFavoriteMode: (v: 'cloud' | 'local') => void;
   setTapRange: (v: number) => void;
+  setCustomConfigUrl: (v: string) => void;
 
   /** 从 /api/setting 响应更新域名 */
   updateFromSetting: (data: SettingData) => void;
@@ -77,6 +79,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   downloadToGallery: true,
   favoriteMode: 'cloud',
   tapRange: 5,
+  customConfigUrl: '',
   loaded: false,
 
   mainWebHost: '',
@@ -97,6 +100,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setDownloadToGallery: (v) => { set({ downloadToGallery: v }); get().save(); },
   setFavoriteMode: (v) => { set({ favoriteMode: v }); get().save(); },
   setTapRange: (v) => { set({ tapRange: v }); get().save(); },
+  setCustomConfigUrl: (v) => { set({ customConfigUrl: v }); get().save(); },
 
   updateFromSetting: (data: SettingData) => {
     const shunts: Shunt[] = (data.app_shunts || []).map((s) => ({
@@ -105,6 +109,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       main_web_host: data.main_web_host,
       img_host: data.img_host,
     }));
+    // 添加第5个源：快速通道 (express)
+    if (!shunts.find((s) => s.key === 0)) {
+      shunts.push({ key: 0, title: '快速通道', main_web_host: data.main_web_host, img_host: data.img_host });
+    }
 
     const cleanHost = (data.img_host || '').replace(/^https?:\/\//, '');
     if (cleanHost) apiClient.setImgHost(cleanHost);

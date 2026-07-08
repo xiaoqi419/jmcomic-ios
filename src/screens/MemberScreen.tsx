@@ -27,7 +27,7 @@ export function MemberScreen() {
   const { username: jmUser, loggedIn: jmLoggedIn, login: jmDoLogin, logout: jmDoLogout } = useAuthStore();
   const { username: picaUser, loggedIn: picaLoggedIn, login: picaDoLogin, logout: picaDoLogout, apiSource: picaApiSource, setApiSource: setPicaApiSource } = usePicaStore();
   const { info, signData, signed, doSignIn, loadInfo, loadSign, loadAchievements, achievements, notifications, loadNotifications, unread } = useMemberStore();
-  const { language, setLanguage, readingMode, setReadingMode, showDebugLog, setShowDebugLog, theme, setTheme, shunts, selectedShuntKey, selectShunt, prefetchCount, setPrefetchCount, imageLayout, setImageLayout, lockOrientation, setLockOrientation, downloadToGallery, setDownloadToGallery, favoriteMode, setFavoriteMode } = useSettingsStore();
+  const { language, setLanguage, readingMode, setReadingMode, showDebugLog, setShowDebugLog, theme, setTheme, shunts, selectedShuntKey, selectShunt, prefetchCount, setPrefetchCount, imageLayout, setImageLayout, lockOrientation, setLockOrientation, downloadToGallery, setDownloadToGallery, favoriteMode, setFavoriteMode, customConfigUrl, setCustomConfigUrl } = useSettingsStore();
 
   const [showJmLogin, setShowJmLogin] = useState(false);
   const [jmUserInput, setJmUserInput] = useState('');
@@ -397,7 +397,14 @@ export function MemberScreen() {
               <MaterialIcons name="chevron-right" size={20} color={C.textTertiary} />
             } />
           </Pressable>
-          <Row label="收藏模式" right={
+                    <Row label="自定义配置地址" right={
+            <TextInput
+              style={{ width: 140, textAlign: 'right', color: C.textSecondary, fontSize: 13, paddingVertical: 0 }}
+              placeholder="空=使用默认" placeholderTextColor={C.textTertiary}
+              value={customConfigUrl} onChangeText={setCustomConfigUrl}
+              autoCapitalize="none" autoCorrect={false}
+            />
+          } />
             <View style={styles.toggleGroup}>
               <Pressable onPress={() => setFavoriteMode('cloud')} style={[styles.toggleBtn, favoriteMode === 'cloud' && styles.toggleBtnActive]}>
                 <Text style={[styles.toggleText, favoriteMode === 'cloud' && styles.toggleTextActive]}>云端</Text>

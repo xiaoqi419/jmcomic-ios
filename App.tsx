@@ -240,7 +240,8 @@ export default function App() {
       setReady(true);
 
       try {
-        const setting = await fetchSetting();
+        const url = useSettingsStore.getState().customConfigUrl;
+        const setting = await fetchSetting(url || undefined);
         updateFromSetting(setting);
         if (saved !== null) selectShunt(saved);
       } catch {}

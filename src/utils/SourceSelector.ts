@@ -35,7 +35,8 @@ export async function getShuntImgHost(key: number): Promise<string> {
   const { token, tokenparam } = generateToken(ts);
   // 不能用 getMainHost（主站带 Cloudflare），要用 CDN 代理域名
   const domain = apiClient.getDomains()[0];
-  const url = `https://${domain}/setting?app_img_shunt=${key}`;
+  const qs = key === 0 ? 'express=on' : `app_img_shunt=${key}`;
+  const url = `https://${domain}/setting?${qs}`;
   const resp = await fetch(url, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K; wv) AppleWebKit/537.36',
