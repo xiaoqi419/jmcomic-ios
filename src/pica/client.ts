@@ -52,8 +52,10 @@ class PicaHttpClient {
 
         const json = await res.json();
         // Pica API 响应统一为 { code, message, data }
+        import("../utils/HaKaLogger").then(m => m.logger.ok("Pica " + method + " " + pathWithQuery)).catch(() => {});
         return (json.data || json) as T;
       } catch (e: any) {
+        import("../utils/HaKaLogger").then(m => m.logger.error("Pica " + method + " " + pathWithQuery, e)).catch(() => {});
         lastErr = e;
         if (e.name === 'AbortError') continue;
         if (e.message?.includes('登录失效')) throw e;
