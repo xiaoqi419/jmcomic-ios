@@ -244,11 +244,13 @@ export function ReaderScreen() {
             data={pages}
             keyExtractor={(_, i) => String(i)}
             renderItem={renderItem}
+            windowSize={7}
+            maxToRenderPerBatch={5}
             {...(isVertical
               ? { showsVerticalScrollIndicator: false, pagingEnabled: false, horizontal: false }
               : { horizontal: true, pagingEnabled: true, showsHorizontalScrollIndicator: false }
             )}
-            onScrollBeginDrag={() => { if (showUI) { topAnim.setValue(0); bottomAnim.setValue(0); setShowUI(false); } }}
+            onScrollBeginDrag={() => { topAnim.setValue(0); bottomAnim.setValue(0); }}
             onMomentumScrollEnd={(e) => {
               if (isVertical) {
                 // 垂直模式：按累计高度估算页面索引

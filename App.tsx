@@ -189,16 +189,28 @@ function AppInner() {
 
 export default function App() {
   const [ready, setReady] = useState(false);
-  // 全局 JS 错误捕获
+  // 全局错误 + Promise rejection 捕获
   useEffect(() => {
-    const origHandler = (ErrorUtils as any).getGlobalHandler?.();
-    (ErrorUtils as any).setGlobalHandler?.((e: any, isFatal?: boolean) => {
-      console.error('[GlobalError]', e?.message || e, 'isFatal:', isFatal);
-      logger.fatal('unhandled', e);
-      logger.init();
-      // 仍然保留原始处理，避免完全静默
-      if (origHandler) origHandler(e, isFatal);
-    });
+    // ErrorUtils
+    try {
+      const origHandler = (ErrorUtils as any).getGlobalHandler?.();
+      (ErrorUtils as any).setGlobalHandler?.((e: any, isFatal?: boolean) => {
+        logger.fatal('unhandled', e);
+        logger.init();
+        if (origHandler) origHandler(e, isFatal);
+      });
+    } catch {}
+
+    // Promise rejection
+    const onUnhandledRejection = (event: any) => {
+      const reason = event?.reason || event;
+      logger.error('unhandled_rejection', reason);
+    };
+    // @ts-ignore
+    if (global.addEventListener) {
+      // @ts-ignore
+      global.addEventListener('unhandledrejection', onUnhandledRejection);
+    }
   }, []);
   const { load: loadSettings, updateFromSetting, selectShunt, theme } = useSettingsStore();
   const { load: loadAuth } = useAuthStore();
