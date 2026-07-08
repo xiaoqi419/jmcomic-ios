@@ -28,8 +28,11 @@ export class SimpleErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: ErrorInfo) {
     const stack = error.stack || info.componentStack || '';
     this.setState({ stack });
-    console.error('[ErrorBoundary]', error.message);
-    console.error('[ErrorBoundary] Stack:', stack);
+    // 写入日志文件
+    try {
+      const { logger } = require('../utils/HaKaLogger');
+      logger.error('ErrorBoundary: ' + (this.props.title || ''), error);
+    } catch {}
   }
 
   handleCopy = () => {
