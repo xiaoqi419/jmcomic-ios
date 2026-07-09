@@ -18,6 +18,7 @@ import { useSettingsStore } from '../store/useSettings';
 import { login as jmLogin } from '../api/endpoints';
 import { userProfile as picaProfile, punchIn as picaPunch } from '../pica/endpoints';
 import { isPicaEnabled } from '../sources/pica';
+import { ConfigUrlModal } from '../components/ConfigUrlModal';
 
 export function MemberScreen() {
   const nav = useNavigation<any>();
