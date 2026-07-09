@@ -137,6 +137,11 @@ export class ApiClient {
       if (!resp.ok) {
         let msg = `HTTP ${resp.status}`;
         try { const j = JSON.parse(text); if (j.errorMsg) msg = j.errorMsg; } catch {}
+        // 401 = 登录过期，清除 AVS
+        if (resp.status === 401 && this.avsToken) {
+          this.avsToken = '';
+          try { require('../store/useAuth').useAuthStore.getState().logout(); } catch {}
+        }
         throw new ApiError(msg, resp.status);
       }
 
