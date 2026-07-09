@@ -243,7 +243,7 @@ export function ReaderScreen() {
         </View>
       ) : isVertical ? (
         <View style={{ flex: 1 }}>
-          <FlatList
+                    <FlatList
             ref={flatRef}
             data={pages}
             keyExtractor={(_, i) => String(i)}
@@ -252,6 +252,10 @@ export function ReaderScreen() {
             pagingEnabled={false}
             windowSize={7}
             maxToRenderPerBatch={5}
+            onTouchEnd={(e) => {
+              const y = e.nativeEvent.locationY;
+              if (y > 60 && y < H - 130) toggleUI();
+            }}
             onScrollBeginDrag={() => { if (showUI) { topAnim.setValue(0); bottomAnim.setValue(0); setShowUI(false); } }}
             onMomentumScrollEnd={(e) => {
               const y = e.nativeEvent.contentOffset.y;
@@ -262,8 +266,7 @@ export function ReaderScreen() {
               }
             }}
           />
-          {/* 透明点击层 — 点击切换 UI */}
-          <Pressable style={{ position: 'absolute', top: 60, left: 0, right: 0, bottom: 130 }} onPress={toggleUI} />
+          />
         </View>
       ) : (
         <Pressable style={{ flex: 1 }} onPress={handleTap}>
