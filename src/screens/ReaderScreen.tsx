@@ -242,25 +242,29 @@ export function ReaderScreen() {
           <Text style={{ color: '#9895A0' }}>暂无内容</Text>
         </View>
       ) : isVertical ? (
-        <FlatList
-          ref={flatRef}
-          data={pages}
-          keyExtractor={(_, i) => String(i)}
-          renderItem={renderItem}
-          showsVerticalScrollIndicator={false}
-          pagingEnabled={false}
-          windowSize={7}
-          maxToRenderPerBatch={5}
-          onScrollBeginDrag={() => { topAnim.setValue(0); bottomAnim.setValue(0); }}
-          onMomentumScrollEnd={(e) => {
-            const y = e.nativeEvent.contentOffset.y;
-            let acc = 0;
-            for (let i = 0; i < pages.length; i++) {
-              acc += imageHeights[i] || W * 1.4;
-              if (y < acc) { setCurrentIdx(i); break; }
-            }
-          }}
-        />
+        <View style={{ flex: 1 }}>
+          <FlatList
+            ref={flatRef}
+            data={pages}
+            keyExtractor={(_, i) => String(i)}
+            renderItem={renderItem}
+            showsVerticalScrollIndicator={false}
+            pagingEnabled={false}
+            windowSize={7}
+            maxToRenderPerBatch={5}
+            onScrollBeginDrag={() => { if (showUI) { topAnim.setValue(0); bottomAnim.setValue(0); setShowUI(false); } }}
+            onMomentumScrollEnd={(e) => {
+              const y = e.nativeEvent.contentOffset.y;
+              let acc = 0;
+              for (let i = 0; i < pages.length; i++) {
+                acc += imageHeights[i] || W * 1.4;
+                if (y < acc) { setCurrentIdx(i); break; }
+              }
+            }}
+          />
+          {/* 透明点击层 — 点击切换 UI */}
+          <Pressable style={{ position: 'absolute', top: 60, left: 0, right: 0, bottom: 130 }} onPress={toggleUI} />
+        </View>
       ) : (
         <Pressable style={{ flex: 1 }} onPress={handleTap}>
           <FlatList
